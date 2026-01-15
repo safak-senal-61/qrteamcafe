@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Cafe {
+  id        String      @id @default(uuid())
+  name      String
+  address   String?
+  phone     String?
+  isActive  Boolean     @default(true) @map("is_active")
+  status    String      @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  admins    CafeAdmin[]
+  categories Category[]
+  products  Product[]
+  tables    Table[]
+  orders    Order[]
+
+  @@map("cafes")
+}
+
+model CafeAdmin {
+  id           String   @id @default(uuid())
+  cafeId       String   @map("cafe_id")
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  isActive     Boolean  @default(true) @map("is_active")
+  isApproved   Boolean  @default(false) @map("is_approved")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  cafe         Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  @@map("cafe_admins")
+}
+
+model SuperAdmin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("super_admins")
+}
+
+model SystemSetting {
+  key         String   @id
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  cafeId    String    @map("cafe_id")
+  name      String
+  sortOrder Int       @default(0) @map("sort_order")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  cafe      Cafe      @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  cafeId      String      @map("cafe_id")
+  categoryId  String      @map("category_id")
+  name        String
+  description String?
+  price       Decimal     @db.Decimal(10, 2)
+  stock       Int         @default(0)
+  imageUrl    String?     @map("image_url")
+  isAvailable Boolean     @default(true) @map("is_available")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  cafe        Cafe        @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+model Table {
+  id          String   @id @default(uuid())
+  cafeId      String   @map("cafe_id")
+  tableNumber Int      @map("table_number")
+  isOccupied  Boolean  @default(false) @map("is_occupied")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  cafe        Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  orders      Order[]
+
+  @@unique([cafeId, tableNumber])
+  @@map("tables")
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  cafeId       String      @map("cafe_id")
+  tableId      String?     @map("table_id")
+  customerName String?     @map("customer_name")
+  status       String      @default("pending") // pending, preparing, delivered
+  totalAmount  Decimal     @default(0) @db.Decimal(10, 2) @map("total_amount")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  cafe         Cafe        @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  table        Table?      @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  items        OrderItem[]
+  payment      Payment?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String   @map("order_id")
+  productId  String   @map("product_id")
+  quantity   Int
+  unitPrice  Decimal  @db.Decimal(10, 2) @map("unit_price")
+  totalPrice Decimal  @db.Decimal(10, 2) @map("total_price")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  orderId       String   @unique @map("order_id")
+  amount        Decimal  @db.Decimal(10, 2)
+  status        String   @default("pending") // pending, completed, failed
+  receiptNumber String?  @map("receipt_number")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
