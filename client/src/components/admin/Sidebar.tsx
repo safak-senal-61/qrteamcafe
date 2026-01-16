@@ -1,0 +1,103 @@
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import {
+  LayoutDashboard,
+  UtensilsCrossed,
+  List,
+  QrCode,
+  Settings,
+  LogOut,
+  Coffee,
+  TrendingUp,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+const menuItems = [
+  {
+    title: 'Panel',
+    href: '/admin/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'Ürünler',
+    href: '/admin/products',
+    icon: UtensilsCrossed,
+  },
+  {
+    title: 'Kategoriler',
+    href: '/admin/categories',
+    icon: List,
+  },
+  {
+    title: 'Masalar & QR',
+    href: '/admin/tables',
+    icon: QrCode,
+  },
+  {
+    title: 'İstatistikler',
+    href: '/admin/statistics',
+    icon: TrendingUp,
+  },
+  {
+    title: 'Ayarlar',
+    href: '/admin/settings',
+    icon: Settings,
+  },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    router.push('/admin/login');
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-card border-r w-64 p-4">
+      <div className="flex items-center gap-2 px-2 py-4 mb-6">
+        <div className="bg-primary text-primary-foreground p-2 rounded-xl">
+          <Coffee className="h-6 w-6" />
+        </div>
+        <span className="font-bold text-xl tracking-tight">Cafe Admin</span>
+      </div>
+
+      <nav className="flex-1 space-y-1">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href;
+
+          return (
+            <Link key={item.href} href={item.href}>
+              <Button
+                variant={isActive ? 'default' : 'ghost'}
+                className={cn(
+                  'w-full justify-start h-12 text-base font-medium',
+                  isActive
+                    ? 'shadow-md'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Icon className="mr-3 h-5 w-5" />
+                {item.title}
+              </Button>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="mt-auto pt-4 border-t">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50"
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-3 h-5 w-5" />
+          Çıkış Yap
+        </Button>
+      </div>
+    </div>
+  );
+}
