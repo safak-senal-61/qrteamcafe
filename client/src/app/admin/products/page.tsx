@@ -28,6 +28,7 @@ export default function ProductsPage() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [pendingProducts, setPendingProducts] = useState<any[]>([]);
 
   const getCafeId = () => {
     const userStr = localStorage.getItem('user');
@@ -88,36 +89,103 @@ export default function ProductsPage() {
     }
   };
 
+  const handleAddPending = () => {
+    if (!formData.name || !formData.price || !formData.categoryId) {
+      toast.error('Lütfen gerekli alanları doldurun.');
+      return;
+    }
+
+    const category = categories.find(c => c.id === formData.categoryId);
+
+    setPendingProducts([
+      ...pendingProducts,
+      { ...formData, id: Date.now().toString(), categoryName: category?.name }
+    ]);
+
+    // Formu temizle ama kategoriyi koru
+    setFormData(prev => ({
+      ...prev,
+      name: '',
+      price: '',
+      description: '',
+      imageUrl: '',
+      // categoryId ve isAvailable korunur
+    }));
+    toast.success('Listeye eklendi.');
+  };
+
+  const removePending = (id: string) => {
+    setPendingProducts(pendingProducts.filter(p => p.id !== id));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cafeId = getCafeId();
     if (!cafeId) return;
 
     try {
-      const url = editingId 
-        ? `${API_URL}/products/${editingId}`
-        : `${API_URL}/products?cafeId=${cafeId}`;
-      
-      const method = editingId ? 'PATCH' : 'POST';
-      const body = {
-        ...formData,
-        price: parseFloat(formData.price),
-      };
+      if (editingId) {
+        if (!formData.name || !formData.price) {
+          toast.error('Lütfen ad ve fiyat alanlarını doldurun.');
+          return;
+        }
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+        const res = await fetch(`${API_URL}/products/${editingId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            price: parseFloat(formData.price),
+          }),
+        });
 
-      if (res.ok) {
-        toast.success(editingId ? 'Ürün güncellendi.' : 'Ürün eklendi.');
+        if (res.ok) {
+          toast.success('Ürün güncellendi.');
+          fetchData();
+          setIsDialogOpen(false);
+          resetForm();
+        } else {
+          const error = await res.json();
+          toast.error(error.message || 'İşlem başarısız.');
+        }
+      } else {
+        // Yeni Ekleme (Tekli veya Çoklu)
+        let productsToSave = [...pendingProducts];
+
+        // Eğer formda doldurulmuş geçerli veri varsa onu da listeye dahil et
+        if (formData.name && formData.price && formData.categoryId) {
+           productsToSave.push({ 
+             ...formData, 
+             id: Date.now().toString(), // id gerekli olabilir
+             categoryName: categories.find(c => c.id === formData.categoryId)?.name 
+           });
+        } else if (productsToSave.length === 0) {
+           // Eğer liste boşsa ve form da eksikse uyarı ver
+           toast.error('Lütfen eklenecek ürün girin veya mevcut formu doldurun.');
+           return;
+        }
+
+        const promises = productsToSave.map(product => {
+          return fetch(`${API_URL}/products?cafeId=${cafeId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: product.name,
+              categoryId: product.categoryId,
+              price: parseFloat(product.price),
+              description: product.description,
+              imageUrl: product.imageUrl,
+              isAvailable: product.isAvailable,
+            }),
+          });
+        });
+
+        await Promise.all(promises);
+        toast.success(`${productsToSave.length} ürün eklendi.`);
         fetchData();
         setIsDialogOpen(false);
+        setPendingProducts([]);
         resetForm();
-      } else {
-        const error = await res.json();
-        toast.error(error.message || 'İşlem başarısız.');
       }
     } catch (error) {
       toast.error('Hata oluştu.');
@@ -202,43 +270,55 @@ export default function ProductsPage() {
               <Plus className="mr-2 h-4 w-4" /> Yeni Ürün
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? 'Ürün Düzenle' : 'Yeni Ürün Ekle'}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               
-              <div className="space-y-2">
-                <Label htmlFor="category">Kategori</Label>
-                <Select 
-                  value={formData.categoryId} 
-                  onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Kategori seçin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-12 gap-4">
+                <div className="col-span-8 space-y-2">
+                  <Label htmlFor="category">Kategori</Label>
+                  <Select 
+                    value={formData.categoryId} 
+                    onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Kategori seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="col-span-4 flex items-end">
+                  <div className="flex items-center justify-between space-x-2 border p-2 rounded-md w-full h-10 bg-muted/20">
+                    <Label htmlFor="isAvailable" className="text-xs">Satışa Açık</Label>
+                    <Switch
+                      id="isAvailable"
+                      checked={formData.isAvailable}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isAvailable: checked })}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2 col-span-2 sm:col-span-1">
+                <div className="space-y-2">
                   <Label htmlFor="name">Ürün Adı</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
                     placeholder="Örn: Çay"
                   />
                 </div>
-                <div className="space-y-2 col-span-2 sm:col-span-1">
+                <div className="space-y-2">
                   <Label htmlFor="price">Fiyat (₺)</Label>
                   <Input
                     id="price"
@@ -246,7 +326,6 @@ export default function ProductsPage() {
                     step="0.01"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    required
                     placeholder="0.00"
                   />
                 </div>
@@ -275,62 +354,98 @@ export default function ProductsPage() {
                 </div>
               )}
               
-              <div className="space-y-2">
-                <Label htmlFor="description">Açıklama</Label>
-                <Input
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="İsteğe bağlı ürün açıklaması"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="description">Açıklama</Label>
+                  <Input
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="İsteğe bağlı açıklama"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label>Ürün Resmi</Label>
-                <div className="flex items-center gap-4">
-                  {formData.imageUrl && (
-                    <div className="relative h-20 w-20 rounded-lg overflow-hidden border">
-                      <img src={formData.imageUrl} alt="Preview" className="h-full w-full object-cover" />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <Label 
-                      htmlFor="image-upload" 
-                      className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed rounded-lg cursor-pointer hover:bg-secondary/50 transition-colors"
-                    >
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        {uploading ? (
-                          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        ) : (
-                          <>
-                            <Upload className="h-6 w-6 text-muted-foreground mb-1" />
-                            <span className="text-xs text-muted-foreground">Resim Yükle</span>
-                          </>
-                        )}
+                <div className="space-y-2">
+                  <Label>Resim</Label>
+                  <div className="flex items-center gap-2">
+                    {formData.imageUrl && (
+                      <div className="relative h-10 w-10 rounded-md overflow-hidden border">
+                        <img src={formData.imageUrl} alt="Preview" className="h-full w-full object-cover" />
                       </div>
-                      <Input 
-                        id="image-upload" 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handleFileChange}
-                        disabled={uploading}
-                      />
-                    </Label>
+                    )}
+                    <div className="flex-1">
+                      <Label 
+                        htmlFor="image-upload" 
+                        className="flex items-center justify-center w-full h-10 border border-dashed rounded-md cursor-pointer hover:bg-secondary/50 transition-colors"
+                      >
+                        {uploading ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Upload className="h-4 w-4" />
+                            <span className="text-xs">Yükle</span>
+                          </div>
+                        )}
+                        <Input 
+                          id="image-upload" 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={handleFileChange}
+                          disabled={uploading}
+                        />
+                      </Label>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="isAvailable">Satışa Açık</Label>
-                <Switch
-                  id="isAvailable"
-                  checked={formData.isAvailable}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isAvailable: checked })}
-                />
-              </div>
+              {/* Eklenen Ürünler Listesi */}
+              {!editingId && pendingProducts.length > 0 && (
+                <div className="space-y-2 border rounded-md p-3 bg-muted/20">
+                  <Label className="text-sm font-medium">Eklenecek Ürünler ({pendingProducts.length})</Label>
+                  <div className="space-y-2 max-h-[150px] overflow-y-auto">
+                    {pendingProducts.map((p) => (
+                      <div key={p.id} className="flex items-center justify-between text-sm p-2 bg-background rounded border">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{p.name}</span>
+                          <span className="text-xs text-muted-foreground">{p.categoryName} - ₺{p.price}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                          onClick={() => removePending(p.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              <Button type="submit" className="w-full">Kaydet</Button>
+              <div className="flex gap-2 pt-2 sticky bottom-0 bg-background border-t">
+                {!editingId && (
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    className="flex-1"
+                    onClick={handleAddPending}
+                    disabled={!formData.name || !formData.price || !formData.categoryId}
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Listeye Ekle
+                  </Button>
+                )}
+                <Button type="submit" className="flex-1">
+                  {editingId 
+                    ? 'Güncelle' 
+                    : pendingProducts.length > 0 
+                      ? `Hepsini Kaydet (${pendingProducts.length})` 
+                      : 'Kaydet'}
+                </Button>
+              </div>
             </form>
           </DialogContent>
         </Dialog>
