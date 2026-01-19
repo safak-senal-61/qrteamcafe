@@ -13,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
 import { EventsGateway } from './events/events.gateway';
 import { EventsModule } from './events/events.module';
+import { WaiterCallsModule } from './waiter-calls/waiter-calls.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { EventsModule } from './events/events.module';
     PaymentsModule,
     SuperAdminModule,
     EventsModule,
+    WaiterCallsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

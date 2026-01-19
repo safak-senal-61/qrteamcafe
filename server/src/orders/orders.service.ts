@@ -11,6 +11,23 @@ export class OrdersService {
   ) {}
 
   async create(cafeId: string, createOrderDto: CreateOrderDto) {
+    // 0. Masa durumunu güncelle (Eğer masa boşsa, dolu yap ve süreyi başlat)
+    if (createOrderDto.tableId) {
+      const table = await this.prisma.table.findUnique({
+        where: { id: createOrderDto.tableId },
+      });
+
+      if (table && !table.isOccupied) {
+        await this.prisma.table.update({
+          where: { id: createOrderDto.tableId },
+          data: {
+            isOccupied: true,
+            lastOccupiedAt: new Date(),
+          },
+        });
+      }
+    }
+
     // 1. Siparişi oluştur
     const order = await this.prisma.order.create({
       data: {

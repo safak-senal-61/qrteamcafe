@@ -8,21 +8,22 @@ export declare class OrdersService {
     create(cafeId: string, createOrderDto: CreateOrderDto): Promise<{
         table: {
             id: string;
-            cafeId: string;
             createdAt: Date;
             updatedAt: Date;
-            isOccupied: boolean;
+            cafeId: string;
             tableNumber: number;
+            isOccupied: boolean;
+            lastOccupiedAt: Date | null;
         } | null;
         items: ({
             product: {
                 id: string;
-                cafeId: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                description: string | null;
+                cafeId: string;
+                name: string;
                 categoryId: string;
+                description: string | null;
                 price: import("@prisma/client-runtime-utils").Decimal;
                 stock: number;
                 imageUrl: string | null;
@@ -31,40 +32,41 @@ export declare class OrdersService {
         } & {
             id: string;
             createdAt: Date;
-            orderId: string;
-            productId: string;
             quantity: number;
             unitPrice: import("@prisma/client-runtime-utils").Decimal;
             totalPrice: import("@prisma/client-runtime-utils").Decimal;
+            productId: string;
+            orderId: string;
         })[];
     } & {
         id: string;
-        cafeId: string;
-        createdAt: Date;
-        updatedAt: Date;
+        customerName: string | null;
         status: string;
         totalAmount: import("@prisma/client-runtime-utils").Decimal;
+        createdAt: Date;
+        updatedAt: Date;
+        cafeId: string;
         tableId: string | null;
-        customerName: string | null;
     }>;
     findAll(cafeId: string): import("@prisma/client").Prisma.PrismaPromise<({
         table: {
             id: string;
-            cafeId: string;
             createdAt: Date;
             updatedAt: Date;
-            isOccupied: boolean;
+            cafeId: string;
             tableNumber: number;
+            isOccupied: boolean;
+            lastOccupiedAt: Date | null;
         } | null;
         items: ({
             product: {
                 id: string;
-                cafeId: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                description: string | null;
+                cafeId: string;
+                name: string;
                 categoryId: string;
+                description: string | null;
                 price: import("@prisma/client-runtime-utils").Decimal;
                 stock: number;
                 imageUrl: string | null;
@@ -73,40 +75,41 @@ export declare class OrdersService {
         } & {
             id: string;
             createdAt: Date;
-            orderId: string;
-            productId: string;
             quantity: number;
             unitPrice: import("@prisma/client-runtime-utils").Decimal;
             totalPrice: import("@prisma/client-runtime-utils").Decimal;
+            productId: string;
+            orderId: string;
         })[];
     } & {
         id: string;
-        cafeId: string;
-        createdAt: Date;
-        updatedAt: Date;
+        customerName: string | null;
         status: string;
         totalAmount: import("@prisma/client-runtime-utils").Decimal;
+        createdAt: Date;
+        updatedAt: Date;
+        cafeId: string;
         tableId: string | null;
-        customerName: string | null;
     })[]>;
     updateStatus(id: string, status: string): Promise<{
         table: {
             id: string;
-            cafeId: string;
             createdAt: Date;
             updatedAt: Date;
-            isOccupied: boolean;
+            cafeId: string;
             tableNumber: number;
+            isOccupied: boolean;
+            lastOccupiedAt: Date | null;
         } | null;
         items: ({
             product: {
                 id: string;
-                cafeId: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                description: string | null;
+                cafeId: string;
+                name: string;
                 categoryId: string;
+                description: string | null;
                 price: import("@prisma/client-runtime-utils").Decimal;
                 stock: number;
                 imageUrl: string | null;
@@ -115,21 +118,21 @@ export declare class OrdersService {
         } & {
             id: string;
             createdAt: Date;
-            orderId: string;
-            productId: string;
             quantity: number;
             unitPrice: import("@prisma/client-runtime-utils").Decimal;
             totalPrice: import("@prisma/client-runtime-utils").Decimal;
+            productId: string;
+            orderId: string;
         })[];
     } & {
         id: string;
-        cafeId: string;
-        createdAt: Date;
-        updatedAt: Date;
+        customerName: string | null;
         status: string;
         totalAmount: import("@prisma/client-runtime-utils").Decimal;
+        createdAt: Date;
+        updatedAt: Date;
+        cafeId: string;
         tableId: string | null;
-        customerName: string | null;
     }>;
     closeTable(tableId: string): Promise<{
         message: string;

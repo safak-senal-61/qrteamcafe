@@ -40,11 +40,53 @@ let TablesService = class TablesService {
         return this.prisma.table.findMany({
             where: { cafeId },
             orderBy: { tableNumber: 'asc' },
+            include: {
+                waiterCalls: {
+                    where: { status: 'PENDING' },
+                },
+            },
         });
     }
     async remove(id) {
         return this.prisma.table.delete({
             where: { id },
+        });
+    }
+    async moveTable(cafeId, fromTableId, toTableId) {
+        return this.prisma.$transaction(async (prisma) => {
+            const sourceOrders = await prisma.order.findMany({
+                where: {
+                    tableId: fromTableId,
+                    status: { not: 'PAID' },
+                },
+            });
+            if (sourceOrders.length === 0) {
+                throw new common_1.BadRequestException('Taşınacak aktif sipariş bulunamadı.');
+            }
+            const targetTable = await prisma.table.findUnique({
+                where: { id: toTableId },
+            });
+            if (!targetTable) {
+                throw new common_1.NotFoundException('Hedef masa bulunamadı.');
+            }
+            await prisma.order.updateMany({
+                where: {
+                    tableId: fromTableId,
+                    status: { not: 'PAID' },
+                },
+                data: {
+                    tableId: toTableId,
+                },
+            });
+            await prisma.table.update({
+                where: { id: fromTableId },
+                data: { isOccupied: false },
+            });
+            await prisma.table.update({
+                where: { id: toTableId },
+                data: { isOccupied: true },
+            });
+            return { message: 'Masa başarıyla taşındı' };
         });
     }
 };

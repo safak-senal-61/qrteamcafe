@@ -3,24 +3,24 @@ export declare class CafesService {
     private prisma;
     constructor(prisma: PrismaService);
     findOne(id: string): Promise<{
-        phone: string | null;
         id: string;
         name: string;
+        address: string | null;
+        phone: string | null;
         isActive: boolean;
+        status: string;
         createdAt: Date;
         updatedAt: Date;
-        address: string | null;
-        status: string;
     }>;
     update(id: string, data: any): Promise<{
-        phone: string | null;
         id: string;
         name: string;
+        address: string | null;
+        phone: string | null;
         isActive: boolean;
+        status: string;
         createdAt: Date;
         updatedAt: Date;
-        address: string | null;
-        status: string;
     }>;
     getDashboardStats(cafeId: string): Promise<{
         totalOrders: number;
@@ -30,20 +30,21 @@ export declare class CafesService {
         recentOrders: ({
             table: {
                 id: string;
-                cafeId: string;
                 createdAt: Date;
                 updatedAt: Date;
+                cafeId: string;
                 isOccupied: boolean;
                 tableNumber: number;
+                lastOccupiedAt: Date | null;
             } | null;
             items: ({
                 product: {
                     id: string;
-                    cafeId: string;
                     name: string;
                     createdAt: Date;
                     updatedAt: Date;
                     description: string | null;
+                    cafeId: string;
                     categoryId: string;
                     price: import("@prisma/client-runtime-utils").Decimal;
                     stock: number;
@@ -61,21 +62,21 @@ export declare class CafesService {
             })[];
         } & {
             id: string;
-            cafeId: string;
+            status: string;
             createdAt: Date;
             updatedAt: Date;
-            status: string;
+            cafeId: string;
             totalAmount: import("@prisma/client-runtime-utils").Decimal;
             tableId: string | null;
             customerName: string | null;
         })[];
         popularProducts: {
             id: string;
-            cafeId: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
             description: string | null;
+            cafeId: string;
             categoryId: string;
             price: import("@prisma/client-runtime-utils").Decimal;
             stock: number;

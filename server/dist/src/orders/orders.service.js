@@ -21,6 +21,20 @@ let OrdersService = class OrdersService {
         this.eventsGateway = eventsGateway;
     }
     async create(cafeId, createOrderDto) {
+        if (createOrderDto.tableId) {
+            const table = await this.prisma.table.findUnique({
+                where: { id: createOrderDto.tableId },
+            });
+            if (table && !table.isOccupied) {
+                await this.prisma.table.update({
+                    where: { id: createOrderDto.tableId },
+                    data: {
+                        isOccupied: true,
+                        lastOccupiedAt: new Date(),
+                    },
+                });
+            }
+        }
         const order = await this.prisma.order.create({
             data: {
                 cafeId,

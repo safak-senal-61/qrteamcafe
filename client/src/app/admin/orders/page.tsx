@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Receipt, ChefHat, CheckCircle2, XCircle, Armchair } from 'lucide-react';
+import { Loader2, Receipt, ChefHat, CheckCircle2, XCircle, Armchair, ArrowRightLeft } from 'lucide-react';
 import { API_URL } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,6 +18,12 @@ export default function OrdersPage() {
   const [selectedTable, setSelectedTable] = useState<any | null>(null);
   const [printTable, setPrintTable] = useState<any | null>(null);
   const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
+  
+  // Move Table State
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
+  const [moveSourceTable, setMoveSourceTable] = useState<any | null>(null);
+  const [moveTargetTableId, setMoveTargetTableId] = useState<string>('');
+  
   const [cafeId, setCafeId] = useState<string | null>(null);
 
   const fetchData = async () => {
@@ -37,6 +43,34 @@ export default function OrdersPage() {
       toast.error('Veriler yüklenemedi.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMoveTable = async () => {
+    if (!moveSourceTable || !moveTargetTableId || !cafeId) return;
+
+    try {
+      const res = await fetch(`${API_URL}/tables/move?cafeId=${cafeId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fromTableId: moveSourceTable.id,
+          toTableId: moveTargetTableId
+        })
+      });
+
+      if (res.ok) {
+        toast.success('Masa başarıyla taşındı.');
+        setIsMoveDialogOpen(false);
+        setMoveSourceTable(null);
+        setMoveTargetTableId('');
+        fetchData();
+      } else {
+        const err = await res.json();
+        toast.error(err.message || 'Masa taşınamadı.');
+      }
+    } catch (error) {
+      toast.error('Bir hata oluştu.');
     }
   };
 
@@ -271,16 +305,29 @@ export default function OrdersPage() {
                         </div>
                       ))}
                     </ScrollArea>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => {
-                        setSelectedTable(table);
-                        setIsPayDialogOpen(true);
-                      }}
-                    >
-                      <Receipt className="mr-2 h-4 w-4" />
-                      Hesabı Kapat
-                    </Button>
+                    <div className="flex gap-2 w-full">
+                      <Button 
+                        className="flex-1" 
+                        onClick={() => {
+                          setSelectedTable(table);
+                          setIsPayDialogOpen(true);
+                        }}
+                      >
+                        <Receipt className="mr-2 h-4 w-4" />
+                        Hesabı Kapat
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        title="Masayı Taşı"
+                        onClick={() => {
+                          setMoveSourceTable(table);
+                          setIsMoveDialogOpen(true);
+                        }}
+                      >
+                        <ArrowRightLeft className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm italic">
@@ -329,6 +376,42 @@ export default function OrdersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsPayDialogOpen(false)}>İptal</Button>
             <Button onClick={handlePayTable}>Ödemeyi Al ve Kapat</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Masa Taşıma: Masa {moveSourceTable?.tableNumber}</DialogTitle>
+            <DialogDescription>
+              Bu masadaki siparişleri başka bir masaya taşıyın veya birleştirin.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+             <label className="block text-sm font-medium mb-2">Hedef Masa</label>
+             <select 
+               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+               value={moveTargetTableId}
+               onChange={(e) => setMoveTargetTableId(e.target.value)}
+             >
+               <option value="">Masa seçiniz</option>
+               {tables
+                 .filter(t => t.id !== moveSourceTable?.id)
+                 .map(t => {
+                   const isActive = getTableOrders(t.id).length > 0;
+                   return (
+                     <option key={t.id} value={t.id}>
+                       Masa {t.tableNumber} {isActive ? '(Dolu - Birleştir)' : '(Boş)'}
+                     </option>
+                   );
+                 })
+               }
+             </select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsMoveDialogOpen(false)}>İptal</Button>
+            <Button onClick={handleMoveTable} disabled={!moveTargetTableId}>Taşı</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

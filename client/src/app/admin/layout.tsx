@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/admin/Sidebar';
 import { Loader2, Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { PendingOrdersWidget } from '@/components/admin/PendingOrdersWidget';
 
 export default function AdminLayout({
   children,
@@ -70,6 +71,7 @@ export default function AdminLayout({
 
   return (
     <div className="flex h-screen bg-secondary/20">
+      <PendingOrdersWidget />
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
         <Sidebar />

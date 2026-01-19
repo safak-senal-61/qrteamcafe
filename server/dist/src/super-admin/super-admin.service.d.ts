@@ -10,8 +10,8 @@ export declare class SuperAdminService {
     }>;
     getPendingCafes(): Promise<({
         admins: {
-            email: string;
             id: string;
+            email: string;
             cafeId: string;
             passwordHash: string;
             name: string;
@@ -21,19 +21,19 @@ export declare class SuperAdminService {
             updatedAt: Date;
         }[];
     } & {
-        phone: string | null;
         id: string;
         name: string;
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
         address: string | null;
+        phone: string | null;
         status: string;
     })[]>;
     getAllCafes(): Promise<({
         admins: {
-            email: string;
             id: string;
+            email: string;
             cafeId: string;
             passwordHash: string;
             name: string;
@@ -43,13 +43,13 @@ export declare class SuperAdminService {
             updatedAt: Date;
         }[];
     } & {
-        phone: string | null;
         id: string;
         name: string;
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
         address: string | null;
+        phone: string | null;
         status: string;
     })[]>;
     getDashboardStats(): Promise<{
@@ -67,23 +67,23 @@ export declare class SuperAdminService {
         value: string;
     }>;
     approveCafe(cafeId: string): Promise<{
-        phone: string | null;
         id: string;
         name: string;
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
         address: string | null;
+        phone: string | null;
         status: string;
     }>;
     rejectCafe(cafeId: string): Promise<{
-        phone: string | null;
         id: string;
         name: string;
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
         address: string | null;
+        phone: string | null;
         status: string;
     }>;
 }

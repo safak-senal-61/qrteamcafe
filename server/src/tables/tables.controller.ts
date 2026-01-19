@@ -22,6 +22,14 @@ export class TablesController {
     return this.tablesService.create(cafeId, createTableDto);
   }
 
+  @Post('move')
+  moveTable(
+    @Query('cafeId') cafeId: string,
+    @Body() body: { fromTableId: string; toTableId: string },
+  ) {
+    return this.tablesService.moveTable(cafeId, body.fromTableId, body.toTableId);
+  }
+
   @Get()
   findAll(@Query('cafeId') cafeId: string) {
     return this.tablesService.findAll(cafeId);

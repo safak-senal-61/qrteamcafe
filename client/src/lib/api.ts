@@ -13,3 +13,4 @@ export const getApiUrl = () => {
 };
 
 export const API_URL = getApiUrl();
+export const SOCKET_URL = API_URL;

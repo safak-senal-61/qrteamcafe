@@ -10,6 +10,8 @@ import {
   LogOut,
   Coffee,
   TrendingUp,
+  Bell,
+  Receipt,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -18,6 +20,16 @@ const menuItems = [
     title: 'Panel',
     href: '/admin/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    title: 'Siparişler',
+    href: '/admin/orders',
+    icon: Receipt,
+  },
+  {
+    title: 'Garson Çağrıları',
+    href: '/admin/waiter-calls',
+    icon: Bell,
   },
   {
     title: 'Ürünler',

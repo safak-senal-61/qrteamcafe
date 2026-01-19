@@ -13,13 +13,15 @@ export interface Product {
 
 export interface CartItem extends Product {
   quantity: number;
+  note?: string;
+  cartItemId: string;
 }
 
 interface CartState {
   items: CartItem[];
-  addItem: (product: Product) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addItem: (product: Product, note?: string) => void;
+  removeItem: (cartItemId: string) => void;
+  updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -29,35 +31,43 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
-      addItem: (product) => {
+      addItem: (product, note) => {
         const items = get().items;
-        const existingItem = items.find((item) => item.id === product.id);
+        // Check if item with same product ID AND same note exists
+        const existingItem = items.find((item) => item.id === product.id && item.note === note);
 
         if (existingItem) {
           set({
             items: items.map((item) =>
-              item.id === product.id
+              item.cartItemId === existingItem.cartItemId
                 ? { ...item, quantity: item.quantity + 1 }
                 : item
             ),
           });
         } else {
-          set({ items: [...items, { ...product, quantity: 1 }] });
+          // Create new item with unique cartItemId
+          const newItem: CartItem = {
+            ...product,
+            quantity: 1,
+            note,
+            cartItemId: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`
+          };
+          set({ items: [...items, newItem] });
         }
       },
-      removeItem: (productId) => {
+      removeItem: (cartItemId) => {
         set({
-          items: get().items.filter((item) => item.id !== productId),
+          items: get().items.filter((item) => item.cartItemId !== cartItemId),
         });
       },
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (cartItemId, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(productId);
+          get().removeItem(cartItemId);
           return;
         }
         set({
           items: get().items.map((item) =>
-            item.id === productId ? { ...item, quantity } : item
+            item.cartItemId === cartItemId ? { ...item, quantity } : item
           ),
         });
       },

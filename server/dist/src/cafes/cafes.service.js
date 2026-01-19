@@ -30,8 +30,21 @@ let CafesService = class CafesService {
             where: { id },
             data: {
                 name: data.name,
-                phone: data.phone,
+                description: data.description,
+                type: data.type,
+                city: data.city,
+                district: data.district,
                 address: data.address,
+                phone: data.phone,
+                email: data.email,
+                website: data.website,
+                authorizedPerson: data.authorizedPerson,
+                serviceType: data.serviceType,
+                workingHours: data.workingHours,
+                preparationTime: data.preparationTime ? parseInt(data.preparationTime) : undefined,
+                paymentMethods: data.paymentMethods,
+                logoUrl: data.logoUrl,
+                googleMapsUrl: data.googleMapsUrl,
             },
         });
     }

@@ -6,6 +6,7 @@ import { CategoryNav } from '@/components/menu/CategoryNav';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 import { OrdersSheet } from '@/components/menu/OrdersSheet';
+import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
 import { Badge } from '@/components/ui/badge';
 import { Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -51,7 +52,7 @@ export default function MenuPage() {
   const [scrolled, setScrolled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
-  const [isOrdersOpen, setIsOrdersOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [currentTableId, setCurrentTableId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -335,16 +336,17 @@ export default function MenuPage() {
         )}
       </div>
 
-      <OrdersSheet 
-        orders={activeOrders} 
-        onCancel={handleCancelOrder} 
-        open={isOrdersOpen} 
-        onOpenChange={setIsOrdersOpen} 
+      <CallWaiterButton />
+      <CartSheet 
+        onOrderSuccess={() => {
+          setIsCartOpen(true);
+          fetchActiveOrders();
+        }}
+        activeOrders={activeOrders}
+        onCancelOrder={handleCancelOrder}
+        isOpen={isCartOpen}
+        onOpenChange={setIsCartOpen}
       />
-      <CartSheet onOrderSuccess={() => {
-        setIsOrdersOpen(true);
-        fetchActiveOrders();
-      }} />
     </div>
   );
 }

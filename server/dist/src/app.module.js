@@ -21,6 +21,7 @@ const payments_module_1 = require("./payments/payments.module");
 const prisma_module_1 = require("./prisma/prisma.module");
 const super_admin_module_1 = require("./super-admin/super-admin.module");
 const events_module_1 = require("./events/events.module");
+const waiter_calls_module_1 = require("./waiter-calls/waiter-calls.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -40,6 +41,7 @@ exports.AppModule = AppModule = __decorate([
             payments_module_1.PaymentsModule,
             super_admin_module_1.SuperAdminModule,
             events_module_1.EventsModule,
+            waiter_calls_module_1.WaiterCallsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

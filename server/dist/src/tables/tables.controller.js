@@ -24,6 +24,9 @@ let TablesController = class TablesController {
     create(createTableDto, cafeId) {
         return this.tablesService.create(cafeId, createTableDto);
     }
+    moveTable(cafeId, body) {
+        return this.tablesService.moveTable(cafeId, body.fromTableId, body.toTableId);
+    }
     findAll(cafeId) {
         return this.tablesService.findAll(cafeId);
     }
@@ -40,6 +43,14 @@ __decorate([
     __metadata("design:paramtypes", [create_table_dto_1.CreateTableDto, String]),
     __metadata("design:returntype", void 0)
 ], TablesController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)('move'),
+    __param(0, (0, common_1.Query)('cafeId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], TablesController.prototype, "moveTable", null);
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)('cafeId')),
