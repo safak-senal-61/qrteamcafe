@@ -5,39 +5,39 @@ export declare class TablesService {
     constructor(prisma: PrismaService);
     create(cafeId: string, createTableDto: CreateTableDto): Promise<{
         id: string;
-        tableNumber: number;
-        isOccupied: boolean;
-        lastOccupiedAt: Date | null;
+        cafeId: string;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
+        isOccupied: boolean;
+        tableNumber: number;
+        lastOccupiedAt: Date | null;
     }>;
     findAll(cafeId: string): Promise<({
         waiterCalls: {
             id: string;
+            cafeId: string;
             createdAt: Date;
             updatedAt: Date;
-            cafeId: string;
             status: string;
             tableId: string;
         }[];
     } & {
         id: string;
-        tableNumber: number;
-        isOccupied: boolean;
-        lastOccupiedAt: Date | null;
+        cafeId: string;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
+        isOccupied: boolean;
+        tableNumber: number;
+        lastOccupiedAt: Date | null;
     })[]>;
     remove(id: string): Promise<{
         id: string;
-        tableNumber: number;
-        isOccupied: boolean;
-        lastOccupiedAt: Date | null;
+        cafeId: string;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
+        isOccupied: boolean;
+        tableNumber: number;
+        lastOccupiedAt: Date | null;
     }>;
     moveTable(cafeId: string, fromTableId: string, toTableId: string): Promise<{
         message: string;

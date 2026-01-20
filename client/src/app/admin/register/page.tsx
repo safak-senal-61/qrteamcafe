@@ -1,21 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Coffee, User, Mail, Phone, Lock, Store, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { Coffee, User, Mail, Phone, Lock, Store, ArrowRight, Loader2, CheckCircle2, Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
+import Cropper from 'react-easy-crop';
+import getCroppedImg from '@/lib/imageUtils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
     cafeName: '',
     fullName: '',
@@ -23,9 +23,69 @@ export default function RegisterPage() {
     email: '',
     password: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  // Cropper State
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        toast.error('Lütfen geçerli bir resim dosyası seçin.');
+        return;
+      }
+      // Keep the original file for later use if needed, but we mostly care about the cropped one
+      // However, we start by showing the cropper with this file
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setSelectedImage(reader.result as string);
+        setIsCropperOpen(true);
+      });
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const onCropSave = async () => {
+    if (!selectedImage || !croppedAreaPixels) return;
+
+    try {
+      const croppedBlob = await getCroppedImg(selectedImage, croppedAreaPixels);
+      if (!croppedBlob) {
+        toast.error('Resim kırpılamadı.');
+        return;
+      }
+
+      // Convert Blob to File
+      const file = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
+      
+      // Update preview and selected file
+      setLogoPreview(URL.createObjectURL(croppedBlob));
+      setSelectedFile(file);
+      
+      setIsCropperOpen(false);
+      setZoom(1);
+      setCrop({ x: 0, y: 0 });
+    } catch (e) {
+      console.error(e);
+      toast.error('Kırpma işlemi başarısız.');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,6 +93,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
+      // First register the user and cafe
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,6 +107,19 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        
+        // If logo is selected, upload it
+        if (selectedFile && data.cafeId) {
+            const formDataUpload = new FormData();
+            formDataUpload.append('file', selectedFile);
+
+            await fetch(`${API_URL}/cafes/${data.cafeId}/logo`, {
+                method: 'PATCH',
+                body: formDataUpload,
+            });
+        }
+
         setIsSuccess(true);
         toast.success('Başvurunuz başarıyla alındı!');
       } else {
@@ -141,6 +215,42 @@ export default function RegisterPage() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label>İşletme Logosu</Label>
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-secondary/50 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {logoPreview ? (
+                      <img src={logoPreview} alt="Logo Preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Logo Seç
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={onFileChange}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1 text-center">
+                        Zorunlu değildir. (Önerilen: 512x512px)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Ad Soyad</Label>
@@ -223,6 +333,7 @@ export default function RegisterPage() {
               </Button>
             </form>
           </CardContent>
+
           <CardFooter className="text-center text-sm text-muted-foreground pb-8">
             <div className="w-full">
               Zaten hesabınız var mı?{' '}
@@ -233,6 +344,55 @@ export default function RegisterPage() {
           </CardFooter>
         </Card>
       </motion.div>
+
+      {/* Cropper Dialog */}
+      <Dialog open={isCropperOpen} onOpenChange={setIsCropperOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Logoyu Düzenle</DialogTitle>
+            <DialogDescription>
+              Logonuzu kare formatında kırpın ve ayarlayın.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative w-full h-80 bg-black/5 rounded-md overflow-hidden">
+            {selectedImage && (
+              <Cropper
+                image={selectedImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+              />
+            )}
+          </div>
+          <div className="space-y-2 py-4">
+            <div className="flex justify-between text-xs">
+              <span>Yakınlaştır</span>
+              <span>{Math.round(zoom * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              value={zoom}
+              min={1}
+              max={3}
+              step={0.1}
+              aria-labelledby="Zoom"
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCropperOpen(false)}>
+              İptal
+            </Button>
+            <Button onClick={onCropSave}>
+              Kırp ve Kaydet
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

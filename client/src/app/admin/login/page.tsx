@@ -7,7 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Coffee, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter as DialogFooterUI,
+} from "@/components/ui/dialog";
+import { Coffee, Lock, Mail, ArrowRight, Loader2, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
@@ -20,8 +29,76 @@ export default function AdminLoginPage() {
     password: '',
   });
 
+  // Forgot Password State
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [forgotPasswordStep, setForgotPasswordStep] = useState(1);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [isResetLoading, setIsResetLoading] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsResetLoading(true);
+
+    try {
+      if (forgotPasswordStep === 1) {
+        // Step 1: Send Code
+        const response = await fetch(`${API_URL}/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: resetEmail }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          toast.success(data.message);
+          setForgotPasswordStep(2);
+        } else {
+          toast.error(data.message || 'Bir hata oluştu.');
+        }
+      } else if (forgotPasswordStep === 2) {
+        // Step 2: Verify Code
+        const response = await fetch(`${API_URL}/auth/verify-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: resetEmail, code: resetCode }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          toast.success(data.message);
+          setForgotPasswordStep(3);
+        } else {
+          toast.error(data.message || 'Kod hatalı.');
+        }
+      } else if (forgotPasswordStep === 3) {
+        // Step 3: Reset Password
+        const response = await fetch(`${API_URL}/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: resetEmail, code: resetCode, newPassword }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          toast.success(data.message);
+          setIsForgotPasswordOpen(false);
+          setForgotPasswordStep(1);
+          setResetEmail('');
+          setResetCode('');
+          setNewPassword('');
+        } else {
+          toast.error(data.message || 'Şifre sıfırlanamadı.');
+        }
+      }
+    } catch (error) {
+      console.error('Reset password error:', error);
+      toast.error('Bir hata oluştu.');
+    } finally {
+      setIsResetLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,6 +160,85 @@ export default function AdminLoginPage() {
             >
               <Coffee className="h-8 w-8" />
             </motion.div>
+
+      <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Şifre Sıfırlama</DialogTitle>
+            <DialogDescription>
+              {forgotPasswordStep === 1 && 'Şifrenizi sıfırlamak için e-posta adresinizi girin.'}
+              {forgotPasswordStep === 2 && 'E-posta adresinize gönderilen 6 haneli kodu girin.'}
+              {forgotPasswordStep === 3 && 'Yeni şifrenizi belirleyin.'}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            {forgotPasswordStep === 1 && (
+              <div className="space-y-2">
+                <Label htmlFor="resetEmail">E-posta Adresi</Label>
+                <Input
+                  id="resetEmail"
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="ornek@cafe.com"
+                  required
+                />
+              </div>
+            )}
+            {forgotPasswordStep === 2 && (
+              <div className="space-y-2">
+                <Label htmlFor="resetCode">Doğrulama Kodu</Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="resetCode"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value)}
+                    placeholder="123456"
+                    className="pl-10 tracking-widest text-lg"
+                    maxLength={6}
+                    required
+                  />
+                </div>
+              </div>
+            )}
+            {forgotPasswordStep === 3 && (
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Yeni Şifre</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="pl-10"
+                    required
+                    minLength={6}
+                  />
+                </div>
+              </div>
+            )}
+            <DialogFooterUI>
+              <Button type="submit" disabled={isResetLoading}>
+                {isResetLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    İşleniyor...
+                  </>
+                ) : (
+                  <>
+                    {forgotPasswordStep === 1 && 'Kod Gönder'}
+                    {forgotPasswordStep === 2 && 'Doğrula'}
+                    {forgotPasswordStep === 3 && 'Şifreyi Güncelle'}
+                  </>
+                )}
+              </Button>
+            </DialogFooterUI>
+          </form>
+        </DialogContent>
+      </Dialog>
             <div className="space-y-2">
               <CardTitle className="text-2xl font-bold tracking-tight">Yönetici Girişi</CardTitle>
               <CardDescription>
@@ -110,12 +266,17 @@ export default function AdminLoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Şifre</Label>
-                  <Link
-                    href="#"
-                    className="text-xs font-medium text-primary hover:underline"
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-xs font-medium text-primary hover:underline p-0 h-auto"
+                    onClick={() => {
+                      setForgotPasswordStep(1);
+                      setIsForgotPasswordOpen(true);
+                    }}
                   >
                     Şifremi Unuttum
-                  </Link>
+                  </Button>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

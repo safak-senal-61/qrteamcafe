@@ -46,10 +46,13 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = __importStar(require("bcryptjs"));
+const mail_service_1 = require("./mail.service");
 let AuthService = class AuthService {
     prisma;
-    constructor(prisma) {
+    mailService;
+    constructor(prisma, mailService) {
         this.prisma = prisma;
+        this.mailService = mailService;
     }
     async registerCafe(dto) {
         const existingCafeAdmin = await this.prisma.cafeAdmin.findUnique({
@@ -134,10 +137,58 @@ let AuthService = class AuthService {
         }
         throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
     }
+    async forgotPassword(dto) {
+        const admin = await this.prisma.cafeAdmin.findUnique({
+            where: { email: dto.email },
+        });
+        if (!admin) {
+            throw new common_1.NotFoundException('Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.');
+        }
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires = new Date(Date.now() + 15 * 60 * 1000);
+        await this.prisma.cafeAdmin.update({
+            where: { id: admin.id },
+            data: {
+                resetCode: code,
+                resetCodeExpires: expires,
+            },
+        });
+        await this.mailService.sendPasswordResetEmail(admin.email, code);
+        return { message: 'Şifre sıfırlama kodu e-posta adresinize gönderildi.' };
+    }
+    async verifyResetCode(dto) {
+        const admin = await this.prisma.cafeAdmin.findUnique({
+            where: { email: dto.email },
+        });
+        if (!admin || admin.resetCode !== dto.code || !admin.resetCodeExpires || admin.resetCodeExpires < new Date()) {
+            throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş kod.');
+        }
+        return { message: 'Kod doğrulandı.' };
+    }
+    async resetPassword(dto) {
+        const admin = await this.prisma.cafeAdmin.findUnique({
+            where: { email: dto.email },
+        });
+        if (!admin || admin.resetCode !== dto.code || !admin.resetCodeExpires || admin.resetCodeExpires < new Date()) {
+            throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş kod.');
+        }
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(dto.newPassword, salt);
+        await this.prisma.cafeAdmin.update({
+            where: { id: admin.id },
+            data: {
+                passwordHash,
+                resetCode: null,
+                resetCodeExpires: null,
+            },
+        });
+        return { message: 'Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.' };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        mail_service_1.MailService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

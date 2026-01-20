@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { API_URL } from '@/lib/api';
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -61,6 +63,73 @@ const menuItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  
+  // Initialize state from localStorage if available to prevent flickering
+  const [cafeData, setCafeData] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('cafe_info');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        // Ensure logoUrl is absolute
+        if (parsed.logoUrl && !parsed.logoUrl.startsWith('http')) {
+           parsed.logoUrl = `${API_URL}${parsed.logoUrl}`;
+        }
+        return parsed;
+      }
+    }
+    return { name: '\u00A0', logoUrl: '' };
+  });
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const fetchCafeInfo = async () => {
+      try {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return;
+        
+        const user = JSON.parse(userStr);
+        if (!user.cafeId) return;
+
+        const res = await fetch(`${API_URL}/cafes/${user.cafeId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const newData = {
+            name: data.name || 'Cafe Admin',
+            logoUrl: data.logoUrl || ''
+          };
+          setCafeData(newData);
+          // Cache the data
+          localStorage.setItem('cafe_info', JSON.stringify(newData));
+          
+          // Update document title and favicon
+          document.title = newData.name;
+          const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+          if (link) {
+            link.href = newData.logoUrl || '/favicon.ico';
+          } else {
+            const newLink = document.createElement('link');
+            newLink.rel = 'icon';
+            newLink.href = newData.logoUrl || '/favicon.ico';
+            document.head.appendChild(newLink);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch cafe info:', error);
+      }
+    };
+
+    fetchCafeInfo();
+    
+    // Listen for updates from settings page
+    const handleCafeUpdate = () => fetchCafeInfo();
+    window.addEventListener('cafe-info-updated', handleCafeUpdate);
+    
+    return () => {
+      window.removeEventListener('cafe-info-updated', handleCafeUpdate);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -69,11 +138,32 @@ export function Sidebar() {
 
   return (
     <div className="flex flex-col h-full bg-card border-r w-64 p-4">
-      <div className="flex items-center gap-2 px-2 py-4 mb-6">
-        <div className="bg-primary text-primary-foreground p-2 rounded-xl">
-          <Coffee className="h-6 w-6" />
+      <div className="flex flex-col px-2 py-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div 
+            className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border"
+            suppressHydrationWarning
+          >
+            {mounted && cafeData.logoUrl ? (
+              <img 
+                src={cafeData.logoUrl} 
+                alt="Logo" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'; // Hide broken image
+                }}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-primary text-primary-foreground">
+                <Coffee className="h-6 w-6" />
+              </div>
+            )}
+          </div>
+          <span className="font-bold text-xl tracking-tight truncate" suppressHydrationWarning>{cafeData.name}</span>
         </div>
-        <span className="font-bold text-xl tracking-tight">Cafe Admin</span>
+        <div className="pl-[52px] -mt-1">
+            <span className="text-[10px] font-bold text-muted-foreground/70 tracking-wider uppercase">powered by qrcafeteam</span>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-1">

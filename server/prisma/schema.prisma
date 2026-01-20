@@ -66,6 +66,8 @@ model CafeAdmin {
   name         String
   isActive     Boolean  @default(true) @map("is_active")
   isApproved   Boolean  @default(false) @map("is_approved")
+  resetCode    String?  @map("reset_code")
+  resetCodeExpires DateTime? @map("reset_code_expires")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

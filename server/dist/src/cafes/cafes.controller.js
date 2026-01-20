@@ -14,7 +14,10 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CafesController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const cafes_service_1 = require("./cafes.service");
+const multer_1 = require("multer");
+const path_1 = require("path");
 let CafesController = class CafesController {
     cafesService;
     constructor(cafesService) {
@@ -25,6 +28,13 @@ let CafesController = class CafesController {
     }
     findOne(id) {
         return this.cafesService.findOne(id);
+    }
+    async uploadLogo(id, file) {
+        if (!file) {
+            throw new common_1.BadRequestException('Dosya yüklenemedi.');
+        }
+        const logoUrl = `/uploads/logos/${file.filename}`;
+        return this.cafesService.update(id, { logoUrl });
     }
     update(id, body) {
         return this.cafesService.update(id, body);
@@ -45,6 +55,33 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], CafesController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Patch)(':id/logo'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: (0, multer_1.diskStorage)({
+            destination: './uploads/logos',
+            filename: (req, file, callback) => {
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+                const ext = (0, path_1.extname)(file.originalname);
+                callback(null, `cafe-logo-${uniqueSuffix}${ext}`);
+            },
+        }),
+        fileFilter: (req, file, callback) => {
+            if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+                return callback(new common_1.BadRequestException('Sadece resim dosyaları yüklenebilir!'), false);
+            }
+            callback(null, true);
+        },
+        limits: {
+            fileSize: 5 * 1024 * 1024,
+        },
+    })),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], CafesController.prototype, "uploadLogo", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Param)('id')),

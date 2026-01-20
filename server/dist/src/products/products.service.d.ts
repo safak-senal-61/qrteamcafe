@@ -5,9 +5,9 @@ export declare class ProductsService {
     private prisma;
     constructor(prisma: PrismaService);
     create(cafeId: string, createProductDto: CreateProductDto): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
@@ -19,17 +19,17 @@ export declare class ProductsService {
     }>;
     findAll(cafeId: string): Promise<({
         category: {
+            name: string;
             id: string;
             cafeId: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
             sortOrder: number;
         };
     } & {
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
@@ -41,17 +41,17 @@ export declare class ProductsService {
     })[]>;
     findOne(id: string): Promise<{
         category: {
+            name: string;
             id: string;
             cafeId: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
             sortOrder: number;
         };
     } & {
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
@@ -62,9 +62,9 @@ export declare class ProductsService {
         isAvailable: boolean;
     }>;
     update(id: string, updateProductDto: UpdateProductDto): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
@@ -75,9 +75,9 @@ export declare class ProductsService {
         isAvailable: boolean;
     }>;
     updateStock(id: string, quantity: number): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
@@ -88,9 +88,9 @@ export declare class ProductsService {
         isAvailable: boolean;
     }>;
     remove(id: string): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;

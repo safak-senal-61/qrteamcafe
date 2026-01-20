@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { API_URL } from '@/lib/api';
+import Cropper from 'react-easy-crop';
+import getCroppedImg from '@/lib/imageUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,12 +12,31 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Loader2, Save, Store, User, Settings2 } from 'lucide-react';
+import { Loader2, Save, Store, User, Settings2, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  
+  // Cropper State
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     // Basic Identity
     name: '',
@@ -92,7 +113,7 @@ export default function SettingsPage() {
           workingHours: data.workingHours || '',
           preparationTime: data.preparationTime?.toString() || '15',
           paymentMethods: methods,
-          logoUrl: data.logoUrl || '',
+          logoUrl: data.logoUrl ? (data.logoUrl.startsWith('http') ? data.logoUrl : `${API_URL}${data.logoUrl}`) : '',
           googleMapsUrl: data.googleMapsUrl || '',
           createdAt: data.createdAt,
         });
@@ -113,6 +134,88 @@ export default function SettingsPage() {
       setFormData(prev => ({ ...prev, paymentMethods: [...prev.paymentMethods, value] }));
     } else {
       setFormData(prev => ({ ...prev, paymentMethods: prev.paymentMethods.filter(item => item !== value) }));
+    }
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        toast.error('Lütfen geçerli bir resim dosyası seçin.');
+        return;
+      }
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setSelectedImage(reader.result as string);
+        setIsCropperOpen(true);
+      });
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const onCropSave = async () => {
+    if (!selectedImage || !croppedAreaPixels) return;
+
+    try {
+      const croppedBlob = await getCroppedImg(selectedImage, croppedAreaPixels);
+      if (!croppedBlob) {
+        toast.error('Resim kırpılamadı.');
+        return;
+      }
+
+      // Convert Blob to File
+      const file = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
+      await handleLogoUpload(file);
+      setIsCropperOpen(false);
+      setZoom(1);
+      setCrop({ x: 0, y: 0 });
+    } catch (e) {
+      console.error(e);
+      toast.error('Kırpma işlemi başarısız.');
+    }
+  };
+
+  const handleLogoUpload = async (file: File) => {
+    const cafeId = getCafeId();
+    if (!cafeId) return;
+
+    setUploadingLogo(true);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+
+    try {
+      const res = await fetch(`${API_URL}/cafes/${cafeId}/logo`, {
+        method: 'PATCH',
+        body: formDataUpload,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Construct full URL if returned URL is relative
+        const fullLogoUrl = data.logoUrl.startsWith('http') 
+          ? data.logoUrl 
+          : `${API_URL}${data.logoUrl}`;
+          
+        setFormData(prev => ({ ...prev, logoUrl: fullLogoUrl }));
+        toast.success('Logo başarıyla yüklendi.');
+        // Update sidebar immediately
+        window.dispatchEvent(new Event('cafe-info-updated'));
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.message || 'Logo yüklenirken bir hata oluştu.');
+      }
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      toast.error('Sunucu hatası.');
+    } finally {
+      setUploadingLogo(false);
+      // Reset input value to allow selecting the same file again if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -137,6 +240,8 @@ export default function SettingsPage() {
 
       if (res.ok) {
         toast.success('İşletme bilgileri güncellendi.');
+        // Trigger event to update sidebar
+        window.dispatchEvent(new Event('cafe-info-updated'));
       } else {
         toast.error('Güncelleme başarısız.');
       }
@@ -386,6 +491,103 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label>Logo</Label>
+                  <div className="flex items-start gap-4">
+                    <div className="relative group">
+                      <div className="h-24 w-24 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/50 overflow-hidden">
+                        {formData.logoUrl ? (
+                          <img 
+                            src={formData.logoUrl} 
+                            alt="Logo" 
+                            className="h-full w-full object-contain p-1" 
+                          />
+                        ) : (
+                          <Store className="h-8 w-8 text-muted-foreground/50" />
+                        )}
+                        {uploadingLogo && (
+                          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2 flex-1">
+                      <div className="flex gap-2">
+                        <Input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={onFileChange}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={uploadingLogo}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Logo Yükle
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Önerilen boyut: 512x512px. PNG, JPG veya WEBP formatında.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cropper Dialog */}
+                <Dialog open={isCropperOpen} onOpenChange={setIsCropperOpen}>
+                  <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                      <DialogTitle>Logoyu Düzenle</DialogTitle>
+                      <DialogDescription>
+                        Logonuzu kare formatında kırpın ve ayarlayın.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="relative w-full h-80 bg-black/5 rounded-md overflow-hidden">
+                      {selectedImage && (
+                        <Cropper
+                          image={selectedImage}
+                          crop={crop}
+                          zoom={zoom}
+                          aspect={1}
+                          onCropChange={setCrop}
+                          onCropComplete={onCropComplete}
+                          onZoomChange={setZoom}
+                        />
+                      )}
+                    </div>
+                    <div className="space-y-2 py-4">
+                        <div className="flex justify-between text-xs">
+                            <span>Yakınlaştır</span>
+                            <span>{Math.round(zoom * 100)}%</span>
+                        </div>
+                        <input
+                            type="range"
+                            value={zoom}
+                            min={1}
+                            max={3}
+                            step={0.1}
+                            aria-labelledby="Zoom"
+                            onChange={(e) => setZoom(Number(e.target.value))}
+                            className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsCropperOpen(false)}>
+                        İptal
+                      </Button>
+                      <Button onClick={onCropSave} disabled={uploadingLogo}>
+                        {uploadingLogo && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Kaydet ve Yükle
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <div className="space-y-2">
                   <Label htmlFor="googleMapsUrl">Google Maps Linki</Label>
                   <Input
                     id="googleMapsUrl"
@@ -393,21 +595,6 @@ export default function SettingsPage() {
                     onChange={(e) => setFormData({ ...formData, googleMapsUrl: e.target.value })}
                     placeholder="https://maps.google.com/..."
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="logoUrl">Logo URL</Label>
-                  <Input
-                    id="logoUrl"
-                    value={formData.logoUrl}
-                    onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
-                    placeholder="https://..."
-                  />
-                  {formData.logoUrl && (
-                    <div className="mt-2">
-                      <img src={formData.logoUrl} alt="Logo Önizleme" className="h-20 w-auto object-contain rounded border p-1" />
-                    </div>
-                  )}
                 </div>
 
                 <div className="pt-4 border-t">

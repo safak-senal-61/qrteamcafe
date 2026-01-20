@@ -8,9 +8,9 @@ export declare class ProductsController {
         url: string;
     };
     create(createProductDto: CreateProductDto, cafeId: string): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
@@ -22,17 +22,17 @@ export declare class ProductsController {
     }>;
     findAll(cafeId: string): Promise<({
         category: {
+            name: string;
             id: string;
             cafeId: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
             sortOrder: number;
         };
     } & {
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
@@ -44,17 +44,17 @@ export declare class ProductsController {
     })[]>;
     findOne(id: string): Promise<{
         category: {
+            name: string;
             id: string;
             cafeId: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
             sortOrder: number;
         };
     } & {
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
@@ -65,9 +65,9 @@ export declare class ProductsController {
         isAvailable: boolean;
     }>;
     updateStock(id: string, quantity: number): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
@@ -78,9 +78,9 @@ export declare class ProductsController {
         isAvailable: boolean;
     }>;
     update(id: string, updateProductDto: UpdateProductDto): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;
@@ -91,9 +91,9 @@ export declare class ProductsController {
         isAvailable: boolean;
     }>;
     remove(id: string): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         description: string | null;

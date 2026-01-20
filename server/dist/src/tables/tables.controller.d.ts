@@ -5,12 +5,12 @@ export declare class TablesController {
     constructor(tablesService: TablesService);
     create(createTableDto: CreateTableDto, cafeId: string): Promise<{
         id: string;
-        tableNumber: number;
-        isOccupied: boolean;
-        lastOccupiedAt: Date | null;
+        cafeId: string;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
+        isOccupied: boolean;
+        tableNumber: number;
+        lastOccupiedAt: Date | null;
     }>;
     moveTable(cafeId: string, body: {
         fromTableId: string;
@@ -21,28 +21,28 @@ export declare class TablesController {
     findAll(cafeId: string): Promise<({
         waiterCalls: {
             id: string;
+            cafeId: string;
             createdAt: Date;
             updatedAt: Date;
-            cafeId: string;
             status: string;
             tableId: string;
         }[];
     } & {
         id: string;
-        tableNumber: number;
-        isOccupied: boolean;
-        lastOccupiedAt: Date | null;
+        cafeId: string;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
+        isOccupied: boolean;
+        tableNumber: number;
+        lastOccupiedAt: Date | null;
     })[]>;
     remove(id: string): Promise<{
         id: string;
-        tableNumber: number;
-        isOccupied: boolean;
-        lastOccupiedAt: Date | null;
+        cafeId: string;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
+        isOccupied: boolean;
+        tableNumber: number;
+        lastOccupiedAt: Date | null;
     }>;
 }

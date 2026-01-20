@@ -10,21 +10,21 @@ export declare class CafesController {
         recentOrders: ({
             table: {
                 id: string;
+                cafeId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                cafeId: string;
                 isOccupied: boolean;
                 tableNumber: number;
                 lastOccupiedAt: Date | null;
             } | null;
             items: ({
                 product: {
-                    id: string;
                     name: string;
+                    id: string;
+                    cafeId: string;
                     createdAt: Date;
                     updatedAt: Date;
                     description: string | null;
-                    cafeId: string;
                     categoryId: string;
                     price: import("@prisma/client-runtime-utils").Decimal;
                     stock: number;
@@ -34,29 +34,29 @@ export declare class CafesController {
             } & {
                 id: string;
                 createdAt: Date;
-                orderId: string;
-                productId: string;
                 quantity: number;
                 unitPrice: import("@prisma/client-runtime-utils").Decimal;
                 totalPrice: import("@prisma/client-runtime-utils").Decimal;
+                productId: string;
+                orderId: string;
             })[];
         } & {
             id: string;
-            status: string;
+            cafeId: string;
             createdAt: Date;
             updatedAt: Date;
-            cafeId: string;
+            status: string;
             totalAmount: import("@prisma/client-runtime-utils").Decimal;
             tableId: string | null;
             customerName: string | null;
         })[];
         popularProducts: {
-            id: string;
             name: string;
+            id: string;
+            cafeId: string;
             createdAt: Date;
             updatedAt: Date;
             description: string | null;
-            cafeId: string;
             categoryId: string;
             price: import("@prisma/client-runtime-utils").Decimal;
             stock: number;
@@ -65,23 +65,72 @@ export declare class CafesController {
         }[];
     }>;
     findOne(id: string): Promise<{
-        id: string;
-        name: string;
-        address: string | null;
         phone: string | null;
+        email: string | null;
+        name: string;
+        id: string;
         isActive: boolean;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
+        type: string | null;
+        city: string | null;
+        district: string | null;
+        address: string | null;
+        website: string | null;
+        authorizedPerson: string | null;
+        serviceType: string | null;
+        workingHours: string | null;
+        preparationTime: number | null;
+        paymentMethods: string | null;
+        logoUrl: string | null;
+        googleMapsUrl: string | null;
+        status: string;
+    }>;
+    uploadLogo(id: string, file: Express.Multer.File): Promise<{
+        phone: string | null;
+        email: string | null;
+        name: string;
+        id: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string | null;
+        type: string | null;
+        city: string | null;
+        district: string | null;
+        address: string | null;
+        website: string | null;
+        authorizedPerson: string | null;
+        serviceType: string | null;
+        workingHours: string | null;
+        preparationTime: number | null;
+        paymentMethods: string | null;
+        logoUrl: string | null;
+        googleMapsUrl: string | null;
+        status: string;
     }>;
     update(id: string, body: any): Promise<{
-        id: string;
-        name: string;
-        address: string | null;
         phone: string | null;
+        email: string | null;
+        name: string;
+        id: string;
         isActive: boolean;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
+        type: string | null;
+        city: string | null;
+        district: string | null;
+        address: string | null;
+        website: string | null;
+        authorizedPerson: string | null;
+        serviceType: string | null;
+        workingHours: string | null;
+        preparationTime: number | null;
+        paymentMethods: string | null;
+        logoUrl: string | null;
+        googleMapsUrl: string | null;
+        status: string;
     }>;
 }

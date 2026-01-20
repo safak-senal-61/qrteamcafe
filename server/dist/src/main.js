@@ -10,7 +10,7 @@ async function bootstrap() {
         origin: true,
         credentials: true,
     });
-    app.useStaticAssets((0, path_1.join)(__dirname, '..', 'uploads'), {
+    app.useStaticAssets((0, path_1.join)(process.cwd(), 'uploads'), {
         prefix: '/uploads/',
     });
     app.useGlobalPipes(new common_1.ValidationPipe());

@@ -5,9 +5,9 @@ export declare class CategoriesController {
     private readonly categoriesService;
     constructor(categoriesService: CategoriesService);
     create(createCategoryDto: CreateCategoryDto, cafeId: string): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         sortOrder: number;
@@ -17,33 +17,33 @@ export declare class CategoriesController {
             products: number;
         };
     } & {
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         sortOrder: number;
     })[]>;
     findOne(id: string): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         sortOrder: number;
     }>;
     update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         sortOrder: number;
     }>;
     remove(id: string): Promise<{
+        name: string;
         id: string;
         cafeId: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
         sortOrder: number;
