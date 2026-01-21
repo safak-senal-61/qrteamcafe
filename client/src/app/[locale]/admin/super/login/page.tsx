@@ -40,6 +40,9 @@ export default function SuperAdminLoginPage() {
         if (data.user.role === 'SUPER_ADMIN') {
           toast.success('Yönetici girişi başarılı!');
           localStorage.setItem('user', JSON.stringify(data.user));
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+          }
           setTimeout(() => {
             router.push('/admin/super/dashboard');
           }, 1000);

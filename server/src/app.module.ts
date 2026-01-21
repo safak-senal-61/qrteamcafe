@@ -15,9 +15,14 @@ import { EventsGateway } from './events/events.gateway';
 import { EventsModule } from './events/events.module';
 import { WaiterCallsModule } from './waiter-calls/waiter-calls.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 1 minute
+      limit: 10, // 10 requests
+    }]),
     ConfigModule.forRoot({
       isGlobal: true,
     }),

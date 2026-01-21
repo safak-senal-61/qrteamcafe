@@ -8,12 +8,20 @@ import { CartSheet } from '@/components/menu/CartSheet';
 // OrdersSheet is no longer used in this component
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, Wifi, Instagram, Facebook, Twitter, Info, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 import { io } from 'socket.io-client';
+import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface Cafe {
   id: string;
@@ -21,6 +29,17 @@ interface Cafe {
   coverImage?: string;
   logo?: string;
   showProductRatings?: boolean;
+  brandColor?: string;
+  menuViewMode?: 'card' | 'list';
+  welcomeMessage?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  website?: string;
+  wifiSsid?: string;
+  wifiPassword?: string;
+  isMaintenanceMode?: boolean;
+  waiterCallOptions?: string[];
 }
 
 interface Category {
@@ -101,6 +120,28 @@ export default function MenuPage() {
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [currentTableId, setCurrentTableId] = useState<string | null>(null);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+
+  useEffect(() => {
+    if (cafe?.welcomeMessage) {
+      setWelcomeOpen(true);
+    }
+  }, [cafe?.welcomeMessage]);
+
+  useEffect(() => {
+    if (cafe?.brandColor) {
+      // Assuming brandColor is a hex code or compatible color
+      // Since tailwind config uses oklch for primary, we might need to be careful.
+      // But we can try setting it. If it fails, we might need a color converter.
+      // For now, let's assume it works or we will use a style tag for specific elements.
+      // Actually, updating CSS variable might break oklch alpha modifiers if we put hex.
+      // But we can update the variable to a hex value and it should work for standard usage.
+      // Alpha modifiers won't work if we break the syntax expected by tailwind.
+      // But let's try.
+      document.documentElement.style.setProperty('--primary', cafe.brandColor);
+      document.documentElement.style.setProperty('--ring', cafe.brandColor);
+    }
+  }, [cafe?.brandColor]);
 
   useEffect(() => {
     // Socket connection
@@ -266,6 +307,59 @@ export default function MenuPage() {
     );
   }
 
+  if (cafe.isMaintenanceMode) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-8 text-center space-y-6">
+         <Lock className="h-24 w-24 text-muted-foreground opacity-20" />
+         <h1 className="text-3xl font-bold">Hizmet Dışı</h1>
+         <p className="text-muted-foreground max-w-md">
+           Şu anda bakım çalışması yapıyoruz veya hizmet dışıyız. Lütfen daha sonra tekrar deneyiniz.
+         </p>
+      </div>
+    );
+  }
+
+  const copyWifi = () => {
+    if (cafe?.wifiPassword) {
+      navigator.clipboard.writeText(cafe.wifiPassword);
+      toast.success(`Wi-Fi şifresi kopyalandı: ${cafe.wifiPassword}`);
+    }
+  };
+
+  // Social URL helper
+  const getSocialUrl = (platform: 'instagram' | 'facebook' | 'twitter' | 'website', url: string) => {
+    if (!url) return '';
+    
+    const cleanUrl = url.trim();
+
+    // If it's already a full URL, ensure protocol and return
+    if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+      return cleanUrl;
+    }
+
+    // Platform specific logic for non-URL inputs
+    if (platform === 'instagram') {
+        if (!cleanUrl.includes('instagram.com')) {
+             return `https://instagram.com/${cleanUrl.replace('@', '')}`;
+        }
+    }
+    
+    if (platform === 'facebook') {
+        if (!cleanUrl.includes('facebook.com')) {
+             return `https://facebook.com/${cleanUrl}`;
+        }
+    }
+
+    if (platform === 'twitter') {
+        if (!cleanUrl.includes('twitter.com') && !cleanUrl.includes('x.com')) {
+             return `https://twitter.com/${cleanUrl.replace('@', '')}`;
+        }
+    }
+
+    // Default fallback: assume it's a domain or relative path that needs https
+    return `https://${cleanUrl}`;
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24 relative">
       {/* Header Image */}
@@ -297,14 +391,28 @@ export default function MenuPage() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="mb-2 flex flex-col items-start"
+              className="mb-2 flex flex-col items-start gap-2"
             >
-              <h1 className="text-3xl md:text-4xl font-extrabold text-foreground mb-2 shadow-sm">{cafe.name}</h1>
-              {tableNumber && (
-                <Badge variant="secondary" className="text-lg px-4 py-1 font-bold bg-white/90 text-primary backdrop-blur-md shadow-lg border-2 border-primary/20">
-                  Masa {tableNumber}
-                </Badge>
-              )}
+              <h1 className="text-3xl md:text-4xl font-extrabold text-foreground mb-1 shadow-sm">{cafe.name}</h1>
+              <div className="flex flex-wrap gap-2">
+                {tableNumber && (
+                  <Badge variant="secondary" className="text-lg px-4 py-1 font-bold bg-white/90 text-primary backdrop-blur-md shadow-lg border-2 border-primary/20">
+                    Masa {tableNumber}
+                  </Badge>
+                )}
+                {cafe.wifiSsid && (
+                  <div 
+                    onClick={copyWifi}
+                    className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-white/50 cursor-pointer active:scale-95 transition-all hover:bg-white"
+                  >
+                    <Wifi className="h-4 w-4 text-primary" />
+                    <div className="flex flex-col leading-none">
+                      <span className="text-[10px] text-muted-foreground font-bold">Wi-Fi: {cafe.wifiSsid}</span>
+                      <span className="text-xs font-bold text-foreground">Bağlan</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </div>
         </div>
@@ -366,7 +474,7 @@ export default function MenuPage() {
                     ...product,
                     category: product.categoryId,
                     image: product.imageUrl
-                  }} index={index} showRating={cafe?.showProductRatings} />
+                  }} index={index} showRating={cafe?.showProductRatings} variant="card" />
                 </div>
               ))}
             </div>
@@ -395,7 +503,7 @@ export default function MenuPage() {
                     ...product,
                     category: product.categoryId,
                     image: product.imageUrl
-                  }} index={index} showRating={cafe?.showProductRatings} />
+                  }} index={index} showRating={cafe?.showProductRatings} variant="card" />
                 </div>
               ))}
             </div>
@@ -428,13 +536,18 @@ export default function MenuPage() {
                   {categoryProducts.length} ürün
                 </Badge>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className={cn(
+                "grid gap-6",
+                cafe.menuViewMode === 'list' 
+                  ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              )}>
                 {categoryProducts.map((product, index) => (
                   <ProductCard key={product.id} product={{
                     ...product,
                     category: category.id,
                     image: product.imageUrl
-                  }} index={index} showRating={cafe?.showProductRatings} />
+                  }} index={index} showRating={cafe?.showProductRatings} variant={cafe.menuViewMode || 'card'} />
                 ))}
               </div>
             </motion.div>
@@ -453,7 +566,40 @@ export default function MenuPage() {
         )}
       </div>
 
-      <CallWaiterButton />
+      <CallWaiterButton options={cafe.waiterCallOptions} />
+
+      {/* Footer with Social Links */}
+      <footer className="mt-20 py-10 bg-secondary/30 border-t">
+        <div className="container mx-auto px-4 flex flex-col items-center gap-6">
+          <div className="flex gap-4">
+            {cafe.instagramUrl && (
+              <a href={getSocialUrl('instagram', cafe.instagramUrl)} target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-white shadow-md hover:scale-110 transition-transform text-pink-600">
+                <Instagram className="h-6 w-6" />
+              </a>
+            )}
+            {cafe.facebookUrl && (
+              <a href={getSocialUrl('facebook', cafe.facebookUrl)} target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-white shadow-md hover:scale-110 transition-transform text-blue-600">
+                <Facebook className="h-6 w-6" />
+              </a>
+            )}
+            {cafe.twitterUrl && (
+              <a href={getSocialUrl('twitter', cafe.twitterUrl)} target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-white shadow-md hover:scale-110 transition-transform text-sky-500">
+                <Twitter className="h-6 w-6" />
+              </a>
+            )}
+            {cafe.website && (
+              <a href={getSocialUrl('website', cafe.website)} target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-white shadow-md hover:scale-110 transition-transform text-gray-700">
+                <Info className="h-6 w-6" />
+              </a>
+            )}
+          </div>
+          <div className="text-center text-muted-foreground text-sm">
+            <p>&copy; {new Date().getFullYear()} {cafe.name}</p>
+            <p className="mt-1">QR Team Cafe Altyapısı ile Hazırlanmıştır</p>
+          </div>
+        </div>
+      </footer>
+
       <CartSheet 
         onOrderSuccess={() => {
           setIsCartOpen(true);
@@ -464,10 +610,30 @@ export default function MenuPage() {
         isOpen={isCartOpen}
         onOpenChange={setIsCartOpen}
       />
+
+      {/* Welcome Message Dialog */}
+      <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex flex-col items-center gap-4 pt-4">
+              {cafe.logo && (
+                <div className="h-20 w-20 rounded-full overflow-hidden border-4 border-primary/20">
+                   <img src={cafe.logo} alt={cafe.name} className="h-full w-full object-cover" />
+                </div>
+              )}
+              <span>Hoş Geldiniz!</span>
+            </DialogTitle>
+            <DialogDescription className="text-lg pt-2 text-foreground/80">
+              {cafe.welcomeMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center pt-4 pb-2">
+            <Badge variant="outline" className="text-primary border-primary/50 py-1 px-4 cursor-pointer hover:bg-primary/5" onClick={() => setWelcomeOpen(false)}>
+              Menüyü İncele
+            </Badge>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-}
-
-function cn(...classes: (string | undefined | null | false)[]) {
-  return classes.filter(Boolean).join(' ');
 }

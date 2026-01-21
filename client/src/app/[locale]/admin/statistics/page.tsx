@@ -83,7 +83,7 @@ export default function StatisticsPage() {
 
     try {
       const [statsRes, catRes, prodRes] = await Promise.all([
-        fetch(`${API_URL}/cafes/my-stats?cafeId=${cafeId}`),
+        fetch(`${API_URL}/cafes/${cafeId}/dashboard-stats`),
         fetch(`${API_URL}/categories?cafeId=${cafeId}`),
         fetch(`${API_URL}/products?cafeId=${cafeId}`)
       ]);

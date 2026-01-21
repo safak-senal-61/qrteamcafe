@@ -1,4 +1,5 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateCafeDto } from './dto/update-cafe.dto';
 export declare class CafesService {
     private prisma;
     constructor(prisma: PrismaService);
@@ -22,11 +23,22 @@ export declare class CafesService {
         preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
+        coverImageUrl: string | null;
+        brandColor: string | null;
+        menuViewMode: string | null;
+        welcomeMessage: string | null;
+        instagramUrl: string | null;
+        facebookUrl: string | null;
+        twitterUrl: string | null;
+        wifiSsid: string | null;
+        wifiPassword: string | null;
+        waiterCallOptions: string | null;
+        isMaintenanceMode: boolean;
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
     }>;
-    update(id: string, data: any): Promise<{
+    update(id: string, data: UpdateCafeDto): Promise<{
         id: string;
         name: string;
         description: string | null;
@@ -46,13 +58,24 @@ export declare class CafesService {
         preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
+        coverImageUrl: string | null;
+        brandColor: string | null;
+        menuViewMode: string | null;
+        welcomeMessage: string | null;
+        instagramUrl: string | null;
+        facebookUrl: string | null;
+        twitterUrl: string | null;
+        wifiSsid: string | null;
+        wifiPassword: string | null;
+        waiterCallOptions: string | null;
+        isMaintenanceMode: boolean;
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
     }>;
     getDashboardStats(cafeId: string): Promise<{
         totalOrders: number;
-        dailyRevenue: number | import("@prisma/client-runtime-utils").Decimal;
+        dailyRevenue: number | import("@prisma/client/runtime/library").Decimal;
         activeTables: number;
         totalProducts: number;
         recentOrders: ({
@@ -72,14 +95,14 @@ export declare class CafesService {
                     categoryId: string;
                     name: string;
                     description: string | null;
-                    price: import("@prisma/client-runtime-utils").Decimal;
-                    originalPrice: import("@prisma/client-runtime-utils").Decimal | null;
+                    price: import("@prisma/client/runtime/library").Decimal;
+                    originalPrice: import("@prisma/client/runtime/library").Decimal | null;
                     stock: number;
                     sortOrder: number;
                     imageUrl: string | null;
                     isAvailable: boolean;
                     isChefRecommended: boolean;
-                    averageRating: import("@prisma/client-runtime-utils").Decimal;
+                    averageRating: import("@prisma/client/runtime/library").Decimal;
                     reviewCount: number;
                     createdAt: Date;
                     updatedAt: Date;
@@ -90,8 +113,8 @@ export declare class CafesService {
                 orderId: string;
                 productId: string;
                 quantity: number;
-                unitPrice: import("@prisma/client-runtime-utils").Decimal;
-                totalPrice: import("@prisma/client-runtime-utils").Decimal;
+                unitPrice: import("@prisma/client/runtime/library").Decimal;
+                totalPrice: import("@prisma/client/runtime/library").Decimal;
             })[];
         } & {
             id: string;
@@ -100,7 +123,7 @@ export declare class CafesService {
             updatedAt: Date;
             customerName: string | null;
             status: string;
-            totalAmount: import("@prisma/client-runtime-utils").Decimal;
+            totalAmount: import("@prisma/client/runtime/library").Decimal;
             tableId: string | null;
         })[];
         popularProducts: {
@@ -109,14 +132,14 @@ export declare class CafesService {
             categoryId: string;
             name: string;
             description: string | null;
-            price: import("@prisma/client-runtime-utils").Decimal;
-            originalPrice: import("@prisma/client-runtime-utils").Decimal | null;
+            price: import("@prisma/client/runtime/library").Decimal;
+            originalPrice: import("@prisma/client/runtime/library").Decimal | null;
             stock: number;
             sortOrder: number;
             imageUrl: string | null;
             isAvailable: boolean;
             isChefRecommended: boolean;
-            averageRating: import("@prisma/client-runtime-utils").Decimal;
+            averageRating: import("@prisma/client/runtime/library").Decimal;
             reviewCount: number;
             createdAt: Date;
             updatedAt: Date;

@@ -47,12 +47,53 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = __importStar(require("bcryptjs"));
 const mail_service_1 = require("./mail.service");
+const jwt_1 = require("@nestjs/jwt");
+const otplib_1 = require("otplib");
+const qrcode_1 = require("qrcode");
+const crypto_1 = require("crypto");
 let AuthService = class AuthService {
     prisma;
     mailService;
-    constructor(prisma, mailService) {
+    jwtService;
+    constructor(prisma, mailService, jwtService) {
         this.prisma = prisma;
         this.mailService = mailService;
+        this.jwtService = jwtService;
+    }
+    async changePassword(dto) {
+        const cafeAdmin = await this.prisma.cafeAdmin.findUnique({
+            where: { id: dto.userId },
+        });
+        if (cafeAdmin) {
+            const isPasswordValid = await bcrypt.compare(dto.oldPassword, cafeAdmin.passwordHash);
+            if (!isPasswordValid) {
+                throw new common_1.BadRequestException('Mevcut şifre hatalı.');
+            }
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(dto.newPassword, salt);
+            await this.prisma.cafeAdmin.update({
+                where: { id: cafeAdmin.id },
+                data: { passwordHash },
+            });
+            return { message: 'Şifreniz başarıyla güncellendi.' };
+        }
+        const superAdmin = await this.prisma.superAdmin.findUnique({
+            where: { id: dto.userId },
+        });
+        if (superAdmin) {
+            const isPasswordValid = await bcrypt.compare(dto.oldPassword, superAdmin.passwordHash);
+            if (!isPasswordValid) {
+                throw new common_1.BadRequestException('Mevcut şifre hatalı.');
+            }
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(dto.newPassword, salt);
+            await this.prisma.superAdmin.update({
+                where: { id: superAdmin.id },
+                data: { passwordHash },
+            });
+            return { message: 'Şifreniz başarıyla güncellendi.' };
+        }
+        throw new common_1.NotFoundException('Kullanıcı bulunamadı.');
     }
     async registerCafe(dto) {
         const existingCafeAdmin = await this.prisma.cafeAdmin.findUnique({
@@ -90,52 +131,81 @@ let AuthService = class AuthService {
             cafeId: result.cafe.id,
         };
     }
-    async login(dto) {
-        const cafeAdmin = await this.prisma.cafeAdmin.findUnique({
+    async login(dto, ip, userAgent) {
+        let user = await this.prisma.cafeAdmin.findUnique({
             where: { email: dto.email },
             include: { cafe: true },
         });
-        if (cafeAdmin) {
-            const isPasswordValid = await bcrypt.compare(dto.password, cafeAdmin.passwordHash);
-            if (!isPasswordValid) {
-                throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
+        let role = 'CAFE_ADMIN';
+        if (!user) {
+            user = await this.prisma.superAdmin.findUnique({
+                where: { email: dto.email },
+            });
+            role = 'SUPER_ADMIN';
+        }
+        if (!user) {
+            throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
+        }
+        const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+        if (!isPasswordValid) {
+            throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
+        }
+        if (role === 'CAFE_ADMIN') {
+            if (!user.isApproved) {
+                throw new common_1.UnauthorizedException('Hesabınız henüz onaylanmamış.');
             }
-            if (!cafeAdmin.isApproved) {
-                throw new common_1.UnauthorizedException('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.');
-            }
-            if (!cafeAdmin.isActive || !cafeAdmin.cafe.isActive) {
+            if (!user.isActive || !user.cafe.isActive) {
                 throw new common_1.UnauthorizedException('Hesabınız veya işletmeniz pasif durumda.');
             }
-            return {
-                message: 'Giriş başarılı',
-                user: {
-                    id: cafeAdmin.id,
-                    name: cafeAdmin.name,
-                    email: cafeAdmin.email,
-                    role: 'CAFE_ADMIN',
-                    cafeId: cafeAdmin.cafeId,
-                },
-            };
         }
-        const superAdmin = await this.prisma.superAdmin.findUnique({
-            where: { email: dto.email },
-        });
-        if (superAdmin) {
-            const isPasswordValid = await bcrypt.compare(dto.password, superAdmin.passwordHash);
-            if (!isPasswordValid) {
-                throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
+        if (role === 'CAFE_ADMIN' && user.isTwoFactorEnabled) {
+            if (!dto.twoFactorCode) {
+                throw new common_1.UnauthorizedException({
+                    message: '2FA_REQUIRED',
+                    code: '2FA_REQUIRED'
+                });
             }
-            return {
-                message: 'Giriş başarılı',
-                user: {
-                    id: superAdmin.id,
-                    name: superAdmin.name,
-                    email: superAdmin.email,
-                    role: 'SUPER_ADMIN',
-                },
-            };
+            const verifyResult = await (0, otplib_1.verify)({
+                token: dto.twoFactorCode,
+                secret: user.twoFactorSecret,
+            });
+            if (!verifyResult.valid) {
+                throw new common_1.UnauthorizedException('Geçersiz 2FA kodu.');
+            }
         }
-        throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
+        let sessionId;
+        if (role === 'CAFE_ADMIN') {
+            const session = await this.prisma.adminSession.create({
+                data: {
+                    adminId: user.id,
+                    device: userAgent || 'Unknown',
+                    ip: ip || 'Unknown',
+                    token: (0, crypto_1.randomBytes)(32).toString('hex'),
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                }
+            });
+            sessionId = session.id;
+        }
+        const payload = {
+            sub: user.id,
+            email: user.email,
+            role,
+            sessionId,
+            cafeId: role === 'CAFE_ADMIN' ? user.cafeId : undefined
+        };
+        const token = this.jwtService.sign(payload);
+        return {
+            message: 'Giriş başarılı',
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role,
+                cafeId: role === 'CAFE_ADMIN' ? user.cafeId : undefined,
+                isTwoFactorEnabled: role === 'CAFE_ADMIN' ? user.isTwoFactorEnabled : false,
+            },
+        };
     }
     async forgotPassword(dto) {
         const admin = await this.prisma.cafeAdmin.findUnique({
@@ -184,11 +254,110 @@ let AuthService = class AuthService {
         });
         return { message: 'Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.' };
     }
+    async getProfile(userId) {
+        const cafeAdmin = await this.prisma.cafeAdmin.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                isTwoFactorEnabled: true,
+            }
+        });
+        if (cafeAdmin) {
+            return { ...cafeAdmin, role: 'CAFE_ADMIN' };
+        }
+        const superAdmin = await this.prisma.superAdmin.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                email: true,
+            }
+        });
+        if (superAdmin) {
+            return { ...superAdmin, role: 'SUPER_ADMIN', isTwoFactorEnabled: false };
+        }
+        throw new common_1.NotFoundException('Kullanıcı bulunamadı.');
+    }
+    async generate2FASecret(userId) {
+        const user = await this.prisma.cafeAdmin.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.NotFoundException('Kullanıcı bulunamadı.');
+        const secret = (0, otplib_1.generateSecret)();
+        const otpauthUrl = (0, otplib_1.generateURI)({
+            secret,
+            issuer: 'QR Team Cafe',
+            label: user.email,
+        });
+        await this.prisma.cafeAdmin.update({
+            where: { id: userId },
+            data: { twoFactorSecret: secret }
+        });
+        const qrCodeUrl = await (0, qrcode_1.toDataURL)(otpauthUrl);
+        return { secret, qrCodeUrl };
+    }
+    async enable2FA(userId, code) {
+        const user = await this.prisma.cafeAdmin.findUnique({ where: { id: userId } });
+        if (!user || !user.twoFactorSecret)
+            throw new common_1.BadRequestException('2FA kurulumu başlatılmamış.');
+        const verifyResult = await (0, otplib_1.verify)({
+            token: code,
+            secret: user.twoFactorSecret
+        });
+        if (!verifyResult.valid)
+            throw new common_1.BadRequestException('Geçersiz kod.');
+        await this.prisma.cafeAdmin.update({
+            where: { id: userId },
+            data: { isTwoFactorEnabled: true }
+        });
+        return { message: '2FA başarıyla etkinleştirildi.' };
+    }
+    async disable2FA(userId) {
+        await this.prisma.cafeAdmin.update({
+            where: { id: userId },
+            data: {
+                isTwoFactorEnabled: false,
+                twoFactorSecret: null
+            }
+        });
+        return { message: '2FA devre dışı bırakıldı.' };
+    }
+    async getSessions(userId) {
+        return this.prisma.adminSession.findMany({
+            where: { adminId: userId },
+            orderBy: { lastActive: 'desc' },
+            select: {
+                id: true,
+                device: true,
+                ip: true,
+                lastActive: true,
+                createdAt: true
+            }
+        });
+    }
+    async terminateSession(userId, sessionId) {
+        const session = await this.prisma.adminSession.findUnique({ where: { id: sessionId } });
+        if (!session || session.adminId !== userId)
+            throw new common_1.NotFoundException('Oturum bulunamadı.');
+        await this.prisma.adminSession.delete({ where: { id: sessionId } });
+        return { message: 'Oturum sonlandırıldı.' };
+    }
+    async terminateAllOtherSessions(userId, currentSessionId) {
+        const whereClause = { adminId: userId };
+        if (currentSessionId) {
+            whereClause.id = { not: currentSessionId };
+        }
+        await this.prisma.adminSession.deleteMany({
+            where: whereClause
+        });
+        return { message: 'Diğer tüm oturumlar sonlandırıldı.' };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        mail_service_1.MailService])
+        mail_service_1.MailService,
+        jwt_1.JwtService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

@@ -21,11 +21,12 @@ let WaiterCallsService = class WaiterCallsService {
         this.eventsGateway = eventsGateway;
     }
     async create(cafeId, createWaiterCallDto) {
-        const { tableId } = createWaiterCallDto;
+        const { tableId, type } = createWaiterCallDto;
         const call = await this.prisma.waiterCall.create({
             data: {
                 cafeId,
                 tableId,
+                type: type || 'Garson',
                 status: 'PENDING',
             },
             include: {

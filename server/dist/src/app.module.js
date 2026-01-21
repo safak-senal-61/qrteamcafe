@@ -23,12 +23,17 @@ const super_admin_module_1 = require("./super-admin/super-admin.module");
 const events_module_1 = require("./events/events.module");
 const waiter_calls_module_1 = require("./waiter-calls/waiter-calls.module");
 const reviews_module_1 = require("./reviews/reviews.module");
+const throttler_1 = require("@nestjs/throttler");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            throttler_1.ThrottlerModule.forRoot([{
+                    ttl: 60000,
+                    limit: 10,
+                }]),
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
             }),

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import '../globals.css';
 import { Toaster } from 'sonner';
 import Footer from '@/components/footer';
+import NetworkStatus from '@/components/NetworkStatus';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
@@ -33,6 +34,7 @@ export default async function LocaleLayout({
     <html lang={locale} dir={direction}>
       <body className={inter.className} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
+          <NetworkStatus />
           {children}
           <Footer />
           <Toaster position="top-right" richColors />

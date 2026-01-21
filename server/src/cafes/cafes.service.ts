@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateCafeDto } from './dto/update-cafe.dto';
 
 @Injectable()
 export class CafesService {
@@ -13,7 +14,7 @@ export class CafesService {
     return cafe;
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: UpdateCafeDto) {
     return this.prisma.cafe.update({
       where: { id },
       data: {
@@ -29,11 +30,23 @@ export class CafesService {
         authorizedPerson: data.authorizedPerson,
         serviceType: data.serviceType,
         workingHours: data.workingHours,
-        preparationTime: data.preparationTime ? parseInt(data.preparationTime) : undefined,
+        preparationTime: data.preparationTime ? Number(data.preparationTime) : undefined,
         paymentMethods: data.paymentMethods,
         logoUrl: data.logoUrl,
         googleMapsUrl: data.googleMapsUrl,
         showProductRatings: data.showProductRatings,
+        // New Settings
+        coverImageUrl: data.coverImageUrl,
+        brandColor: data.brandColor,
+        menuViewMode: data.menuViewMode,
+        welcomeMessage: data.welcomeMessage,
+        instagramUrl: data.instagramUrl,
+        facebookUrl: data.facebookUrl,
+        twitterUrl: data.twitterUrl,
+        wifiSsid: data.wifiSsid,
+        wifiPassword: data.wifiPassword,
+        waiterCallOptions: data.waiterCallOptions,
+        isMaintenanceMode: data.isMaintenanceMode,
       },
     });
   }

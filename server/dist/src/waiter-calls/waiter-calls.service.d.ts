@@ -20,6 +20,7 @@ export declare class WaiterCallsService {
         cafeId: string;
         createdAt: Date;
         updatedAt: Date;
+        type: string | null;
         status: string;
         tableId: string;
     }>;
@@ -38,6 +39,7 @@ export declare class WaiterCallsService {
         cafeId: string;
         createdAt: Date;
         updatedAt: Date;
+        type: string | null;
         status: string;
         tableId: string;
     })[]>;
@@ -46,6 +48,7 @@ export declare class WaiterCallsService {
         cafeId: string;
         createdAt: Date;
         updatedAt: Date;
+        type: string | null;
         status: string;
         tableId: string;
     }>;
@@ -54,6 +57,7 @@ export declare class WaiterCallsService {
         cafeId: string;
         createdAt: Date;
         updatedAt: Date;
+        type: string | null;
         status: string;
         tableId: string;
     }>;

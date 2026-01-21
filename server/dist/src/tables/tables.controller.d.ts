@@ -24,6 +24,7 @@ export declare class TablesController {
             cafeId: string;
             createdAt: Date;
             updatedAt: Date;
+            type: string | null;
             status: string;
             tableId: string;
         }[];

@@ -14,6 +14,7 @@ const class_validator_1 = require("class-validator");
 class LoginDto {
     email;
     password;
+    twoFactorCode;
 }
 exports.LoginDto = LoginDto;
 __decorate([
@@ -25,4 +26,9 @@ __decorate([
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MinLength)(6),
+    __metadata("design:type", String)
+], LoginDto.prototype, "twoFactorCode", void 0);
 //# sourceMappingURL=login.dto.js.map

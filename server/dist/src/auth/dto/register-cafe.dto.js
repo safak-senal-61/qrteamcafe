@@ -37,7 +37,10 @@ __decorate([
 ], RegisterCafeDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)({ message: 'Şifre boş bırakılamaz.' }),
-    (0, class_validator_1.MinLength)(6, { message: 'Şifre en az 6 karakter olmalıdır.' }),
+    (0, class_validator_1.MinLength)(8, { message: 'Şifre en az 8 karakter olmalıdır.' }),
+    (0, class_validator_1.Matches)(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+        message: 'Şifre en az 1 büyük harf, 1 küçük harf ve 1 rakam veya özel karakter içermelidir.',
+    }),
     __metadata("design:type", String)
 ], RegisterCafeDto.prototype, "password", void 0);
 //# sourceMappingURL=register-cafe.dto.js.map

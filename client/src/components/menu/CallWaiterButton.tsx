@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Bell, Loader2 } from 'lucide-react';
+import { Bell, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 import { motion } from 'framer-motion';
@@ -16,7 +16,18 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 
-export function CallWaiterButton() {
+const OPTION_LABELS: Record<string, string> = {
+  'bill': 'Hesap İste',
+  'waiter': 'Garson Çağır',
+  'cleanup': 'Masayı Topla',
+  'ashtray': 'Küllük İste'
+};
+
+interface CallWaiterButtonProps {
+  options?: string[] | string | null;
+}
+
+export function CallWaiterButton({ options }: CallWaiterButtonProps) {
   const params = useParams();
   const searchParams = useSearchParams();
   const cafeId = params.cafeId as string;
@@ -26,7 +37,27 @@ export function CallWaiterButton() {
   const [open, setOpen] = useState(false);
   const [cooldown, setCooldown] = useState(false);
 
-  const handleCallWaiter = async () => {
+  // Parse options safely
+  let parsedOptions: string[] = [];
+  try {
+    if (Array.isArray(options)) {
+      parsedOptions = options;
+    } else if (typeof options === 'string') {
+      // Check if it looks like a JSON array
+      if (options.trim().startsWith('[') && options.trim().endsWith(']')) {
+         parsedOptions = JSON.parse(options);
+      } else {
+         // Maybe it's a comma separated string? Or just single value? 
+         // For now assume JSON if string, or empty.
+         parsedOptions = JSON.parse(options);
+      }
+    }
+  } catch (e) {
+    console.error('Error parsing waiter call options:', e);
+    parsedOptions = [];
+  }
+
+  const handleCallWaiter = async (type: string = 'Garson') => {
     if (!tableNumber) {
       toast.error('Masa bilgisi bulunamadı (QR kodu okutunuz).');
       return;
@@ -49,17 +80,18 @@ export function CallWaiterButton() {
       const res = await fetch(`${API_URL}/waiter-calls?cafeId=${cafeId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tableId: currentTable.id }),
+        body: JSON.stringify({ tableId: currentTable.id, type }),
       });
 
       if (res.ok) {
-        toast.success('Garson çağrıldı! En kısa sürede ilgileneceğiz.');
+        const label = OPTION_LABELS[type] || type;
+        toast.success(`${label} talebiniz iletildi!`);
         setOpen(false);
         setCooldown(true);
         // 1 minute cooldown
         setTimeout(() => setCooldown(false), 60000);
       } else {
-        toast.error('Garson çağrılırken bir hata oluştu.');
+        toast.error('Talep iletilirken bir hata oluştu.');
       }
     } catch (error) {
       console.error(error);
@@ -70,6 +102,8 @@ export function CallWaiterButton() {
   };
 
   if (!tableNumber) return null;
+
+  const hasOptions = parsedOptions.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -96,24 +130,51 @@ export function CallWaiterButton() {
         <DialogHeader>
           <DialogTitle>Garson Çağır</DialogTitle>
           <DialogDescription>
-            {tableNumber}. Masa için garson çağırmak istiyor musunuz?
+            {hasOptions 
+              ? `${tableNumber}. Masa için isteğinizi seçiniz:` 
+              : `${tableNumber}. Masa için garson çağırmak istiyor musunuz?`
+            }
           </DialogDescription>
         </DialogHeader>
+
+        {hasOptions ? (
+          <div className="grid grid-cols-1 gap-3 py-4">
+            {parsedOptions.map((option: string, idx: number) => (
+              <Button 
+                key={idx} 
+                variant="outline" 
+                className="w-full justify-start h-12 text-lg hover:bg-amber-50 hover:text-amber-700 hover:border-amber-500"
+                onClick={() => handleCallWaiter(option)}
+                disabled={loading}
+              >
+                <CheckCircle2 className="mr-3 h-5 w-5 text-amber-500" />
+                {OPTION_LABELS[option] || option}
+              </Button>
+            ))}
+          </div>
+        ) : (
+          <div className="py-4">
+             <p className="text-center text-muted-foreground">Garsonunuz en kısa sürede masanızda olacaktır.</p>
+          </div>
+        )}
+
         <DialogFooter className="flex-row gap-2 sm:justify-end">
           <DialogClose asChild>
             <Button type="button" variant="secondary" className="flex-1 sm:flex-none">
               Vazgeç
             </Button>
           </DialogClose>
-          <Button 
-            type="submit" 
-            onClick={handleCallWaiter} 
-            disabled={loading}
-            className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white"
-          >
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Garson Çağır
-          </Button>
+          {!hasOptions && (
+            <Button 
+              type="submit" 
+              onClick={() => handleCallWaiter('Garson')} 
+              disabled={loading}
+              className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Garson Çağır
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

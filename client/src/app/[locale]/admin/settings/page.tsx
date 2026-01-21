@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2, Save, Store, User, Settings2, Upload } from 'lucide-react';
+import { Loader2, Save, Store, User, Settings2, Upload, Palette, Wifi, Share2, BellRing, Power, Shield } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SecuritySettings from './components/SecuritySettings';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   
   // Cropper State
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -36,32 +38,50 @@ export default function SettingsPage() {
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cropTarget, setCropTarget] = useState<'logo' | 'cover'>('logo');
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     // Basic Identity
     name: '',
-    type: 'cafe', // restaurant, cafe, patisserie, other
+    type: 'cafe',
     city: '',
     district: '',
     address: '',
     description: '',
+    googleMapsUrl: '',
     
+    // Visual & Brand
+    logoUrl: '',
+    coverImageUrl: '',
+    brandColor: '#000000',
+    menuViewMode: 'card', // card, list
+    welcomeMessage: '',
+
+    // Digital & Social
+    website: '',
+    email: '',
+    instagramUrl: '',
+    facebookUrl: '',
+    twitterUrl: '',
+    wifiSsid: '',
+    wifiPassword: '',
+
     // Authorized Person
     authorizedPerson: '',
     phone: '',
-    email: '',
-    website: '',
 
     // Operational Info
-    serviceType: 'both', // table, package, both
+    serviceType: 'both',
     workingHours: '',
     preparationTime: '15',
     paymentMethods: [] as string[],
-    logoUrl: '',
-    googleMapsUrl: '',
-    createdAt: '',
+    waiterCallOptions: ['bill', 'waiter'] as string[],
     showProductRatings: true,
+    isMaintenanceMode: false,
+    createdAt: '',
   });
 
   const paymentOptions = [
@@ -69,6 +89,13 @@ export default function SettingsPage() {
     { id: 'credit_card', label: 'Kredi Kartı' },
     { id: 'ticket', label: 'Yemek Kartı (Sodexo, Multinet vb.)' },
     { id: 'online', label: 'Online Ödeme' },
+  ];
+
+  const waiterCallOptionList = [
+    { id: 'bill', label: 'Hesap İste' },
+    { id: 'waiter', label: 'Garson Çağır' },
+    { id: 'cleanup', label: 'Masayı Topla' },
+    { id: 'ashtray', label: 'Küllük İste' },
   ];
 
   const getCafeId = () => {
@@ -82,21 +109,28 @@ export default function SettingsPage() {
     if (!cafeId) return;
 
     try {
-      const res = await fetch(`${API_URL}/cafes/${cafeId}`);
+      const res = await fetch(`${API_URL}/cafes/${cafeId}`, {
+        cache: 'no-store',
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         
-        // Parse payment methods from string if necessary
-        let methods = [];
-        try {
-            if (data.paymentMethods) {
-                methods = data.paymentMethods.includes('[') 
-                    ? JSON.parse(data.paymentMethods) 
-                    : data.paymentMethods.split(',').filter(Boolean);
-            }
-        } catch (e) {
-            methods = [];
-        }
+        // Helper to parse JSON or array fields safely
+        const parseList = (field: any) => {
+            try {
+                if (!field) return [];
+                if (Array.isArray(field)) return field;
+                if (typeof field === 'string') {
+                     if (field.startsWith('[')) return JSON.parse(field);
+                     return field.split(',').filter(Boolean);
+                }
+                return [];
+            } catch { return []; }
+        };
 
         setFormData({
           name: data.name || '',
@@ -105,19 +139,32 @@ export default function SettingsPage() {
           district: data.district || '',
           address: data.address || '',
           description: data.description || '',
+          googleMapsUrl: data.googleMapsUrl || '',
           
+          logoUrl: data.logoUrl ? (data.logoUrl.startsWith('http') ? data.logoUrl : `${API_URL}${data.logoUrl}`) : '',
+          coverImageUrl: data.coverImageUrl ? (data.coverImageUrl.startsWith('http') ? data.coverImageUrl : `${API_URL}${data.coverImageUrl}`) : '',
+          brandColor: data.brandColor || '#000000',
+          menuViewMode: data.menuViewMode || 'card',
+          welcomeMessage: data.welcomeMessage || '',
+
+          website: data.website || '',
+          email: data.email || '',
+          instagramUrl: data.instagramUrl || '',
+          facebookUrl: data.facebookUrl || '',
+          twitterUrl: data.twitterUrl || '',
+          wifiSsid: data.wifiSsid || '',
+          wifiPassword: data.wifiPassword || '',
+
           authorizedPerson: data.authorizedPerson || '',
           phone: data.phone || '',
-          email: data.email || '',
-          website: data.website || '',
-          
+
           serviceType: data.serviceType || 'both',
           workingHours: data.workingHours || '',
           preparationTime: data.preparationTime?.toString() || '15',
-          paymentMethods: methods,
-          logoUrl: data.logoUrl ? (data.logoUrl.startsWith('http') ? data.logoUrl : `${API_URL}${data.logoUrl}`) : '',
-          googleMapsUrl: data.googleMapsUrl || '',
+          paymentMethods: parseList(data.paymentMethods),
+          waiterCallOptions: parseList(data.waiterCallOptions).length > 0 ? parseList(data.waiterCallOptions) : ['bill', 'waiter'],
           showProductRatings: data.showProductRatings ?? true,
+          isMaintenanceMode: data.isMaintenanceMode ?? false,
           createdAt: data.createdAt,
         });
       }
@@ -132,15 +179,19 @@ export default function SettingsPage() {
     fetchCafe();
   }, []);
 
-  const handlePaymentChange = (checked: boolean, value: string) => {
+  const handleCheckboxChange = (
+    field: 'paymentMethods' | 'waiterCallOptions', 
+    checked: boolean, 
+    value: string
+  ) => {
     if (checked) {
-      setFormData(prev => ({ ...prev, paymentMethods: [...prev.paymentMethods, value] }));
+      setFormData(prev => ({ ...prev, [field]: [...prev[field], value] }));
     } else {
-      setFormData(prev => ({ ...prev, paymentMethods: prev.paymentMethods.filter(item => item !== value) }));
+      setFormData(prev => ({ ...prev, [field]: prev[field].filter(item => item !== value) }));
     }
   };
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>, target: 'logo' | 'cover') => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       if (!file.type.startsWith('image/')) {
@@ -148,6 +199,7 @@ export default function SettingsPage() {
         return;
       }
       setSelectedFile(file);
+      setCropTarget(target);
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         setSelectedImage(reader.result as string);
@@ -155,10 +207,6 @@ export default function SettingsPage() {
       });
       reader.readAsDataURL(file);
     }
-  };
-
-  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels);
   };
 
   const onCropSave = async () => {
@@ -171,9 +219,14 @@ export default function SettingsPage() {
         return;
       }
 
-      // Convert Blob to File
-      const file = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
-      await handleLogoUpload(file);
+      const file = new File([croppedBlob], `${cropTarget}.jpg`, { type: 'image/jpeg' });
+      
+      if (cropTarget === 'logo') {
+        await handleLogoUpload(file);
+      } else {
+        await handleCoverUpload(file);
+      }
+      
       setIsCropperOpen(false);
       setZoom(1);
       setCrop({ x: 0, y: 0 });
@@ -199,26 +252,54 @@ export default function SettingsPage() {
 
       if (res.ok) {
         const data = await res.json();
-        // Construct full URL if returned URL is relative
         const fullLogoUrl = data.logoUrl.startsWith('http') 
           ? data.logoUrl 
           : `${API_URL}${data.logoUrl}`;
           
         setFormData(prev => ({ ...prev, logoUrl: fullLogoUrl }));
         toast.success('Logo başarıyla yüklendi.');
-        // Update sidebar immediately
         window.dispatchEvent(new Event('cafe-info-updated'));
       } else {
-        const errorData = await res.json();
-        toast.error(errorData.message || 'Logo yüklenirken bir hata oluştu.');
+        toast.error('Logo yüklenirken hata oluştu.');
       }
     } catch (error) {
-      console.error('Logo upload error:', error);
       toast.error('Sunucu hatası.');
     } finally {
       setUploadingLogo(false);
-      // Reset input value to allow selecting the same file again if needed
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (logoInputRef.current) logoInputRef.current.value = '';
+    }
+  };
+
+  const handleCoverUpload = async (file: File) => {
+    const cafeId = getCafeId();
+    if (!cafeId) return;
+
+    setUploadingCover(true);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+
+    try {
+      const res = await fetch(`${API_URL}/cafes/${cafeId}/cover-image`, {
+        method: 'PATCH',
+        body: formDataUpload,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const fullCoverUrl = data.coverImageUrl.startsWith('http') 
+          ? data.coverImageUrl 
+          : `${API_URL}${data.coverImageUrl}`;
+          
+        setFormData(prev => ({ ...prev, coverImageUrl: fullCoverUrl }));
+        toast.success('Kapak fotoğrafı başarıyla yüklendi.');
+      } else {
+        toast.error('Kapak fotoğrafı yüklenirken hata oluştu.');
+      }
+    } catch (error) {
+      toast.error('Sunucu hatası.');
+    } finally {
+      setUploadingCover(false);
+      if (coverInputRef.current) coverInputRef.current.value = '';
     }
   };
 
@@ -229,10 +310,13 @@ export default function SettingsPage() {
 
     setSaving(true);
     try {
-      // Prepare payload
+      // Exclude read-only fields like createdAt
+      const { createdAt, ...rest } = formData;
+      
       const payload = {
-        ...formData,
+        ...rest,
         paymentMethods: JSON.stringify(formData.paymentMethods),
+        waiterCallOptions: JSON.stringify(formData.waiterCallOptions),
       };
 
       const res = await fetch(`${API_URL}/cafes/${cafeId}`, {
@@ -243,7 +327,6 @@ export default function SettingsPage() {
 
       if (res.ok) {
         toast.success('İşletme bilgileri güncellendi.');
-        // Trigger event to update sidebar
         window.dispatchEvent(new Event('cafe-info-updated'));
       } else {
         toast.error('Güncelleme başarısız.');
@@ -264,25 +347,34 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+    <div className="space-y-6 max-w-5xl mx-auto pb-10">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">İşletme Bilgileri</h2>
+        <h2 className="text-3xl font-bold tracking-tight">İşletme Ayarları</h2>
         <p className="text-muted-foreground">
-          İşletmenizin kimlik, iletişim ve operasyonel bilgilerini buradan yönetebilirsiniz.
+          Marka kimliği, operasyonel detaylar ve müşteri deneyimi ayarlarını buradan yönetebilirsiniz.
         </p>
       </div>
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="identity" className="w-full space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="identity" className="flex items-center gap-2">
-              <Store className="h-4 w-4" /> Temel Kimlik
+          <TabsList className="grid w-full grid-cols-6 h-auto">
+            <TabsTrigger value="identity" className="flex flex-col gap-1 py-2">
+              <Store className="h-4 w-4" /> Temel
             </TabsTrigger>
-            <TabsTrigger value="authorized" className="flex items-center gap-2">
-              <User className="h-4 w-4" /> Yetkili Bilgisi
+            <TabsTrigger value="visual" className="flex flex-col gap-1 py-2">
+              <Palette className="h-4 w-4" /> Görünüm
             </TabsTrigger>
-            <TabsTrigger value="operation" className="flex items-center gap-2">
-              <Settings2 className="h-4 w-4" /> Operasyon Bilgisi
+            <TabsTrigger value="digital" className="flex flex-col gap-1 py-2">
+              <Share2 className="h-4 w-4" /> Dijital
+            </TabsTrigger>
+            <TabsTrigger value="operation" className="flex flex-col gap-1 py-2">
+              <Settings2 className="h-4 w-4" /> Operasyon
+            </TabsTrigger>
+            <TabsTrigger value="authorized" className="flex flex-col gap-1 py-2">
+              <User className="h-4 w-4" /> Yetkili
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex flex-col gap-1 py-2">
+              <Shield className="h-4 w-4" /> Güvenlik
             </TabsTrigger>
           </TabsList>
 
@@ -291,30 +383,18 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>İşletme Kimliği</CardTitle>
-                <CardDescription>
-                  İşletmenizin temel bilgileri ve adresi.
-                </CardDescription>
+                <CardDescription>Temel bilgiler ve adres.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">İşletme Adı *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                    />
+                    <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="type">İşletme Türü</Label>
-                    <Select 
-                      value={formData.type} 
-                      onValueChange={(value) => setFormData({ ...formData, type: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
+                    <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                      <SelectTrigger><SelectValue placeholder="Seçiniz" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="cafe">Kafe</SelectItem>
                         <SelectItem value="restaurant">Restoran</SelectItem>
@@ -325,302 +405,295 @@ export default function SettingsPage() {
                     </Select>
                   </div>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="city">İl</Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      placeholder="Örn: İstanbul"
-                    />
+                    <Input id="city" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="district">İlçe</Label>
-                    <Input
-                      id="district"
-                      value={formData.district}
-                      onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                      placeholder="Örn: Kadıköy"
-                    />
+                    <Input id="district" value={formData.district} onChange={(e) => setFormData({ ...formData, district: e.target.value })} />
                   </div>
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="address">Açık Adres</Label>
-                  <Textarea
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    rows={3}
-                  />
+                  <Textarea id="address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} rows={3} />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="description">Kısa Açıklama (Slogan)</Label>
-                  <Input
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Örn: Şehrin en iyi kahvesi..."
-                  />
+                  <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="googleMapsUrl">Google Maps Linki</Label>
+                  <Input id="googleMapsUrl" value={formData.googleMapsUrl} onChange={(e) => setFormData({ ...formData, googleMapsUrl: e.target.value })} placeholder="https://maps.google.com/..." />
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* 2. Yetkili Bilgisi */}
-          <TabsContent value="authorized">
+          {/* 2. Görünüm */}
+          <TabsContent value="visual">
             <Card>
               <CardHeader>
-                <CardTitle>Yetkili İletişim Bilgileri</CardTitle>
-                <CardDescription>
-                  Müşterilerinizin veya tedarikçilerinizin ulaşabileceği bilgiler.
-                </CardDescription>
+                <CardTitle>Görünüm ve Marka</CardTitle>
+                <CardDescription>Menü tasarımı ve görseller.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="authorizedPerson">Yetkili Adı Soyadı</Label>
-                  <Input
-                    id="authorizedPerson"
-                    value={formData.authorizedPerson}
-                    onChange={(e) => setFormData({ ...formData, authorizedPerson: e.target.value })}
-                  />
+              <CardContent className="space-y-6">
+                {/* Logo & Cover Image */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Logo */}
+                  <div className="space-y-2">
+                    <Label>Logo (Kare)</Label>
+                    <div className="flex flex-col gap-3">
+                      <div className="h-32 w-32 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/50 overflow-hidden relative">
+                        {formData.logoUrl ? (
+                          <img src={formData.logoUrl} alt="Logo" className="h-full w-full object-contain p-1" />
+                        ) : (
+                          <Store className="h-8 w-8 text-muted-foreground/50" />
+                        )}
+                        {uploadingLogo && <div className="absolute inset-0 bg-background/80 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFileChange(e, 'logo')} />
+                        <Button type="button" variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} disabled={uploadingLogo}>
+                          <Upload className="mr-2 h-4 w-4" /> Logo Yükle
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cover Image */}
+                  <div className="space-y-2">
+                    <Label>Kapak Fotoğrafı (16:9)</Label>
+                    <div className="flex flex-col gap-3">
+                      <div className="h-32 w-full rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/50 overflow-hidden relative">
+                        {formData.coverImageUrl ? (
+                          <img src={formData.coverImageUrl} alt="Cover" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center text-muted-foreground/50">
+                            <Store className="h-8 w-8 mb-1" />
+                            <span className="text-xs">Kapak Görseli Yok</span>
+                          </div>
+                        )}
+                        {uploadingCover && <div className="absolute inset-0 bg-background/80 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFileChange(e, 'cover')} />
+                        <Button type="button" variant="outline" size="sm" onClick={() => coverInputRef.current?.click()} disabled={uploadingCover}>
+                          <Upload className="mr-2 h-4 w-4" /> Kapak Fotoğrafı Yükle
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Telefon *</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-posta</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    />
-                  </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="brandColor">Marka Rengi (Tema)</Label>
+                        <div className="flex items-center gap-3">
+                            <Input 
+                                id="brandColor" 
+                                type="color" 
+                                value={formData.brandColor} 
+                                onChange={(e) => setFormData({ ...formData, brandColor: e.target.value })} 
+                                className="w-16 h-10 p-1 cursor-pointer"
+                            />
+                            <span className="text-sm font-mono text-muted-foreground">{formData.brandColor}</span>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Menü Görünümü</Label>
+                        <Select value={formData.menuViewMode} onValueChange={(value) => setFormData({ ...formData, menuViewMode: value })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="card">Kart Görünümü (Büyük Foto)</SelectItem>
+                                <SelectItem value="list">Liste Görünümü (Sade)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="website">Web Sitesi</Label>
-                  <Input
-                    id="website"
-                    value={formData.website}
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                    placeholder="https://..."
-                  />
+                    <Label htmlFor="welcomeMessage">Karşılama Mesajı</Label>
+                    <Input 
+                        id="welcomeMessage" 
+                        value={formData.welcomeMessage} 
+                        onChange={(e) => setFormData({ ...formData, welcomeMessage: e.target.value })} 
+                        placeholder="Hoşgeldiniz! Bugünün spesiyali..."
+                    />
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* 3. Operasyon Bilgisi */}
+          {/* 3. Dijital */}
+          <TabsContent value="digital">
+            <Card>
+              <CardHeader>
+                <CardTitle>Dijital Varlıklar</CardTitle>
+                <CardDescription>Sosyal medya ve Wi-Fi entegrasyonu.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                    <h3 className="font-medium flex items-center gap-2"><Share2 className="w-4 h-4" /> Sosyal Medya</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="instagram">Instagram</Label>
+                            <Input id="instagram" placeholder="https://instagram.com/..." value={formData.instagramUrl} onChange={(e) => setFormData({...formData, instagramUrl: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="facebook">Facebook</Label>
+                            <Input id="facebook" placeholder="https://facebook.com/..." value={formData.facebookUrl} onChange={(e) => setFormData({...formData, facebookUrl: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="twitter">Twitter / X</Label>
+                            <Input id="twitter" placeholder="https://twitter.com/..." value={formData.twitterUrl} onChange={(e) => setFormData({...formData, twitterUrl: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="website">Web Sitesi</Label>
+                            <Input id="website" placeholder="https://..." value={formData.website} onChange={(e) => setFormData({...formData, website: e.target.value})} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t">
+                    <h3 className="font-medium flex items-center gap-2"><Wifi className="w-4 h-4" /> Wi-Fi Bilgileri</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="wifiSsid">Wi-Fi Adı (SSID)</Label>
+                            <Input id="wifiSsid" value={formData.wifiSsid} onChange={(e) => setFormData({...formData, wifiSsid: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="wifiPassword">Wi-Fi Şifresi</Label>
+                            <Input id="wifiPassword" value={formData.wifiPassword} onChange={(e) => setFormData({...formData, wifiPassword: e.target.value})} />
+                        </div>
+                    </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 4. Operasyon */}
           <TabsContent value="operation">
             <Card>
               <CardHeader>
-                <CardTitle>Operasyon Detayları</CardTitle>
-                <CardDescription>
-                  Hizmet, çalışma saatleri ve diğer detaylar.
-                </CardDescription>
+                <CardTitle>Operasyon ve Servis</CardTitle>
+                <CardDescription>Hizmet detayları ve servis ayarları.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="serviceType">Hizmet Şekli</Label>
-                    <Select 
-                      value={formData.serviceType} 
-                      onValueChange={(value) => setFormData({ ...formData, serviceType: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="table">Sadece Masa Servis</SelectItem>
-                        <SelectItem value="package">Sadece Paket Servis</SelectItem>
-                        <SelectItem value="both">Masa ve Paket Servis</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between border p-4 rounded-lg bg-secondary/10">
+                  <div className="space-y-0.5">
+                    <Label className="text-base flex items-center gap-2"><Power className="w-4 h-4 text-red-500" /> Bakım Modu</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Aktif edildiğinde menü "Hizmet Dışı" olarak görünür.
+                    </p>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="preparationTime">Ortalama Hazırlama Süresi (dk)</Label>
-                    <Input
-                      id="preparationTime"
-                      type="number"
-                      value={formData.preparationTime}
-                      onChange={(e) => setFormData({ ...formData, preparationTime: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="workingHours">Çalışma Saatleri</Label>
-                  <Input
-                    id="workingHours"
-                    value={formData.workingHours}
-                    onChange={(e) => setFormData({ ...formData, workingHours: e.target.value })}
-                    placeholder="Örn: Her gün 09:00 - 23:00"
+                  <Switch
+                    checked={formData.isMaintenanceMode}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isMaintenanceMode: checked })}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Ödeme Türleri</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {paymentOptions.map((option) => (
-                      <div key={option.id} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`payment-${option.id}`} 
-                          checked={formData.paymentMethods.includes(option.id)}
-                          onCheckedChange={(checked) => handlePaymentChange(checked as boolean, option.id)}
-                        />
-                        <label
-                          htmlFor={`payment-${option.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {option.label}
-                        </label>
-                      </div>
-                    ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Hizmet Şekli</Label>
+                    <Select value={formData.serviceType} onValueChange={(value) => setFormData({ ...formData, serviceType: value })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="table">Sadece Masa</SelectItem>
+                        <SelectItem value="package">Sadece Paket</SelectItem>
+                        <SelectItem value="both">Masa ve Paket</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Hazırlama Süresi (dk)</Label>
+                    <Input type="number" value={formData.preparationTime} onChange={(e) => setFormData({ ...formData, preparationTime: e.target.value })} />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between border p-3 rounded-lg">
+                <div className="space-y-2">
+                  <Label>Çalışma Saatleri</Label>
+                  <Input value={formData.workingHours} onChange={(e) => setFormData({ ...formData, workingHours: e.target.value })} placeholder="Örn: 09:00 - 23:00" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                    <div className="space-y-2">
+                        <Label>Ödeme Türleri</Label>
+                        <div className="grid grid-cols-1 gap-2 mt-2">
+                            {paymentOptions.map((option) => (
+                            <div key={option.id} className="flex items-center space-x-2">
+                                <Checkbox 
+                                id={`payment-${option.id}`} 
+                                checked={formData.paymentMethods.includes(option.id)}
+                                onCheckedChange={(checked) => handleCheckboxChange('paymentMethods', checked as boolean, option.id)}
+                                />
+                                <label htmlFor={`payment-${option.id}`} className="text-sm font-medium">{option.label}</label>
+                            </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2"><BellRing className="w-4 h-4" /> Garson Çağırma Seçenekleri</Label>
+                        <div className="grid grid-cols-1 gap-2 mt-2">
+                            {waiterCallOptionList.map((option) => (
+                            <div key={option.id} className="flex items-center space-x-2">
+                                <Checkbox 
+                                id={`waiter-${option.id}`} 
+                                checked={formData.waiterCallOptions.includes(option.id)}
+                                onCheckedChange={(checked) => handleCheckboxChange('waiterCallOptions', checked as boolean, option.id)}
+                                />
+                                <label htmlFor={`waiter-${option.id}`} className="text-sm font-medium">{option.label}</label>
+                            </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between border p-3 rounded-lg mt-4">
                   <div className="space-y-0.5">
                     <Label className="text-base">Ürün Değerlendirmeleri</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Müşterilerin ürün yıldızlarını ve değerlendirmelerini görmesine izin verin.
-                    </p>
+                    <p className="text-sm text-muted-foreground">Müşteriler ürünleri puanlayabilir.</p>
                   </div>
                   <Switch
                     checked={formData.showProductRatings}
                     onCheckedChange={(checked) => setFormData({ ...formData, showProductRatings: checked })}
                   />
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
+          {/* 5. Yetkili */}
+          <TabsContent value="authorized">
+            <Card>
+              <CardHeader>
+                <CardTitle>Yetkili Bilgileri</CardTitle>
+                <CardDescription>İletişim bilgileri.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Logo</Label>
-                  <div className="flex items-start gap-4">
-                    <div className="relative group">
-                      <div className="h-24 w-24 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/50 overflow-hidden">
-                        {formData.logoUrl ? (
-                          <img 
-                            src={formData.logoUrl} 
-                            alt="Logo" 
-                            className="h-full w-full object-contain p-1" 
-                          />
-                        ) : (
-                          <Store className="h-8 w-8 text-muted-foreground/50" />
-                        )}
-                        {uploadingLogo && (
-                          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-2 flex-1">
-                      <div className="flex gap-2">
-                        <Input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={onFileChange}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={uploadingLogo}
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload className="mr-2 h-4 w-4" />
-                          Logo Yükle
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Önerilen boyut: 512x512px. PNG, JPG veya WEBP formatında.
-                      </p>
-                    </div>
+                  <Label htmlFor="authorizedPerson">Ad Soyad</Label>
+                  <Input id="authorizedPerson" value={formData.authorizedPerson} onChange={(e) => setFormData({ ...formData, authorizedPerson: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefon</Label>
+                    <Input id="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
                   </div>
-                </div>
-
-                {/* Cropper Dialog */}
-                <Dialog open={isCropperOpen} onOpenChange={setIsCropperOpen}>
-                  <DialogContent className="sm:max-w-xl">
-                    <DialogHeader>
-                      <DialogTitle>Logoyu Düzenle</DialogTitle>
-                      <DialogDescription>
-                        Logonuzu kare formatında kırpın ve ayarlayın.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="relative w-full h-80 bg-black/5 rounded-md overflow-hidden">
-                      {selectedImage && (
-                        <Cropper
-                          image={selectedImage}
-                          crop={crop}
-                          zoom={zoom}
-                          aspect={1}
-                          onCropChange={setCrop}
-                          onCropComplete={onCropComplete}
-                          onZoomChange={setZoom}
-                        />
-                      )}
-                    </div>
-                    <div className="space-y-2 py-4">
-                        <div className="flex justify-between text-xs">
-                            <span>Yakınlaştır</span>
-                            <span>{Math.round(zoom * 100)}%</span>
-                        </div>
-                        <input
-                            type="range"
-                            value={zoom}
-                            min={1}
-                            max={3}
-                            step={0.1}
-                            aria-labelledby="Zoom"
-                            onChange={(e) => setZoom(Number(e.target.value))}
-                            className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
-                        />
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsCropperOpen(false)}>
-                        İptal
-                      </Button>
-                      <Button onClick={onCropSave} disabled={uploadingLogo}>
-                        {uploadingLogo && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Kaydet ve Yükle
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-
-                <div className="space-y-2">
-                  <Label htmlFor="googleMapsUrl">Google Maps Linki</Label>
-                  <Input
-                    id="googleMapsUrl"
-                    value={formData.googleMapsUrl}
-                    onChange={(e) => setFormData({ ...formData, googleMapsUrl: e.target.value })}
-                    placeholder="https://maps.google.com/..."
-                  />
-                </div>
-
-                <div className="pt-4 border-t">
-                    <Label className="text-muted-foreground">Kayıt Tarihi: </Label>
-                    <span className="text-sm font-mono ml-2">
-                        {formData.createdAt ? new Date(formData.createdAt).toLocaleDateString('tr-TR') : '-'}
-                    </span>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-posta</Label>
+                    <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* 6. Güvenlik */}
+          <TabsContent value="security">
+            <SecuritySettings />
           </TabsContent>
         </Tabs>
 
@@ -640,6 +713,54 @@ export default function SettingsPage() {
           </Button>
         </div>
       </form>
+
+      {/* Cropper Dialog */}
+      <Dialog open={isCropperOpen} onOpenChange={setIsCropperOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{cropTarget === 'logo' ? 'Logoyu Düzenle' : 'Kapak Fotoğrafını Düzenle'}</DialogTitle>
+            <DialogDescription>
+              {cropTarget === 'logo' ? 'Kare (1:1)' : 'Geniş (16:9)'} formatında kırpın.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative w-full h-80 bg-black/5 rounded-md overflow-hidden">
+            {selectedImage && (
+              <Cropper
+                image={selectedImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={cropTarget === 'logo' ? 1 : 16 / 9}
+                onCropChange={setCrop}
+                onCropComplete={setCroppedAreaPixels}
+                onZoomChange={setZoom}
+              />
+            )}
+          </div>
+          <div className="space-y-2 py-4">
+            <div className="flex justify-between text-xs">
+              <span>Yakınlaştır</span>
+              <span>{Math.round(zoom * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              value={zoom}
+              min={1}
+              max={3}
+              step={0.1}
+              aria-labelledby="Zoom"
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCropperOpen(false)}>İptal</Button>
+            <Button onClick={onCropSave} disabled={uploadingLogo || uploadingCover}>
+              {(uploadingLogo || uploadingCover) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Kaydet ve Yükle
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -15,12 +15,20 @@ interface WaiterCall {
   id: string;
   tableId: string;
   cafeId: string;
+  type?: string;
   status: 'PENDING' | 'COMPLETED';
   createdAt: string;
   table: {
     tableNumber: number;
   };
 }
+
+const OPTION_LABELS: Record<string, string> = {
+  'bill': 'Hesap İste',
+  'waiter': 'Garson Çağır',
+  'cleanup': 'Masayı Topla',
+  'ashtray': 'Küllük İste'
+};
 
 export default function WaiterCallsPage() {
   const [calls, setCalls] = useState<WaiterCall[]>([]);
@@ -68,7 +76,8 @@ export default function WaiterCallsPage() {
         if (audioRef.current) {
             audioRef.current.play().catch(e => console.log('Audio play failed', e));
         }
-        toast.info(`${newCall.table?.tableNumber || '?'} . Masa garson çağırıyor!`);
+        const label = newCall.type ? (OPTION_LABELS[newCall.type] || newCall.type) : 'Garson';
+        toast.info(`${newCall.table?.tableNumber || '?'} . Masa: ${label}`);
         setCalls(prev => [newCall, ...prev]);
     });
 
@@ -136,6 +145,13 @@ export default function WaiterCallsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {call.type && (
+                  <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-md">
+                    <p className="text-amber-900 font-medium text-center text-lg">
+                      {OPTION_LABELS[call.type] || call.type}
+                    </p>
+                  </div>
+                )}
                 <div className="flex items-center text-muted-foreground text-sm mb-6">
                   <Clock className="h-4 w-4 mr-1" />
                   {formatDistanceToNow(new Date(call.createdAt), { addSuffix: true, locale: tr })}

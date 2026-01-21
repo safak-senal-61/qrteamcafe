@@ -16,10 +16,14 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { ImageService } from '../common/image.service';
 
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly imageService: ImageService,
+  ) {}
 
   @Post('upload')
   @UseInterceptors(
@@ -35,12 +39,16 @@ export class ProductsController {
       }),
     }),
   )
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
-    // Generate full URL
-    // In production, use env variable for base URL
-    const baseUrl = process.env.BASE_URL || 'http://localhost:3001';
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+    // Process image (resize, transparent bg logic)
+    if (file) {
+      await this.imageService.processProductImage(file);
+    }
+
+    // Return relative path to allow frontend proxying (rewrites) to handle it
+    // This ensures images work on all devices (localhost, LAN, production)
     return {
-      url: `${baseUrl}/uploads/${file.filename}`,
+      url: `/uploads/${file.filename}`,
     };
   }
 

@@ -111,20 +111,20 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex flex-col max-h-[90vh] sm:max-w-[425px] overflow-hidden p-0 gap-0 rounded-2xl" showCloseButton={false}>
-        <DialogHeader className="sr-only">
-          <DialogTitle>{product.name}</DialogTitle>
-          <DialogDescription>Ürün detayları ve sipariş notu ekleme</DialogDescription>
-        </DialogHeader>
-
-        <div className="relative h-64 w-full bg-secondary shrink-0">
-          <Image
-            src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
-            alt={product.name}
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+      <DialogContent className="max-w-md sm:max-w-3xl p-0 gap-0 overflow-hidden bg-white/95 backdrop-blur-xl border-none shadow-2xl h-[90vh] sm:h-[85vh] flex flex-col sm:flex-row">
+        
+        {/* Left Side - Image */}
+        <div className="relative h-[35vh] sm:h-full w-full sm:w-[45%] bg-white shrink-0 flex items-center justify-center p-8">
+          <div className="relative w-full h-full">
+            <Image
+              src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
+              alt={product.name}
+              fill
+              className="object-contain"
+              priority
+              unoptimized={!!product.image?.includes('localhost') || !!product.image?.includes('127.0.0.1') || !!product.image?.startsWith('/uploads/')}
+            />
+          </div>
           
           <DialogClose className="absolute top-4 right-4 rounded-full bg-black/20 hover:bg-black/40 text-white p-2 transition-colors backdrop-blur-sm z-10">
             <X className="h-5 w-5" />
@@ -143,7 +143,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
           <div className="absolute bottom-4 left-4 right-4 text-white">
             <div className="flex justify-between items-end">
               <div>
-                <h2 className="text-2xl font-bold leading-tight mb-1">{product.name}</h2>
+                <DialogTitle className="text-2xl font-bold leading-tight mb-1 text-white text-left">{product.name}</DialogTitle>
                 {Number(product.averageRating) > 0 && (
                   <div className="flex items-center gap-1 text-yellow-400 mb-1">
                     <Star className="w-4 h-4 fill-current" />
@@ -188,6 +188,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                           alt={rec.name}
                           fill
                           className="object-cover"
+                          unoptimized={!!rec.image?.includes('localhost') || !!rec.image?.includes('127.0.0.1') || !!rec.image?.startsWith('/uploads/')}
                         />
                       </div>
                       <div className="flex flex-col gap-0.5">

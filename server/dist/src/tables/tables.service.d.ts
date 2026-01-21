@@ -18,6 +18,7 @@ export declare class TablesService {
             cafeId: string;
             createdAt: Date;
             updatedAt: Date;
+            type: string | null;
             status: string;
             tableId: string;
         }[];

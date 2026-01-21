@@ -166,7 +166,7 @@ export default function DashboardPage() {
       setCafeId(cafeId);
 
       try {
-        const response = await fetch(`${API_URL}/cafes/my-stats?cafeId=${cafeId}`);
+        const response = await fetch(`${API_URL}/cafes/${cafeId}/dashboard-stats`);
         if (response.ok) {
           const data = await response.json();
           setStats(data);

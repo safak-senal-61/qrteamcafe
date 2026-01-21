@@ -1,79 +1,8 @@
 import { CafesService } from './cafes.service';
+import { UpdateCafeDto } from './dto/update-cafe.dto';
 export declare class CafesController {
     private readonly cafesService;
     constructor(cafesService: CafesService);
-    getStats(cafeId: string): Promise<{
-        totalOrders: number;
-        dailyRevenue: number | import("@prisma/client-runtime-utils").Decimal;
-        activeTables: number;
-        totalProducts: number;
-        recentOrders: ({
-            table: {
-                id: string;
-                cafeId: string;
-                createdAt: Date;
-                updatedAt: Date;
-                isOccupied: boolean;
-                tableNumber: number;
-                lastOccupiedAt: Date | null;
-            } | null;
-            items: ({
-                product: {
-                    id: string;
-                    cafeId: string;
-                    categoryId: string;
-                    name: string;
-                    description: string | null;
-                    price: import("@prisma/client-runtime-utils").Decimal;
-                    originalPrice: import("@prisma/client-runtime-utils").Decimal | null;
-                    stock: number;
-                    sortOrder: number;
-                    imageUrl: string | null;
-                    isAvailable: boolean;
-                    isChefRecommended: boolean;
-                    averageRating: import("@prisma/client-runtime-utils").Decimal;
-                    reviewCount: number;
-                    createdAt: Date;
-                    updatedAt: Date;
-                };
-            } & {
-                id: string;
-                createdAt: Date;
-                orderId: string;
-                productId: string;
-                quantity: number;
-                unitPrice: import("@prisma/client-runtime-utils").Decimal;
-                totalPrice: import("@prisma/client-runtime-utils").Decimal;
-            })[];
-        } & {
-            id: string;
-            cafeId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            customerName: string | null;
-            status: string;
-            totalAmount: import("@prisma/client-runtime-utils").Decimal;
-            tableId: string | null;
-        })[];
-        popularProducts: {
-            id: string;
-            cafeId: string;
-            categoryId: string;
-            name: string;
-            description: string | null;
-            price: import("@prisma/client-runtime-utils").Decimal;
-            originalPrice: import("@prisma/client-runtime-utils").Decimal | null;
-            stock: number;
-            sortOrder: number;
-            imageUrl: string | null;
-            isAvailable: boolean;
-            isChefRecommended: boolean;
-            averageRating: import("@prisma/client-runtime-utils").Decimal;
-            reviewCount: number;
-            createdAt: Date;
-            updatedAt: Date;
-        }[];
-    }>;
     findOne(id: string): Promise<{
         id: string;
         name: string;
@@ -94,9 +23,92 @@ export declare class CafesController {
         preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
+        coverImageUrl: string | null;
+        brandColor: string | null;
+        menuViewMode: string | null;
+        welcomeMessage: string | null;
+        instagramUrl: string | null;
+        facebookUrl: string | null;
+        twitterUrl: string | null;
+        wifiSsid: string | null;
+        wifiPassword: string | null;
+        waiterCallOptions: string | null;
+        isMaintenanceMode: boolean;
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+    }>;
+    getDashboardStats(id: string): Promise<{
+        totalOrders: number;
+        dailyRevenue: number | import("@prisma/client/runtime/library").Decimal;
+        activeTables: number;
+        totalProducts: number;
+        recentOrders: ({
+            table: {
+                id: string;
+                cafeId: string;
+                createdAt: Date;
+                updatedAt: Date;
+                isOccupied: boolean;
+                tableNumber: number;
+                lastOccupiedAt: Date | null;
+            } | null;
+            items: ({
+                product: {
+                    id: string;
+                    cafeId: string;
+                    categoryId: string;
+                    name: string;
+                    description: string | null;
+                    price: import("@prisma/client/runtime/library").Decimal;
+                    originalPrice: import("@prisma/client/runtime/library").Decimal | null;
+                    stock: number;
+                    sortOrder: number;
+                    imageUrl: string | null;
+                    isAvailable: boolean;
+                    isChefRecommended: boolean;
+                    averageRating: import("@prisma/client/runtime/library").Decimal;
+                    reviewCount: number;
+                    createdAt: Date;
+                    updatedAt: Date;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                orderId: string;
+                productId: string;
+                quantity: number;
+                unitPrice: import("@prisma/client/runtime/library").Decimal;
+                totalPrice: import("@prisma/client/runtime/library").Decimal;
+            })[];
+        } & {
+            id: string;
+            cafeId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            customerName: string | null;
+            status: string;
+            totalAmount: import("@prisma/client/runtime/library").Decimal;
+            tableId: string | null;
+        })[];
+        popularProducts: {
+            id: string;
+            cafeId: string;
+            categoryId: string;
+            name: string;
+            description: string | null;
+            price: import("@prisma/client/runtime/library").Decimal;
+            originalPrice: import("@prisma/client/runtime/library").Decimal | null;
+            stock: number;
+            sortOrder: number;
+            imageUrl: string | null;
+            isAvailable: boolean;
+            isChefRecommended: boolean;
+            averageRating: import("@prisma/client/runtime/library").Decimal;
+            reviewCount: number;
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
     }>;
     uploadLogo(id: string, file: Express.Multer.File): Promise<{
         id: string;
@@ -118,11 +130,22 @@ export declare class CafesController {
         preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
+        coverImageUrl: string | null;
+        brandColor: string | null;
+        menuViewMode: string | null;
+        welcomeMessage: string | null;
+        instagramUrl: string | null;
+        facebookUrl: string | null;
+        twitterUrl: string | null;
+        wifiSsid: string | null;
+        wifiPassword: string | null;
+        waiterCallOptions: string | null;
+        isMaintenanceMode: boolean;
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
     }>;
-    update(id: string, body: any): Promise<{
+    uploadCoverImage(id: string, file: Express.Multer.File): Promise<{
         id: string;
         name: string;
         description: string | null;
@@ -142,6 +165,52 @@ export declare class CafesController {
         preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
+        coverImageUrl: string | null;
+        brandColor: string | null;
+        menuViewMode: string | null;
+        welcomeMessage: string | null;
+        instagramUrl: string | null;
+        facebookUrl: string | null;
+        twitterUrl: string | null;
+        wifiSsid: string | null;
+        wifiPassword: string | null;
+        waiterCallOptions: string | null;
+        isMaintenanceMode: boolean;
+        googleMapsUrl: string | null;
+        status: string;
+        showProductRatings: boolean;
+    }>;
+    update(id: string, updateCafeDto: UpdateCafeDto): Promise<{
+        id: string;
+        name: string;
+        description: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        phone: string | null;
+        email: string | null;
+        isActive: boolean;
+        type: string | null;
+        city: string | null;
+        district: string | null;
+        address: string | null;
+        website: string | null;
+        authorizedPerson: string | null;
+        serviceType: string | null;
+        workingHours: string | null;
+        preparationTime: number | null;
+        paymentMethods: string | null;
+        logoUrl: string | null;
+        coverImageUrl: string | null;
+        brandColor: string | null;
+        menuViewMode: string | null;
+        welcomeMessage: string | null;
+        instagramUrl: string | null;
+        facebookUrl: string | null;
+        twitterUrl: string | null;
+        wifiSsid: string | null;
+        wifiPassword: string | null;
+        waiterCallOptions: string | null;
+        isMaintenanceMode: boolean;
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;

@@ -11,7 +11,7 @@ export class WaiterCallsService {
   ) {}
 
   async create(cafeId: string, createWaiterCallDto: CreateWaiterCallDto) {
-    const { tableId } = createWaiterCallDto;
+    const { tableId, type } = createWaiterCallDto;
 
     // Check if table belongs to cafe (optional but good for security)
     // For now assuming tableId is correct or handled by prisma relation constraints if we had cafeId in Table relation which we do.
@@ -21,6 +21,7 @@ export class WaiterCallsService {
       data: {
         cafeId,
         tableId,
+        type: type || 'Garson',
         status: 'PENDING',
       },
       include: {

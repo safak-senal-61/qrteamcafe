@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useRouter } from '@/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,13 +21,33 @@ import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 
 export default function AdminLoginPage() {
-  console.log('AdminLoginPage rendering');
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.role === 'SUPER_ADMIN') {
+          router.push('/admin/super/dashboard');
+        } else {
+          router.push('/admin/dashboard');
+        }
+      } catch (e) {
+        localStorage.removeItem('user');
+      }
+    }
+  }, [router]);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+
+  // 2FA State
+  const [is2FARequired, setIs2FARequired] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
 
   // Forgot Password State
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
@@ -106,17 +126,25 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
+      const body: any = { ...formData };
+      if (is2FARequired) {
+        body.twoFactorCode = twoFactorCode;
+      }
+
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Store user data
+        // Store user data and token
         localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+        }
 
         if (data.user.role === 'SUPER_ADMIN') {
           toast.success('Süper Admin girişi algılandı. Yönlendiriliyorsunuz...');
@@ -130,7 +158,12 @@ export default function AdminLoginPage() {
           }, 1000);
         }
       } else {
-        toast.error(data.message || 'Giriş başarısız.');
+        if (data.message === '2FA_REQUIRED' || data.code === '2FA_REQUIRED') {
+            setIs2FARequired(true);
+            toast.info('Lütfen 2FA kodunuzu girin.');
+        } else {
+            toast.error(data.message || 'Giriş başarısız.');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -240,57 +273,95 @@ export default function AdminLoginPage() {
         </DialogContent>
       </Dialog>
             <div className="space-y-2">
-              <CardTitle className="text-2xl font-bold tracking-tight">Yönetici Girişi</CardTitle>
+              <CardTitle className="text-2xl font-bold tracking-tight">
+                {is2FARequired ? '2FA Doğrulama' : 'Yönetici Girişi'}
+              </CardTitle>
               <CardDescription>
-                Cafe yönetim paneline erişmek için giriş yapın
+                {is2FARequired 
+                    ? 'Lütfen authenticator uygulamanızdaki 6 haneli kodu girin'
+                    : 'Cafe yönetim paneline erişmek için giriş yapın'
+                }
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email">E-posta Adresi</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="ornek@cafe.com"
-                    type="email"
-                    className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                    required
-                  />
+              {is2FARequired ? (
+                <div className="space-y-2">
+                    <Label htmlFor="twoFactorCode">Doğrulama Kodu</Label>
+                    <div className="relative">
+                        <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            id="twoFactorCode"
+                            value={twoFactorCode}
+                            onChange={(e) => setTwoFactorCode(e.target.value)}
+                            placeholder="123456"
+                            className="pl-10 tracking-widest text-lg text-center font-mono"
+                            maxLength={6}
+                            autoFocus
+                            required
+                        />
+                    </div>
+                    <Button 
+                        type="button" 
+                        variant="ghost" 
+                        className="w-full text-xs text-muted-foreground"
+                        onClick={() => {
+                            setIs2FARequired(false);
+                            setTwoFactorCode('');
+                        }}
+                    >
+                        Geri Dön
+                    </Button>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Şifre</Label>
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="text-xs font-medium text-primary hover:underline p-0 h-auto"
-                    onClick={() => {
-                      setForgotPasswordStep(1);
-                      setIsForgotPasswordOpen(true);
-                    }}
-                  >
-                    Şifremi Unuttum
-                  </Button>
+              ) : (
+                <>
+                <div className="space-y-2">
+                    <Label htmlFor="email">E-posta Adresi</Label>
+                    <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        id="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="ornek@cafe.com"
+                        type="email"
+                        className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
+                        required
+                    />
+                    </div>
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                    required
-                  />
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Şifre</Label>
+                    <Button
+                        type="button"
+                        variant="link"
+                        className="text-xs font-medium text-primary hover:underline p-0 h-auto"
+                        onClick={() => {
+                        setForgotPasswordStep(1);
+                        setIsForgotPasswordOpen(true);
+                        }}
+                    >
+                        Şifremi Unuttum
+                    </Button>
+                    </div>
+                    <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        id="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        type="password"
+                        placeholder="••••••••"
+                        className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
+                        required
+                    />
+                    </div>
                 </div>
-              </div>
+                </>
+              )}
+              
               <Button
                 type="submit"
                 className="w-full h-11 font-bold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
@@ -299,11 +370,12 @@ export default function AdminLoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Giriş Yapılıyor...
+                    {is2FARequired ? 'Doğrulanıyor...' : 'Giriş Yapılıyor...'}
                   </>
                 ) : (
                   <>
-                    Giriş Yap <ArrowRight className="ml-2 h-4 w-4" />
+                    {is2FARequired ? 'Doğrula ve Giriş Yap' : 'Giriş Yap'} 
+                    {!is2FARequired && <ArrowRight className="ml-2 h-4 w-4" />}
                   </>
                 )}
               </Button>

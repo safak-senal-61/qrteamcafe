@@ -206,6 +206,7 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
                               fill
                               sizes="80px"
                               className="object-cover transition-transform group-hover:scale-110"
+                              unoptimized={!!item.image?.includes('localhost') || !!item.image?.includes('127.0.0.1') || !!item.image?.startsWith('/uploads/')}
                             />
                           </div>
                           <div className="flex-1 min-w-0 py-1">

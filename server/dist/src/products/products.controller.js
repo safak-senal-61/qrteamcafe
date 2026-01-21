@@ -20,15 +20,20 @@ const update_product_dto_1 = require("./dto/update-product.dto");
 const platform_express_1 = require("@nestjs/platform-express");
 const multer_1 = require("multer");
 const path_1 = require("path");
+const image_service_1 = require("../common/image.service");
 let ProductsController = class ProductsController {
     productsService;
-    constructor(productsService) {
+    imageService;
+    constructor(productsService, imageService) {
         this.productsService = productsService;
+        this.imageService = imageService;
     }
-    uploadFile(file) {
-        const baseUrl = process.env.BASE_URL || 'http://localhost:3001';
+    async uploadFile(file) {
+        if (file) {
+            await this.imageService.processProductImage(file);
+        }
         return {
-            url: `${baseUrl}/uploads/${file.filename}`,
+            url: `/uploads/${file.filename}`,
         };
     }
     create(createProductDto, cafeId) {
@@ -75,7 +80,7 @@ __decorate([
     __param(0, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], ProductsController.prototype, "uploadFile", null);
 __decorate([
     (0, common_1.Post)(),
@@ -146,6 +151,7 @@ __decorate([
 ], ProductsController.prototype, "remove", null);
 exports.ProductsController = ProductsController = __decorate([
     (0, common_1.Controller)('products'),
-    __metadata("design:paramtypes", [products_service_1.ProductsService])
+    __metadata("design:paramtypes", [products_service_1.ProductsService,
+        image_service_1.ImageService])
 ], ProductsController);
 //# sourceMappingURL=products.controller.js.map

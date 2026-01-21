@@ -34,19 +34,20 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (info) {
       if (info.role === 'client' && info.tableId) {
         // İstemci bir masadan ayrıldıysa
-        // Not: Gerçek hayatta kullanıcı sayfayı yenilediğinde hemen düşmemesi için
-        // bir timeout veya debounce mekanizması kullanılabilir.
-        // Şimdilik basitleştirilmiş mantık:
+        // Kullanıcı sayfayı yenilediğinde veya kısa süreli kopmalarda hemen düşmemesi için
+        // 10 saniyelik bir bekleme süresi (grace period) ekliyoruz.
+        console.log(`Client ${client.id} disconnected from table ${info.tableId}. Waiting 10s before removal.`);
+        
+        // Socket'i map'ten hemen siliyoruz ki checkAndRemoveTable doğru çalışsın
+        this.clientMap.delete(client.id);
 
-        // Bu masada başka client var mı kontrol et (basitlik için şimdilik etmiyoruz, direkt siliyoruz gibi düşünebiliriz ama
-        // doğrusu bu cafeId ve tableId'ye sahip başka socket var mı diye bakmak)
-
-        // Şimdilik basit activeTables mantığı yerine, o masadaki kişi sayısını tutmak daha doğru olabilir.
-        // Ama istek "aktif masa sayısı" olduğu için, bir masada en az 1 kişi varsa aktiftir.
-
-        this.checkAndRemoveTable(info.cafeId, info.tableId, client.id);
+        setTimeout(() => {
+          this.checkAndRemoveTable(info.cafeId, info.tableId!, client.id);
+        }, 10000);
+      } else {
+        // Admin veya masa bilgisi olmayan client ise direkt sil
+        this.clientMap.delete(client.id);
       }
-      this.clientMap.delete(client.id);
     }
   }
 
@@ -69,6 +70,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     if (!isTableStillActive) {
+      console.log(`Table ${tableId} in cafe ${cafeId} is empty. Removing from active tables.`);
       const tables = this.activeTables.get(cafeId);
       if (tables) {
         tables.delete(tableId);
@@ -80,6 +82,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // Adminlere güncel sayıyı gönder
         this.emitActiveTablesUpdate(cafeId);
       }
+    } else {
+      console.log(`Table ${tableId} in cafe ${cafeId} is still active. Keeping.`);
     }
   }
 

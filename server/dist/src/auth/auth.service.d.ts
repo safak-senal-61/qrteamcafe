@@ -5,31 +5,30 @@ import { MailService } from './mail.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtService } from '@nestjs/jwt';
 export declare class AuthService {
     private prisma;
     private mailService;
-    constructor(prisma: PrismaService, mailService: MailService);
+    private jwtService;
+    constructor(prisma: PrismaService, mailService: MailService, jwtService: JwtService);
+    changePassword(dto: ChangePasswordDto): Promise<{
+        message: string;
+    }>;
     registerCafe(dto: RegisterCafeDto): Promise<{
         message: string;
         cafeId: string;
     }>;
-    login(dto: LoginDto): Promise<{
+    login(dto: LoginDto, ip?: string, userAgent?: string): Promise<{
         message: string;
+        token: string;
         user: {
-            id: string;
-            name: string;
-            email: string;
+            id: any;
+            name: any;
+            email: any;
             role: string;
-            cafeId: string;
-        };
-    } | {
-        message: string;
-        user: {
-            id: string;
-            name: string;
-            email: string;
-            role: string;
-            cafeId?: undefined;
+            cafeId: any;
+            isTwoFactorEnabled: any;
         };
     }>;
     forgotPassword(dto: ForgotPasswordDto): Promise<{
@@ -39,6 +38,41 @@ export declare class AuthService {
         message: string;
     }>;
     resetPassword(dto: ResetPasswordDto): Promise<{
+        message: string;
+    }>;
+    getProfile(userId: string): Promise<{
+        role: string;
+        id: string;
+        name: string;
+        email: string;
+        isTwoFactorEnabled: boolean;
+    } | {
+        role: string;
+        isTwoFactorEnabled: boolean;
+        id: string;
+        email: string;
+    }>;
+    generate2FASecret(userId: string): Promise<{
+        secret: string;
+        qrCodeUrl: string;
+    }>;
+    enable2FA(userId: string, code: string): Promise<{
+        message: string;
+    }>;
+    disable2FA(userId: string): Promise<{
+        message: string;
+    }>;
+    getSessions(userId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        device: string | null;
+        ip: string | null;
+        lastActive: Date;
+    }[]>;
+    terminateSession(userId: string, sessionId: string): Promise<{
+        message: string;
+    }>;
+    terminateAllOtherSessions(userId: string, currentSessionId?: string): Promise<{
         message: string;
     }>;
 }
