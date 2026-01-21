@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Minus, Plus, ShoppingBasket, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,13 +26,14 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
 
-  // Reset state when dialog opens
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Reset state when closing
       setQuantity(1);
       setNote('');
     }
-  }, [open]);
+    onOpenChange(newOpen);
+  };
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
@@ -41,6 +42,11 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
     
     toast.success(`${quantity} adet ${product.name} sepete eklendi.`);
     onOpenChange(false);
+    // State will be reset by handleOpenChange since we called onOpenChange(false) which might not trigger the wrapper if passed directly?
+    // Wait, onOpenChange passed to Dialog is the wrapper. But here we call the PROP onOpenChange directly.
+    // So we should manually reset here too, or call handleOpenChange(false).
+    setQuantity(1);
+    setNote('');
   };
 
   const incrementQuantity = () => {
@@ -56,7 +62,7 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px] overflow-hidden p-0 gap-0 rounded-2xl" showCloseButton={false}>
         <DialogHeader className="sr-only">
           <DialogTitle>{product.name}</DialogTitle>

@@ -41,7 +41,7 @@ export function ProductCard({ product, index }: ProductCardProps) {
           className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 h-full flex flex-col bg-white/50 backdrop-blur-sm hover:bg-white ring-1 ring-black/5 cursor-pointer"
           onClick={() => setIsDialogOpen(true)}
         >
-          <div className="relative h-56 w-full overflow-hidden group">
+          <div className="relative h-40 sm:h-56 w-full overflow-hidden group">
             <Image
               src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
               alt={product.name}

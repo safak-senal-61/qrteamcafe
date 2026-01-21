@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { Link, usePathname, useRouter } from '@/navigation';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { API_URL } from '@/lib/api';
@@ -83,6 +82,7 @@ export function Sidebar() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line
     setMounted(true);
     const fetchCafeInfo = async () => {
       try {

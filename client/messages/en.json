@@ -1,0 +1,154 @@
+{
+  "HomePage": {
+    "title": "The Smartest Way to Order",
+    "subtitle": "Provide a modern, fast, and contactless experience to your customers. Access your menu by simply scanning a QR code, no app download required.",
+    "cta": "Get Started Now",
+    "discoverFeatures": "Discover Features",
+    "demo": "View Demo Menu",
+    "features": "Features",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "login": "Login",
+    "getStarted": "Start for Free",
+    "innovation": "Innovation",
+    "futureOfDining": "Future of Dining Experience",
+    "whyQrTeam": "Why QR Team Cafe?",
+    "whyQrTeamDesc": "Features that will carry your business to the digital age and increase your turnover.",
+    "notJustMenu": "Not Just a Menu,",
+    "fullOperation": "Full-Scale Operation",
+    "operationDesc": "Manage every detail of your business from stock tracking to staff performance, customer loyalty to detailed reports from a single panel.",
+    "readyToMove": "Are You Ready to Move",
+    "readyToMoveHighlight": "Your Business to Digital?",
+    "readyToMoveDesc": "Create a free account now, build your menu, and start selling in 15 minutes.",
+    "contactUs": "Contact Us",
+    "noCreditCard": "*No credit card required. 14-day free trial.",
+    "featuresList": {
+      "contactless": "Contactless QR Menu",
+      "contactlessDesc": "Let your customers access your menu in seconds without downloading an app. Hygienic, fast, and modern.",
+      "mobileOrder": "Mobile Ordering",
+      "mobileOrderDesc": "Freedom to order without waiting for a waiter. Let your customers create their baskets from their own phones.",
+      "dashboard": "Advanced Admin Panel",
+      "dashboardDesc": "Manage all orders, tables, and your menu from a single screen. Make real-time updates.",
+      "reporting": "Detailed Reporting",
+      "reportingDesc": "Daily turnover, best-selling products, and staff performance. Make data-driven decisions.",
+      "dynamicPrice": "Happy Hour & Dynamic Pricing",
+      "dynamicPriceDesc": "Increase your sales with prices that change according to the time of day and special campaigns.",
+      "loyalty": "Customer Loyalty",
+      "loyaltyDesc": "Win back your customers with gamified loyalty systems and digital campaigns."
+    },
+    "benefits": {
+      "faster": "30% Faster Order Cycle",
+      "increase": "20% Increase in Average Basket Size",
+      "savings": "100% Savings on Paper Menu Costs"
+    },
+    "showcaseList": {
+      "liveTracking": "Live Order Tracking",
+      "kds": "Kitchen Display System (KDS) Integration",
+      "waiterCall": "Waiter Call System",
+      "multiLang": "Multi-Language Support"
+    },
+    "dashboardPreview": {
+      "title": "Admin Panel",
+      "clickToView": "Click to examine",
+      "dailyRevenue": "Daily Revenue",
+      "activeTable": "Active Tables"
+    }
+  },
+  "Navigation": {
+    "home": "Home",
+    "features": "Features",
+    "pricing": "Pricing",
+    "integrations": "Integrations",
+    "roadmap": "Roadmap",
+    "about": "About Us",
+    "careers": "Careers",
+    "blog": "Blog",
+    "contact": "Contact",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "kvkk": "KVKK"
+  },
+  "Footer": {
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "description": "Next generation digital menu and order management system for restaurants and cafes.",
+    "rights": "© 2024 QR Team Cafe. All rights reserved."
+  },
+  "NotFound": {
+    "title": "Page Not Found",
+    "description": "We couldn't find the page you're looking for. It might have been deleted, moved, or never existed.",
+    "homeButton": "Back to Home"
+  },
+  "ContactPage": {
+    "badge": "Contact Us",
+    "title": "How Can We",
+    "titleHighlight": "Help You?",
+    "subtitle": "Contact our team for your questions, suggestions, or collaboration requests. We will get back to you as soon as possible.",
+    "emailTitle": "Email",
+    "emailDesc": "For general inquiries and support",
+    "phoneTitle": "Phone",
+    "phoneDesc": "Weekdays 09:00 - 18:00",
+    "officeTitle": "Office",
+    "officeDesc": "Visit us",
+    "address": "Technology Valley, Block B No:42<br />Maslak, Istanbul",
+    "formTitle": "Send a Message",
+    "formName": "Full Name",
+    "formEmail": "Email Address",
+    "formSubject": "Subject",
+    "formSubjectPlaceholder": "How can we help you?",
+    "formMessage": "Your Message",
+    "formMessagePlaceholder": "Write your message here...",
+    "formSubmit": "Send",
+    "quickResponse": "Quick Response",
+    "avgTime": "Avg. within 2 hours",
+    "globalSupport": "Global Support",
+    "languages": "Turkish & English"
+  },
+  "PricingPage": {
+    "title": "Simple and Transparent",
+    "titleHighlight": "Pricing",
+    "subtitle": "Choose the package that suits your business size. No hidden fees, no commitment.",
+    "popular": "Most Popular",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "price": "Free",
+        "description": "Ideal for small businesses and beginners.",
+        "cta": "Start Now",
+        "features": {
+          "0": "Digital QR Menu",
+          "1": "Unlimited Product Addition",
+          "2": "Basic Reporting",
+          "3": "Email Support"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$15/mo",
+        "description": "Advanced features for growing businesses.",
+        "cta": "Start Trial",
+        "features": {
+          "0": "All Included (Starter)",
+          "1": "Table Management",
+          "2": "Waiter Call System",
+          "3": "Multi-Language Support",
+          "4": "24/7 Live Support"
+        }
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom Offer",
+        "description": "For chain restaurants and large businesses.",
+        "cta": "Contact Us",
+        "features": {
+          "0": "All Included (Pro)",
+          "1": "Custom Integrations",
+          "2": "API Access",
+          "3": "Dedicated Account Manager",
+          "4": "Unlimited Branch Management"
+        }
+      }
+    }
+  }
+}
