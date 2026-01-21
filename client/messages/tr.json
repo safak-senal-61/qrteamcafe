@@ -1,0 +1,154 @@
+{
+  "HomePage": {
+    "title": "Siparişin En Akıllı Hali",
+    "subtitle": "Müşterilerinize modern, hızlı ve temassız bir deneyim sunun. Uygulama indirmeden, sadece QR kodu okutarak menünüze erişsinler.",
+    "cta": "Hemen Başlayın",
+    "discoverFeatures": "Özellikleri Keşfet",
+    "demo": "Demo Menüyü İncele",
+    "features": "Özellikler",
+    "pricing": "Fiyatlandırma",
+    "contact": "İletişim",
+    "login": "Giriş Yap",
+    "getStarted": "Ücretsiz Başla",
+    "innovation": "İnovasyon",
+    "futureOfDining": "Geleceğin Restoran Deneyimi",
+    "whyQrTeam": "Neden QR Team Cafe?",
+    "whyQrTeamDesc": "İşletmenizi dijital çağa taşıyacak, cironuzu artıracak özellikler.",
+    "notJustMenu": "Sadece Bir Menü Değil,",
+    "fullOperation": "Tam Kapsamlı Operasyon",
+    "operationDesc": "Stok takibinden personel performansına, müşteri sadakatinden detaylı raporlara kadar işletmenizin her detayını tek bir panelden yönetin.",
+    "readyToMove": "İşletmenizi Dijital Dünyaya",
+    "readyToMoveHighlight": "Taşımaya Hazır Mısınız?",
+    "readyToMoveDesc": "Hemen ücretsiz bir hesap oluşturun, menünüzü oluşturun ve 15 dakika içinde satışa başlayın.",
+    "contactUs": "Bize Ulaşın",
+    "noCreditCard": "*Kredi kartı gerekmez. 14 gün ücretsiz deneme.",
+    "featuresList": {
+      "contactless": "Temassız QR Menü",
+      "contactlessDesc": "Müşterileriniz uygulama indirmeden, saniyeler içinde menünüze ulaşsın. Hijyenik, hızlı ve modern.",
+      "mobileOrder": "Mobil Sipariş",
+      "mobileOrderDesc": "Garson beklemeden sipariş verme özgürlüğü. Müşterileriniz kendi telefonlarından sepetlerini oluştursun.",
+      "dashboard": "Gelişmiş Yönetim Paneli",
+      "dashboardDesc": "Tüm siparişleri, masaları ve menünüzü tek bir ekrandan yönetin. Gerçek zamanlı güncellemeler yapın.",
+      "reporting": "Detaylı Raporlama",
+      "reportingDesc": "Günlük ciro, en çok satan ürünler ve personel performansı. Veriye dayalı kararlar alın.",
+      "dynamicPrice": "Happy Hour & Dinamik Fiyat",
+      "dynamicPriceDesc": "Günün saatine göre değişen fiyatlar ve özel kampanyalar ile satışlarınızı artırın.",
+      "loyalty": "Müşteri Sadakati",
+      "loyaltyDesc": "Oyunlaştırılmış sadakat sistemleri ve dijital kampanyalarla müşterilerinizi tekrar kazanın."
+    },
+    "benefits": {
+      "faster": "%30 Daha Hızlı Sipariş Döngüsü",
+      "increase": "%20 Ortalama Sepet Tutarı Artışı",
+      "savings": "Kağıt Menü Maliyetinden %100 Tasarruf"
+    },
+    "showcaseList": {
+      "liveTracking": "Canlı Sipariş Takibi",
+      "kds": "Mutfak Ekranı (KDS) Entegrasyonu",
+      "waiterCall": "Garson Çağrı Sistemi",
+      "multiLang": "Çoklu Dil Desteği"
+    },
+    "dashboardPreview": {
+      "title": "Yönetim Paneli",
+      "clickToView": "İncelemek için tıklayın",
+      "dailyRevenue": "Günlük Ciro",
+      "activeTable": "Aktif Masa"
+    }
+  },
+  "Navigation": {
+    "home": "Anasayfa",
+    "features": "Özellikler",
+    "pricing": "Fiyatlandırma",
+    "integrations": "Entegrasyonlar",
+    "roadmap": "Yol Haritası",
+    "about": "Hakkımızda",
+    "careers": "Kariyer",
+    "blog": "Blog",
+    "contact": "İletişim",
+    "privacy": "Gizlilik Politikası",
+    "terms": "Kullanım Şartları",
+    "kvkk": "KVKK"
+  },
+  "Footer": {
+    "product": "Ürün",
+    "company": "Şirket",
+    "legal": "Yasal",
+    "description": "Restoran ve kafeler için yeni nesil dijital menü ve sipariş yönetim sistemi.",
+    "rights": "© 2024 QR Team Cafe. Tüm hakları saklıdır."
+  },
+  "NotFound": {
+    "title": "Sayfa Bulunamadı",
+    "description": "Aradığınız sayfayı bulamadık. Silinmiş, taşınmış veya hiç var olmamış olabilir.",
+    "homeButton": "Anasayfaya Dön"
+  },
+  "ContactPage": {
+    "badge": "Bize Ulaşın",
+    "title": "Size Nasıl Yardımcı",
+    "titleHighlight": "Olabiliriz?",
+    "subtitle": "Sorularınız, önerileriniz veya işbirliği talepleriniz için ekibimizle iletişime geçin. Size en kısa sürede dönüş yapacağız.",
+    "emailTitle": "E-posta",
+    "emailDesc": "Genel sorular ve destek için",
+    "phoneTitle": "Telefon",
+    "phoneDesc": "Hafta içi 09:00 - 18:00",
+    "officeTitle": "Ofis",
+    "officeDesc": "Bizi ziyaret edin",
+    "address": "Teknoloji Vadisi, B Blok No:42<br />Maslak, İstanbul",
+    "formTitle": "Mesaj Gönderin",
+    "formName": "Adınız Soyadınız",
+    "formEmail": "E-posta Adresiniz",
+    "formSubject": "Konu",
+    "formSubjectPlaceholder": "Hangi konuda yardımcı olabiliriz?",
+    "formMessage": "Mesajınız",
+    "formMessagePlaceholder": "Mesajınızı buraya yazın...",
+    "formSubmit": "Gönder",
+    "quickResponse": "Hızlı Yanıt",
+    "avgTime": "Ort. 2 saat içinde",
+    "globalSupport": "Global Destek",
+    "languages": "Türkçe & İngilizce"
+  },
+  "PricingPage": {
+    "title": "Basit ve Şeffaf",
+    "titleHighlight": "Fiyatlandırma",
+    "subtitle": "İşletmenizin büyüklüğüne uygun paketi seçin. Gizli ücret yok, taahhüt yok.",
+    "popular": "En Popüler",
+    "plans": {
+      "starter": {
+        "name": "Başlangıç",
+        "price": "Ücretsiz",
+        "description": "Küçük işletmeler ve yeni başlayanlar için ideal.",
+        "cta": "Hemen Başla",
+        "features": {
+          "0": "Dijital QR Menü",
+          "1": "Sınırsız Ürün Ekleme",
+          "2": "Temel Raporlama",
+          "3": "E-posta Desteği"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "₺499/ay",
+        "description": "Büyüyen işletmeler için gelişmiş özellikler.",
+        "cta": "Deneme Başlat",
+        "features": {
+          "0": "Her Şey Dahil (Başlangıç)",
+          "1": "Masa Yönetimi",
+          "2": "Garson Çağırma Sistemi",
+          "3": "Çoklu Dil Desteği",
+          "4": "7/24 Canlı Destek"
+        }
+      },
+      "enterprise": {
+        "name": "Kurumsal",
+        "price": "Özel Teklif",
+        "description": "Zincir restoranlar ve büyük işletmeler için.",
+        "cta": "İletişime Geç",
+        "features": {
+          "0": "Her Şey Dahil (Pro)",
+          "1": "Özel Entegrasyonlar",
+          "2": "API Erişimi",
+          "3": "Özel Müşteri Temsilcisi",
+          "4": "Sınırsız Şube Yönetimi"
+        }
+      }
+    }
+  }
+}

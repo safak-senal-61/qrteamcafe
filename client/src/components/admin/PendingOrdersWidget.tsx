@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { io, Socket } from 'socket.io-client';
 import { API_URL, SOCKET_URL } from '@/lib/api';
 import { Bell, Receipt, X } from 'lucide-react';
