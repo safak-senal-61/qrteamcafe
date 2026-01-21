@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { API_URL } from '@/lib/api';
@@ -32,7 +34,7 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = isOpen !== undefined;
   const open = isControlled ? isOpen : internalOpen;
-  const setOpen = isControlled ? onOpenChange : setInternalOpen;
+  const setOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
   
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('cart');

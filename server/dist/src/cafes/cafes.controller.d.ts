@@ -34,11 +34,11 @@ export declare class CafesController {
             } & {
                 id: string;
                 createdAt: Date;
+                orderId: string;
+                productId: string;
                 quantity: number;
                 unitPrice: import("@prisma/client-runtime-utils").Decimal;
                 totalPrice: import("@prisma/client-runtime-utils").Decimal;
-                productId: string;
-                orderId: string;
             })[];
         } & {
             id: string;

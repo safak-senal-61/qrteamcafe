@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { CategoryNav } from '@/components/menu/CategoryNav';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
-import { OrdersSheet } from '@/components/menu/OrdersSheet';
+// OrdersSheet is no longer used in this component
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
 import { Badge } from '@/components/ui/badge';
 import { Search, Loader2 } from 'lucide-react';
