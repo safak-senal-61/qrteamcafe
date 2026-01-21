@@ -33,6 +33,7 @@ export class CafesService {
         paymentMethods: data.paymentMethods,
         logoUrl: data.logoUrl,
         googleMapsUrl: data.googleMapsUrl,
+        showProductRatings: data.showProductRatings,
       },
     });
   }

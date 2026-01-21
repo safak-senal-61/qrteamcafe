@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Bell,
   Receipt,
+  MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -38,9 +39,9 @@ const menuItems = [
     icon: UtensilsCrossed,
   },
   {
-    title: 'Kategoriler',
-    href: '/admin/categories',
-    icon: List,
+    title: 'Değerlendirmeler',
+    href: '/admin/reviews',
+    icon: MessageSquare,
   },
   {
     title: 'Masalar & QR',

@@ -22,8 +22,20 @@ export class ProductsService {
       include: {
         category: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { sortOrder: 'asc' },
     });
+  }
+
+  async reorder(items: { id: string; sortOrder: number }[]) {
+    // Toplu güncelleme işlemi
+    return this.prisma.$transaction(
+      items.map((item) =>
+        this.prisma.product.update({
+          where: { id: item.id },
+          data: { sortOrder: item.sortOrder },
+        }),
+      ),
+    );
   }
 
   async findOne(id: string) {
@@ -59,6 +71,51 @@ export class ProductsService {
     await this.findOne(id);
     return this.prisma.product.delete({
       where: { id },
+    });
+  }
+
+  async getRecommendations(productId: string, limit = 3) {
+    // 1. Find orders that contain this product
+    const ordersWithProduct = await this.prisma.orderItem.findMany({
+      where: { productId },
+      select: { orderId: true },
+      distinct: ['orderId'],
+      take: 50 // Analyze last 50 orders for performance
+    });
+    
+    const orderIds = ordersWithProduct.map(o => o.orderId);
+    if (orderIds.length === 0) return [];
+
+    // 2. Find other items in these orders
+    const relatedItems = await this.prisma.orderItem.groupBy({
+      by: ['productId'],
+      where: {
+        orderId: { in: orderIds },
+        productId: { not: productId }
+      },
+      _count: {
+        productId: true
+      },
+      orderBy: {
+        _count: {
+          productId: 'desc'
+        }
+      },
+      take: limit
+    });
+
+    // 3. Get product details
+    const recommendedProductIds = relatedItems.map(item => item.productId);
+    return this.prisma.product.findMany({
+      where: { id: { in: recommendedProductIds }, isAvailable: true }
+    });
+  }
+
+  async toggleChefRecommendation(id: string, isChefRecommended: boolean) {
+    await this.findOne(id);
+    return this.prisma.product.update({
+      where: { id },
+      data: { isChefRecommended }
     });
   }
 }

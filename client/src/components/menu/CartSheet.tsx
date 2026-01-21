@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { API_URL } from '@/lib/api';
 import { toast } from 'sonner';
-import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Loader2, ClipboardList, Clock, CheckCircle2, XCircle, ChefHat } from 'lucide-react';
+import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Loader2, ClipboardList, Clock, CheckCircle2, XCircle, ChefHat, Star } from 'lucide-react';
+import { ReviewDialog } from './ReviewDialog';
 import {
   Sheet,
   SheetContent,
@@ -37,6 +38,7 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
   const setOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
   
   const [loading, setLoading] = useState(false);
+  const [reviewOrder, setReviewOrder] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState('cart');
   const { items, removeItem, updateQuantity, clearCart } = useCartStore();
   const totalPrice = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -363,6 +365,20 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
                            </Button>
                          </div>
                        )}
+
+                       {order.status === 'DELIVERED' && (
+                         <div className="mt-4 pl-3">
+                           <Button 
+                             variant="outline" 
+                             size="sm" 
+                             className="w-full border-primary/20 text-primary hover:bg-primary/5"
+                             onClick={() => setReviewOrder(order)}
+                           >
+                             <Star className="w-4 h-4 mr-2" />
+                             Siparişi Değerlendir
+                           </Button>
+                         </div>
+                       )}
                     </div>
                   ))}
                   
@@ -394,6 +410,15 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
           </TabsContent>
         </Tabs>
       </SheetContent>
+
+      {reviewOrder && (
+        <ReviewDialog
+          isOpen={!!reviewOrder}
+          onClose={() => setReviewOrder(null)}
+          orderItems={reviewOrder.items}
+          orderId={reviewOrder.id}
+        />
+      )}
     </Sheet>
   );
 }

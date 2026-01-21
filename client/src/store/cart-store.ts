@@ -9,6 +9,10 @@ export interface Product {
   image: string;
   category: string;
   stock: number;
+  originalPrice?: number;
+  isChefRecommended?: boolean;
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 export interface CartItem extends Product {

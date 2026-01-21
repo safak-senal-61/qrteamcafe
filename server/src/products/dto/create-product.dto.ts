@@ -33,4 +33,14 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   isAvailable?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({}, { message: 'Stok sayı olmalıdır.' })
+  stock?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({}, { message: 'İndirimsiz fiyat sayı olmalıdır.' })
+  originalPrice?: number;
 }

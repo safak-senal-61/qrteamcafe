@@ -5,47 +5,58 @@ export declare class CategoriesService {
     private prisma;
     constructor(prisma: PrismaService);
     create(cafeId: string, createCategoryDto: CreateCategoryDto): Promise<{
-        name: string;
         id: string;
         cafeId: string;
+        name: string;
+        sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
-        sortOrder: number;
     }>;
     findAll(cafeId: string): Promise<({
         _count: {
             products: number;
         };
     } & {
-        name: string;
         id: string;
         cafeId: string;
+        name: string;
+        sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
-        sortOrder: number;
     })[]>;
-    findOne(id: string): Promise<{
-        name: string;
+    reorder(items: {
+        id: string;
+        sortOrder: number;
+    }[]): Promise<{
         id: string;
         cafeId: string;
+        name: string;
+        sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
+    }[]>;
+    findOne(id: string): Promise<{
+        id: string;
+        cafeId: string;
+        name: string;
         sortOrder: number;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<{
-        name: string;
         id: string;
         cafeId: string;
+        name: string;
+        sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
-        sortOrder: number;
     }>;
     remove(id: string): Promise<{
-        name: string;
         id: string;
         cafeId: string;
+        name: string;
+        sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
-        sortOrder: number;
     }>;
 }

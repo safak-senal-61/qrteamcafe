@@ -10,27 +10,27 @@ export declare class SuperAdminService {
     }>;
     getPendingCafes(): Promise<({
         admins: {
-            email: string;
-            name: string;
             id: string;
             cafeId: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            email: string;
             passwordHash: string;
             isActive: boolean;
             isApproved: boolean;
             resetCode: string | null;
             resetCodeExpires: Date | null;
-            createdAt: Date;
-            updatedAt: Date;
         }[];
     } & {
-        phone: string | null;
-        email: string | null;
-        name: string;
         id: string;
-        isActive: boolean;
+        name: string;
+        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        phone: string | null;
+        email: string | null;
+        isActive: boolean;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -44,30 +44,31 @@ export declare class SuperAdminService {
         logoUrl: string | null;
         googleMapsUrl: string | null;
         status: string;
+        showProductRatings: boolean;
     })[]>;
     getAllCafes(): Promise<({
         admins: {
-            email: string;
-            name: string;
             id: string;
             cafeId: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            email: string;
             passwordHash: string;
             isActive: boolean;
             isApproved: boolean;
             resetCode: string | null;
             resetCodeExpires: Date | null;
-            createdAt: Date;
-            updatedAt: Date;
         }[];
     } & {
-        phone: string | null;
-        email: string | null;
-        name: string;
         id: string;
-        isActive: boolean;
+        name: string;
+        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        phone: string | null;
+        email: string | null;
+        isActive: boolean;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -81,6 +82,7 @@ export declare class SuperAdminService {
         logoUrl: string | null;
         googleMapsUrl: string | null;
         status: string;
+        showProductRatings: boolean;
     })[]>;
     getDashboardStats(): Promise<{
         totalCafes: number;
@@ -91,20 +93,20 @@ export declare class SuperAdminService {
     }>;
     getSettings(): Promise<Record<string, string>>;
     updateSetting(key: string, value: string): Promise<{
-        updatedAt: Date;
         description: string | null;
+        updatedAt: Date;
         key: string;
         value: string;
     }>;
     approveCafe(cafeId: string): Promise<{
-        phone: string | null;
-        email: string | null;
-        name: string;
         id: string;
-        isActive: boolean;
+        name: string;
+        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        phone: string | null;
+        email: string | null;
+        isActive: boolean;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -118,16 +120,17 @@ export declare class SuperAdminService {
         logoUrl: string | null;
         googleMapsUrl: string | null;
         status: string;
+        showProductRatings: boolean;
     }>;
     rejectCafe(cafeId: string): Promise<{
-        phone: string | null;
-        email: string | null;
-        name: string;
         id: string;
-        isActive: boolean;
+        name: string;
+        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        phone: string | null;
+        email: string | null;
+        isActive: boolean;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -141,5 +144,6 @@ export declare class SuperAdminService {
         logoUrl: string | null;
         googleMapsUrl: string | null;
         status: string;
+        showProductRatings: boolean;
     }>;
 }

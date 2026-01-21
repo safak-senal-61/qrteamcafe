@@ -8,12 +8,15 @@ import { useCartStore, Product } from '@/store/cart-store';
 import { Badge } from '@/components/ui/badge';
 import { ProductDetailDialog } from './ProductDetailDialog';
 
+import { Star } from 'lucide-react';
+
 interface ProductCardProps {
   product: Product;
   index: number;
+  showRating?: boolean;
 }
 
-export function ProductCard({ product, index }: ProductCardProps) {
+export function ProductCard({ product, index, showRating = true }: ProductCardProps) {
   const { items } = useCartStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
@@ -22,12 +25,16 @@ export function ProductCard({ product, index }: ProductCardProps) {
     .filter((item) => item.id === product.id)
     .reduce((acc, item) => acc + item.quantity, 0);
 
+  const rating = Number(product.averageRating) || 0;
+  const reviewCount = product.reviewCount || 0;
+
   return (
     <>
       <ProductDetailDialog 
         product={product} 
         open={isDialogOpen} 
         onOpenChange={setIsDialogOpen} 
+        showRating={showRating}
       />
       
       <motion.div
@@ -51,6 +58,16 @@ export function ProductCard({ product, index }: ProductCardProps) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
+            {showRating && rating > 0 && (
+              <div className="absolute top-3 left-3 z-10">
+                <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  <span className="text-xs font-bold text-gray-800">{rating.toFixed(1)}</span>
+                  <span className="text-[10px] text-gray-500">({reviewCount})</span>
+                </div>
+              </div>
+            )}
+            
             <AnimatePresence>
               {totalQuantity > 0 && (
                 <motion.div
@@ -73,6 +90,11 @@ export function ProductCard({ product, index }: ProductCardProps) {
                 {product.name}
               </h3>
               <div className="flex flex-col items-end gap-1">
+                  {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
+                    <span className="text-xs text-muted-foreground line-through decoration-red-500/50">
+                      {Number(product.originalPrice).toFixed(2)} ₺
+                    </span>
+                  )}
                   <span className="font-extrabold text-primary text-lg whitespace-nowrap bg-primary/10 px-2 py-1 rounded-md">
                   {Number(product.price).toFixed(2)} ₺
                   </span>

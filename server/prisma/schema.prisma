@@ -31,6 +31,7 @@ model Cafe {
 
   isActive  Boolean     @default(true) @map("is_active")
   status    String      @default("PENDING") // PENDING, APPROVED, REJECTED
+  showProductRatings Boolean @default(true) @map("show_product_ratings")
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
 
@@ -117,15 +118,21 @@ model Product {
   name        String
   description String?
   price       Decimal     @db.Decimal(10, 2)
+  originalPrice Decimal?  @map("original_price") @db.Decimal(10, 2)
   stock       Int         @default(0)
+  sortOrder   Int         @default(0) @map("sort_order")
   imageUrl    String?     @map("image_url")
   isAvailable Boolean     @default(true) @map("is_available")
+  isChefRecommended Boolean @default(false) @map("is_chef_recommended")
+  averageRating Decimal   @default(0) @db.Decimal(3, 2) @map("average_rating")
+  reviewCount   Int       @default(0) @map("review_count")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
   cafe        Cafe        @relation(fields: [cafeId], references: [id], onDelete: Cascade)
   category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   orderItems  OrderItem[]
+  reviews     Review[]
 
   @@map("products")
 }
@@ -192,4 +199,20 @@ model Payment {
   order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("payments")
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  productId   String   @map("product_id")
+  orderId     String?  @map("order_id")
+  customerName String? @map("customer_name")
+  rating      Int
+  comment     String?
+  adminScore  Int?     @map("admin_score")
+  adminReply  String?  @map("admin_reply")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
 }

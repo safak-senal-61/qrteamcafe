@@ -37,8 +37,17 @@ let ProductsController = class ProductsController {
     findAll(cafeId) {
         return this.productsService.findAll(cafeId);
     }
+    reorder(items) {
+        return this.productsService.reorder(items);
+    }
     findOne(id) {
         return this.productsService.findOne(id);
+    }
+    getRecommendations(id) {
+        return this.productsService.getRecommendations(id);
+    }
+    toggleChefRecommendation(id, isChefRecommended) {
+        return this.productsService.toggleChefRecommendation(id, isChefRecommended);
     }
     updateStock(id, quantity) {
         return this.productsService.updateStock(id, Number(quantity));
@@ -84,12 +93,34 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findAll", null);
 __decorate([
+    (0, common_1.Patch)('reorder'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Array]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "reorder", null);
+__decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Get)(':id/recommendations'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "getRecommendations", null);
+__decorate([
+    (0, common_1.Patch)(':id/chef-recommendation'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('isChefRecommended')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Boolean]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "toggleChefRecommendation", null);
 __decorate([
     (0, common_1.Patch)(':id/stock'),
     __param(0, (0, common_1.Param)('id')),

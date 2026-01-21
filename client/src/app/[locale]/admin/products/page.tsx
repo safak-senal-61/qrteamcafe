@@ -1,200 +1,314 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { Reorder, AnimatePresence, motion } from 'framer-motion';
+import { 
+  Plus, 
+  Pencil, 
+  Trash2, 
+  GripVertical, 
+  Search, 
+  Image as ImageIcon,
+  Loader2,
+  MoreVertical,
+  Check,
+  X,
+  Save
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { API_URL } from '@/lib/api';
+import { cn } from '@/lib/utils';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Loader2, Image as ImageIcon, Upload } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { API_URL } from '@/lib/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { CATEGORY_SUGGESTIONS, getProductSuggestions } from '@/constants/menu-suggestions';
 
-export default function ProductsPage() {
-  const [products, setProducts] = useState<any[]>([]);
+export default function MenuPage() {
   const [categories, setCategories] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]); // All products
+  const [viewProducts, setViewProducts] = useState<any[]>([]); // Displayed products
   const [loading, setLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    categoryId: '', 
-    price: '', 
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Dialog States
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  
+  // Edit States
+  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+
+  // Form States
+  const [categoryForm, setCategoryForm] = useState({ name: '' });
+  const [productForm, setProductForm] = useState({
+    name: '',
+    categoryId: '',
+    price: '',
+    originalPrice: '',
+    stock: '',
     description: '',
     imageUrl: '',
-    isAvailable: true 
+    isAvailable: true,
+    isChefRecommended: false
   });
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [pendingProducts, setPendingProducts] = useState<any[]>([]);
 
-  const getCafeId = () => {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return null;
-    return JSON.parse(userStr).cafeId;
-  };
+  // Initial Fetch
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Filter products when category or search changes
+  useEffect(() => {
+    let filtered = [...products];
+
+    if (selectedCategoryId) {
+      filtered = filtered.filter(p => p.categoryId === selectedCategoryId);
+      // Sort by sortOrder
+      filtered.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    }
+
+    if (searchTerm) {
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setViewProducts(filtered);
+  }, [products, selectedCategoryId, searchTerm]);
 
   const fetchData = async () => {
-    const cafeId = getCafeId();
-    if (!cafeId) return;
-
     try {
-      const [prodRes, catRes] = await Promise.all([
-        fetch(`${API_URL}/products?cafeId=${cafeId}`),
-        fetch(`${API_URL}/categories?cafeId=${cafeId}`)
+      setLoading(true);
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return;
+      const user = JSON.parse(userStr);
+      const cafeId = user.cafeId;
+
+      const [catsRes, prodsRes] = await Promise.all([
+        fetch(`${API_URL}/categories?cafeId=${cafeId}`),
+        fetch(`${API_URL}/products?cafeId=${cafeId}`)
       ]);
 
-      if (prodRes.ok && catRes.ok) {
-        setProducts(await prodRes.json());
-        setCategories(await catRes.json());
+      if (catsRes.ok && prodsRes.ok) {
+        const cats = await catsRes.json();
+        const prods = await prodsRes.json();
+        
+        // Sort categories by sortOrder
+        cats.sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        
+        setCategories(cats);
+        setProducts(prods);
+
+        // Select first category by default if none selected
+        if (!selectedCategoryId && cats.length > 0) {
+          setSelectedCategoryId(cats[0].id);
+        }
       }
     } catch (error) {
-      toast.error('Veriler yüklenemedi.');
+      toast.error('Veriler yüklenirken hata oluştu.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // --- Category Actions ---
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    
-    const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append('file', file);
+  const handleCategoryReorder = (newOrder: any[]) => {
+    setCategories(newOrder);
+  };
 
-    setUploading(true);
+  const saveCategoryOrder = async () => {
     try {
-      const res = await fetch(`${API_URL}/products/upload`, {
-        method: 'POST',
-        body: formData,
+      const items = categories.map((cat, index) => ({
+        id: cat.id,
+        sortOrder: index
+      }));
+      
+      await fetch(`${API_URL}/categories/reorder`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(items)
+      });
+      // Silent success or optional toast
+    } catch (error) {
+      toast.error('Sıralama kaydedilemedi.');
+    }
+  };
+
+  // Trigger save when drag ends (using a timeout to debounce/wait for drop)
+  // Since Framer Motion's onReorder triggers every frame, we need a way to know when it ends.
+  // We can use onDragEnd on the Reorder.Item, but easier is to just save on every change with debounce?
+  // Or just provide a "Save Order" button? No, user wants "less manual".
+  // Let's use a simple debounce effect on `categories`.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (categories.length > 0) saveCategoryOrder();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [categories]);
+
+
+  const handleSaveCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return;
+      const user = JSON.parse(userStr);
+      const cafeId = user.cafeId;
+
+      const url = editingCategory 
+        ? `${API_URL}/categories/${editingCategory.id}`
+        : `${API_URL}/categories?cafeId=${cafeId}`;
+      
+      const method = editingCategory ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(categoryForm)
       });
 
       if (res.ok) {
-        const data = await res.json();
-        setFormData(prev => ({ ...prev, imageUrl: data.url }));
-        toast.success('Resim yüklendi.');
-      } else {
-        toast.error('Resim yüklenemedi.');
-      }
-    } catch (error) {
-      toast.error('Bir hata oluştu.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleAddPending = () => {
-    if (!formData.name || !formData.price || !formData.categoryId) {
-      toast.error('Lütfen gerekli alanları doldurun.');
-      return;
-    }
-
-    const category = categories.find(c => c.id === formData.categoryId);
-
-    setPendingProducts([
-      ...pendingProducts,
-      { ...formData, id: Date.now().toString(), categoryName: category?.name }
-    ]);
-
-    // Formu temizle ama kategoriyi koru
-    setFormData(prev => ({
-      ...prev,
-      name: '',
-      price: '',
-      description: '',
-      imageUrl: '',
-      // categoryId ve isAvailable korunur
-    }));
-    toast.success('Listeye eklendi.');
-  };
-
-  const removePending = (id: string) => {
-    setPendingProducts(pendingProducts.filter(p => p.id !== id));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cafeId = getCafeId();
-    if (!cafeId) return;
-
-    try {
-      if (editingId) {
-        if (!formData.name || !formData.price) {
-          toast.error('Lütfen ad ve fiyat alanlarını doldurun.');
-          return;
-        }
-
-        const res = await fetch(`${API_URL}/products/${editingId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...formData,
-            price: parseFloat(formData.price),
-          }),
-        });
-
-        if (res.ok) {
-          toast.success('Ürün güncellendi.');
-          fetchData();
-          setIsDialogOpen(false);
-          resetForm();
-        } else {
-          const error = await res.json();
-          toast.error(error.message || 'İşlem başarısız.');
-        }
-      } else {
-        // Yeni Ekleme (Tekli veya Çoklu)
-        let productsToSave = [...pendingProducts];
-
-        // Eğer formda doldurulmuş geçerli veri varsa onu da listeye dahil et
-        if (formData.name && formData.price && formData.categoryId) {
-           productsToSave.push({ 
-             ...formData, 
-             id: Date.now().toString(), // id gerekli olabilir
-             categoryName: categories.find(c => c.id === formData.categoryId)?.name 
-           });
-        } else if (productsToSave.length === 0) {
-           // Eğer liste boşsa ve form da eksikse uyarı ver
-           toast.error('Lütfen eklenecek ürün girin veya mevcut formu doldurun.');
-           return;
-        }
-
-        const promises = productsToSave.map(product => {
-          return fetch(`${API_URL}/products?cafeId=${cafeId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: product.name,
-              categoryId: product.categoryId,
-              price: parseFloat(product.price),
-              description: product.description,
-              imageUrl: product.imageUrl,
-              isAvailable: product.isAvailable,
-            }),
-          });
-        });
-
-        await Promise.all(promises);
-        toast.success(`${productsToSave.length} ürün eklendi.`);
+        toast.success(editingCategory ? 'Kategori güncellendi' : 'Kategori eklendi');
+        setIsCategoryDialogOpen(false);
+        setEditingCategory(null);
+        setCategoryForm({ name: '' });
         fetchData();
-        setIsDialogOpen(false);
-        setPendingProducts([]);
-        resetForm();
       }
     } catch (error) {
-      toast.error('Hata oluştu.');
+      toast.error('İşlem başarısız.');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Kategoriyi ve içindeki ürünleri silmek istediğinize emin misiniz?')) return;
+    try {
+      const res = await fetch(`${API_URL}/categories/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Kategori silindi.');
+        if (selectedCategoryId === id) setSelectedCategoryId(null);
+        fetchData();
+      }
+    } catch (error) {
+      toast.error('Silme işlemi başarısız.');
+    }
+  };
 
+  // --- Product Actions ---
+
+  const handleProductReorder = (newOrder: any[]) => {
+    // Optimistically update sortOrder in the objects
+    const updatedOrder = newOrder.map((item, index) => ({
+      ...item,
+      sortOrder: index
+    }));
+    
+    setViewProducts(updatedOrder);
+
+    // Update main products state to preserve order when switching categories
+    if (!searchTerm && selectedCategoryId) {
+      setProducts(prev => {
+        const otherProducts = prev.filter(p => p.categoryId !== selectedCategoryId);
+        return [...otherProducts, ...updatedOrder];
+      });
+    }
+  };
+
+  // Save product order when viewProducts changes (and we are in a category view)
+  useEffect(() => {
+    if (!selectedCategoryId || searchTerm) return; // Only reorder when viewing a specific category without search
+    
+    const timer = setTimeout(async () => {
+      if (viewProducts.length > 0) {
+        try {
+          const items = viewProducts.map((prod, index) => ({
+            id: prod.id,
+            sortOrder: index
+          }));
+          
+          await fetch(`${API_URL}/products/reorder`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(items)
+          });
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [viewProducts, selectedCategoryId, searchTerm]);
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return;
+      const user = JSON.parse(userStr);
+      const cafeId = user.cafeId;
+
+      const url = editingProduct 
+        ? `${API_URL}/products/${editingProduct.id}`
+        : `${API_URL}/products?cafeId=${cafeId}`;
+      
+      const method = editingProduct ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...productForm,
+          price: parseFloat(productForm.price),
+          originalPrice: productForm.originalPrice ? parseFloat(productForm.originalPrice) : null,
+          stock: parseInt(productForm.stock) || 0,
+          isChefRecommended: productForm.isChefRecommended
+        })
+      });
+
+      if (res.ok) {
+        toast.success(editingProduct ? 'Ürün güncellendi' : 'Ürün eklendi');
+        setIsProductDialogOpen(false);
+        setEditingProduct(null);
+        resetProductForm();
+        fetchData();
+      }
+    } catch (error) {
+      toast.error('İşlem başarısız.');
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
     try {
       const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -206,318 +320,468 @@ export default function ProductsPage() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({ 
-      name: '', 
-      categoryId: '', 
-      price: '', 
+  const handleToggleAvailability = async (product: any) => {
+    try {
+      // Optimistic update
+      const updatedProducts = products.map(p => 
+        p.id === product.id ? { ...p, isAvailable: !p.isAvailable } : p
+      );
+      setProducts(updatedProducts);
+
+      await fetch(`${API_URL}/products/${product.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isAvailable: !product.isAvailable })
+      });
+      toast.success('Durum güncellendi');
+    } catch (error) {
+      toast.error('Güncelleme başarısız');
+      fetchData(); // Revert
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setUploading(true);
+    try {
+      const res = await fetch(`${API_URL}/products/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      setProductForm(prev => ({ ...prev, imageUrl: data.url }));
+    } catch (error) {
+      toast.error('Resim yüklenemedi');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const resetProductForm = () => {
+    setProductForm({
+      name: '',
+      categoryId: selectedCategoryId || '',
+      price: '',
+      originalPrice: '',
+      stock: '',
       description: '',
       imageUrl: '',
-      isAvailable: true 
+      isAvailable: true,
+      isChefRecommended: false
     });
-    setEditingId(null);
   };
 
-  const getCategoryExamples = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId);
-    if (!category) return [];
-
-    const name = category.name.toLowerCase();
-    
-    if (name.includes('sıcak') || name.includes('çay') || name.includes('kahve')) {
-      return ['Çay', 'Türk Kahvesi', 'Latte', 'Cappuccino', 'Sıcak Çikolata', 'Bitki Çayı', 'Filtre Kahve'];
+  const openProductDialog = (product?: any) => {
+    if (product) {
+      setEditingProduct(product);
+      setProductForm({
+        name: product.name,
+        categoryId: product.categoryId,
+        price: product.price,
+        originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
+        stock: product.stock !== undefined ? product.stock.toString() : '0',
+        description: product.description || '',
+        imageUrl: product.imageUrl || '',
+        isAvailable: product.isAvailable,
+        isChefRecommended: product.isChefRecommended || false
+      });
+    } else {
+      setEditingProduct(null);
+      resetProductForm();
     }
-    if (name.includes('soğuk') || name.includes('kola') || name.includes('su') || name.includes('meşrubat')) {
-      return ['Su', 'Kola', 'Fanta', 'Ayran', 'Limonata', 'Soğuk Kahve', 'Meyve Suyu', 'Ice Tea', 'Soda'];
-    }
-    if (name.includes('tatlı') || name.includes('pasta')) {
-      return ['Magnolia', 'Cheesecake', 'Tiramisu', 'Sütlaç', 'Trileçe', 'Baklava', 'San Sebastian', 'Waffle', 'Dondurma'];
-    }
-    if (name.includes('yemek') || name.includes('ızgara') || name.includes('tavuk') || name.includes('köfte') || name.includes('ana')) {
-      return ['Köfte', 'Tavuk Izgara', 'Hamburger', 'Cheeseburger', 'Pizza', 'Makarna', 'Mantı', 'Çökertme'];
-    }
-    if (name.includes('kahvaltı') || name.includes('tost') || name.includes('omlet')) {
-      return ['Serpme Kahvaltı', 'Kahvaltı Tabağı', 'Menemen', 'Omlet', 'Kaşarlı Tost', 'Karışık Tost', 'Sucuklu Yumurta'];
-    }
-    if (name.includes('atıştırma') || name.includes('cips') || name.includes('börek') || name.includes('ara')) {
-      return ['Patates Kızartması', 'Soğan Halkası', 'Sigara Böreği', 'Sosis Tabağı', 'Çıtır Tavuk', 'Nugget'];
-    }
-    if (name.includes('nargile')) {
-      return ['Elma', 'Nane', 'Kavun', 'Çilek', 'Love 66', 'Lady Killer', 'Üzüm', 'Yaban Mersini'];
-    }
-    if (name.includes('salata')) {
-      return ['Sezar Salata', 'Ton Balıklı Salata', 'Çoban Salata', 'Mevsim Salata', 'Hellim Salata'];
-    }
-    if (name.includes('makarna')) {
-      return ['Penne Arrabbiata', 'Fettuccine Alfredo', 'Spaghetti Bolognese', 'Mantı'];
-    }
-    if (name.includes('burger')) {
-      return ['Hamburger', 'Cheeseburger', 'Tavuk Burger', 'Steak Burger'];
-    }
-    
-    return [];
+    setIsProductDialogOpen(true);
   };
 
-  const selectedCategoryExamples = getCategoryExamples(formData.categoryId);
+  if (loading && categories.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Ürünler</h2>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="mr-2 h-4 w-4" /> Yeni Ürün
+    <div className="h-[calc(100vh-2rem)] flex flex-col gap-4">
+      <div className="flex items-center justify-between shrink-0">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Menü Yönetimi</h2>
+          <p className="text-muted-foreground text-sm">
+            Kategorileri ve ürünleri sürükleyip bırakarak düzenleyebilirsiniz.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {/* Mobile view might need adjustment, keeping simple for now */}
+        </div>
+      </div>
+
+      <div className="flex-1 flex gap-6 min-h-0">
+        {/* Categories Sidebar */}
+        <div className="w-1/3 md:w-1/4 flex flex-col gap-4 min-w-[250px]">
+          <div className="flex items-center justify-between shrink-0">
+            <h3 className="font-semibold">Kategoriler</h3>
+            <Button size="sm" variant="outline" onClick={() => {
+              setEditingCategory(null);
+              setCategoryForm({ name: '' });
+              setIsCategoryDialogOpen(true);
+            }}>
+              <Plus className="h-4 w-4 mr-1" /> Ekle
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingId ? 'Ürün Düzenle' : 'Yeni Ürün Ekle'}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              
-              <div className="grid grid-cols-12 gap-4">
-                <div className="col-span-8 space-y-2">
-                  <Label htmlFor="category">Kategori</Label>
+          </div>
+
+          <ScrollArea className="flex-1 -mx-2 px-2">
+            <Reorder.Group axis="y" values={categories} onReorder={handleCategoryReorder} className="space-y-2">
+              {categories.map((category) => (
+                <Reorder.Item key={category.id} value={category}>
+                  <div 
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground shadow-sm transition-all cursor-pointer hover:border-primary/50 group",
+                      selectedCategoryId === category.id && "border-primary bg-primary/5"
+                    )}
+                    onClick={() => setSelectedCategoryId(category.id)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <span className="font-medium">{category.name}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {category._count?.products || 0}
+                      </Badge>
+                    </div>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                          setEditingCategory(category);
+                          setCategoryForm({ name: category.name });
+                          setIsCategoryDialogOpen(true);
+                        }}>
+                          <Pencil className="mr-2 h-4 w-4" /> Düzenle
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteCategory(category.id)}>
+                          <Trash2 className="mr-2 h-4 w-4" /> Sil
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
+            
+            {categories.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
+                Henüz kategori yok.
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+
+        {/* Products Main Area */}
+        <div className="flex-1 flex flex-col gap-4 bg-muted/10 rounded-xl border p-4">
+          <div className="flex items-center justify-between gap-4 shrink-0">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Ürünlerde ara..."
+                className="pl-9 bg-background"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button onClick={() => openProductDialog()} disabled={!selectedCategoryId}>
+              <Plus className="mr-2 h-4 w-4" /> Ürün Ekle
+            </Button>
+          </div>
+
+          <ScrollArea className="flex-1 pr-4">
+            {selectedCategoryId ? (
+              <Reorder.Group axis="y" values={viewProducts} onReorder={handleProductReorder} className="space-y-2">
+                <AnimatePresence initial={false}>
+                  {viewProducts.map((product) => (
+                    <Reorder.Item key={product.id} value={product} dragListener={!searchTerm}>
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:shadow-md transition-all group"
+                      >
+                        {!searchTerm && (
+                          <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        )}
+                        
+                        <div className="h-12 w-12 rounded-md bg-secondary shrink-0 overflow-hidden relative">
+                          {product.imageUrl ? (
+                            <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <ImageIcon className="h-5 w-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-muted-foreground" />
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium truncate">{product.name}</h4>
+                            {!product.isAvailable && (
+                              <Badge variant="destructive" className="h-5 text-[10px] px-1.5">Pasif</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">{product.description}</p>
+                        </div>
+
+                        <div className="flex items-center gap-4 shrink-0">
+                          <div className="flex flex-col items-end">
+                            {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
+                              <div className="text-xs text-muted-foreground line-through tabular-nums">
+                                ₺{Number(product.originalPrice).toFixed(2)}
+                              </div>
+                            )}
+                            <div className={cn("font-semibold tabular-nums", product.originalPrice && Number(product.originalPrice) > Number(product.price) && "text-green-600")}>
+                              ₺{Number(product.price).toFixed(2)}
+                            </div>
+                            <div className={cn("text-xs font-medium px-1.5 py-0.5 rounded", product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
+                              {product.stock} adet
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-1 border rounded-md p-1 bg-background">
+                             <Switch 
+                                checked={product.isAvailable} 
+                                onCheckedChange={() => handleToggleAvailability(product)}
+                                className="scale-75"
+                             />
+                          </div>
+
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openProductDialog(product)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600" onClick={() => handleDeleteProduct(product.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </Reorder.Item>
+                  ))}
+                </AnimatePresence>
+              </Reorder.Group>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <p>Ürünleri görmek için bir kategori seçin.</p>
+              </div>
+            )}
+            
+            {selectedCategoryId && viewProducts.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                Bu kategoride ürün bulunamadı.
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+      </div>
+
+      {/* Category Dialog */}
+      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? 'Kategori Düzenle' : 'Yeni Kategori'}</DialogTitle>
+            <DialogDescription className="hidden">
+              Kategori bilgilerini giriniz.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveCategory} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Kategori Adı</Label>
+              <Input 
+                value={categoryForm.name} 
+                onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                placeholder="Örn: Tatlılar"
+                required
+              />
+              <div className="flex flex-wrap gap-2 mt-2">
+                {CATEGORY_SUGGESTIONS.map(suggestion => (
+                  <Badge 
+                    key={suggestion} 
+                    variant="outline" 
+                    className="cursor-pointer hover:bg-secondary transition-colors"
+                    onClick={() => setCategoryForm({ ...categoryForm, name: suggestion })}
+                  >
+                    {suggestion}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit">Kaydet</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Product Dialog */}
+      <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingProduct ? 'Ürün Düzenle' : 'Yeni Ürün'}</DialogTitle>
+            <DialogDescription className="hidden">
+              Ürün detaylarını giriniz.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveProduct} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Kategori</Label>
                   <Select 
-                    value={formData.categoryId} 
-                    onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                    value={productForm.categoryId} 
+                    onValueChange={val => setProductForm({ ...productForm, categoryId: val })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Kategori seçin" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="col-span-4 flex items-end">
-                  <div className="flex items-center justify-between space-x-2 border p-2 rounded-md w-full h-10 bg-muted/20">
-                    <Label htmlFor="isAvailable" className="text-xs">Satışa Açık</Label>
-                    <Switch
-                      id="isAvailable"
-                      checked={formData.isAvailable}
-                      onCheckedChange={(checked) => setFormData({ ...formData, isAvailable: checked })}
+                <div className="space-y-2">
+                  <Label>Ürün Adı</Label>
+                  <Input 
+                    value={productForm.name} 
+                    onChange={e => setProductForm({ ...productForm, name: e.target.value })}
+                    required
+                  />
+                  {productForm.categoryId && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {getProductSuggestions(categories.find(c => c.id === productForm.categoryId)?.name || '').map(suggestion => (
+                        <Badge 
+                          key={suggestion} 
+                          variant="outline" 
+                          className="cursor-pointer hover:bg-secondary transition-colors"
+                          onClick={() => setProductForm({ ...productForm, name: suggestion })}
+                        >
+                          {suggestion}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Satış Fiyatı (₺)</Label>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      value={productForm.price} 
+                      onChange={e => setProductForm({ ...productForm, price: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>İndirimsiz Fiyat (Opsiyonel)</Label>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      value={productForm.originalPrice} 
+                      onChange={e => setProductForm({ ...productForm, originalPrice: e.target.value })}
+                      placeholder="İndirim yoksa boş bırakın"
+                    />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label>Stok Adedi</Label>
+                    <Input 
+                      type="number" 
+                      value={productForm.stock} 
+                      onChange={e => setProductForm({ ...productForm, stock: e.target.value })}
+                      placeholder="0"
                     />
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Ürün Adı</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Örn: Çay"
+                <div className="flex items-center justify-between border p-3 rounded-lg">
+                  <Label>Satışa Açık</Label>
+                  <Switch 
+                    checked={productForm.isAvailable} 
+                    onCheckedChange={checked => setProductForm({ ...productForm, isAvailable: checked })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="price">Fiyat (₺)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="0.00"
+
+                <div className="flex items-center justify-between border p-3 rounded-lg">
+                  <Label>Şefin Önerisi</Label>
+                  <Switch 
+                    checked={productForm.isChefRecommended} 
+                    onCheckedChange={checked => setProductForm({ ...productForm, isChefRecommended: checked })}
                   />
                 </div>
               </div>
 
-              {/* Hızlı Seçim Butonları */}
-              {selectedCategoryExamples.length > 0 && !editingId && (
-                <div className="bg-secondary/20 p-3 rounded-lg border border-dashed">
-                  <Label className="text-xs text-muted-foreground mb-2 block">
-                    Hızlı Seçim ({categories.find(c => c.id === formData.categoryId)?.name}):
-                  </Label>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedCategoryExamples.map((item) => (
-                      <Button
-                        key={item}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs bg-background hover:bg-primary hover:text-primary-foreground transition-colors"
-                        onClick={() => setFormData({ ...formData, name: item })}
-                      >
-                        {item}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="description">Açıklama</Label>
-                  <Input
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="İsteğe bağlı açıklama"
+                  <Label>Açıklama</Label>
+                  <Textarea 
+                    value={productForm.description} 
+                    onChange={e => setProductForm({ ...productForm, description: e.target.value })}
+                    className="h-24"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Resim</Label>
-                  <div className="flex items-center gap-2">
-                    {formData.imageUrl && (
-                      <div className="relative h-10 w-10 rounded-md overflow-hidden border">
-                        <img src={formData.imageUrl} alt="Preview" className="h-full w-full object-cover" />
+                  <Label>Ürün Görseli</Label>
+                  <div className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center gap-2 relative h-40 bg-muted/5 hover:bg-muted/10 transition-colors">
+                    {productForm.imageUrl ? (
+                      <>
+                        <img src={productForm.imageUrl} alt="Preview" className="h-full w-full object-contain" />
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          size="icon" 
+                          className="absolute top-2 right-2 h-6 w-6"
+                          onClick={() => setProductForm({ ...productForm, imageUrl: '' })}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+                        <span className="text-xs text-muted-foreground">Resim yüklemek için tıklayın</span>
+                      </>
+                    )}
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      className="absolute inset-0 opacity-0 cursor-pointer" 
+                      onChange={handleFileChange}
+                      disabled={uploading}
+                    />
+                    {uploading && (
+                      <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin" />
                       </div>
                     )}
-                    <div className="flex-1">
-                      <Label 
-                        htmlFor="image-upload" 
-                        className="flex items-center justify-center w-full h-10 border border-dashed rounded-md cursor-pointer hover:bg-secondary/50 transition-colors"
-                      >
-                        {uploading ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        ) : (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Upload className="h-4 w-4" />
-                            <span className="text-xs">Yükle</span>
-                          </div>
-                        )}
-                        <Input 
-                          id="image-upload" 
-                          type="file" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={handleFileChange}
-                          disabled={uploading}
-                        />
-                      </Label>
-                    </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Eklenen Ürünler Listesi */}
-              {!editingId && pendingProducts.length > 0 && (
-                <div className="space-y-2 border rounded-md p-3 bg-muted/20">
-                  <Label className="text-sm font-medium">Eklenecek Ürünler ({pendingProducts.length})</Label>
-                  <div className="space-y-2 max-h-[150px] overflow-y-auto">
-                    {pendingProducts.map((p) => (
-                      <div key={p.id} className="flex items-center justify-between text-sm p-2 bg-background rounded border">
-                        <div className="flex flex-col">
-                          <span className="font-medium">{p.name}</span>
-                          <span className="text-xs text-muted-foreground">{p.categoryName} - ₺{p.price}</span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                          onClick={() => removePending(p.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex gap-2 pt-2 sticky bottom-0 bg-background border-t">
-                {!editingId && (
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    className="flex-1"
-                    onClick={handleAddPending}
-                    disabled={!formData.name || !formData.price || !formData.categoryId}
-                  >
-                    <Plus className="mr-2 h-4 w-4" /> Listeye Ekle
-                  </Button>
-                )}
-                <Button type="submit" className="flex-1">
-                  {editingId 
-                    ? 'Güncelle' 
-                    : pendingProducts.length > 0 
-                      ? `Hepsini Kaydet (${pendingProducts.length})` 
-                      : 'Kaydet'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Ürün Listesi</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Resim</TableHead>
-                  <TableHead>Ad</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Fiyat</TableHead>
-                  <TableHead>Durum</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      {product.imageUrl ? (
-                        <img src={product.imageUrl} alt={product.name} className="h-10 w-10 rounded-md object-cover" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-md bg-secondary flex items-center justify-center">
-                          <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.category?.name || '-'}</TableCell>
-                    <TableCell>₺{Number(product.price).toFixed(2)}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        product.isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {product.isAvailable ? 'Aktif' : 'Pasif'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => {
-                        setEditingId(product.id);
-                        setFormData({ 
-                          name: product.name, 
-                          categoryId: product.categoryId, 
-                          price: product.price, 
-                          description: product.description || '',
-                          imageUrl: product.imageUrl || '',
-                          isAvailable: product.isAvailable
-                        });
-                        setIsDialogOpen(true);
-                      }}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-red-600" onClick={() => handleDelete(product.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsProductDialogOpen(false)}>İptal</Button>
+              <Button type="submit">Kaydet</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

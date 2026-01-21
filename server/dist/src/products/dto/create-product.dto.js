@@ -19,6 +19,8 @@ class CreateProductDto {
     price;
     imageUrl;
     isAvailable;
+    stock;
+    originalPrice;
 }
 exports.CreateProductDto = CreateProductDto;
 __decorate([
@@ -52,4 +54,16 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], CreateProductDto.prototype, "isAvailable", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsNumber)({}, { message: 'Stok sayı olmalıdır.' }),
+    __metadata("design:type", Number)
+], CreateProductDto.prototype, "stock", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsNumber)({}, { message: 'İndirimsiz fiyat sayı olmalıdır.' }),
+    __metadata("design:type", Number)
+], CreateProductDto.prototype, "originalPrice", void 0);
 //# sourceMappingURL=create-product.dto.js.map

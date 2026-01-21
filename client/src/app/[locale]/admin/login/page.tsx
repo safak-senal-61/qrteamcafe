@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 
 export default function AdminLoginPage() {
+  console.log('AdminLoginPage rendering');
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({

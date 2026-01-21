@@ -29,6 +29,12 @@ export class CategoriesController {
     return this.categoriesService.findAll(cafeId);
   }
 
+  @Patch('reorder')
+  reorder(@Body() items: { id: string; sortOrder: number }[]) {
+    // Reorder categories
+    return this.categoriesService.reorder(items);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.categoriesService.findOne(id);

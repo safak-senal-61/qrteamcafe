@@ -36,6 +36,12 @@ let CategoriesService = class CategoriesService {
             },
         });
     }
+    async reorder(items) {
+        return this.prisma.$transaction(items.map((item) => this.prisma.category.update({
+            where: { id: item.id },
+            data: { sortOrder: item.sortOrder },
+        })));
+    }
     async findOne(id) {
         const category = await this.prisma.category.findUnique({
             where: { id },

@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Loader2, Save, Store, User, Settings2, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -60,6 +61,7 @@ export default function SettingsPage() {
     logoUrl: '',
     googleMapsUrl: '',
     createdAt: '',
+    showProductRatings: true,
   });
 
   const paymentOptions = [
@@ -115,6 +117,7 @@ export default function SettingsPage() {
           paymentMethods: methods,
           logoUrl: data.logoUrl ? (data.logoUrl.startsWith('http') ? data.logoUrl : `${API_URL}${data.logoUrl}`) : '',
           googleMapsUrl: data.googleMapsUrl || '',
+          showProductRatings: data.showProductRatings ?? true,
           createdAt: data.createdAt,
         });
       }
@@ -488,6 +491,19 @@ export default function SettingsPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between border p-3 rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Ürün Değerlendirmeleri</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Müşterilerin ürün yıldızlarını ve değerlendirmelerini görmesine izin verin.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.showProductRatings}
+                    onCheckedChange={(checked) => setFormData({ ...formData, showProductRatings: checked })}
+                  />
                 </div>
 
                 <div className="space-y-2">

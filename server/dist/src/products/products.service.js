@@ -31,8 +31,14 @@ let ProductsService = class ProductsService {
             include: {
                 category: true,
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { sortOrder: 'asc' },
         });
+    }
+    async reorder(items) {
+        return this.prisma.$transaction(items.map((item) => this.prisma.product.update({
+            where: { id: item.id },
+            data: { sortOrder: item.sortOrder },
+        })));
     }
     async findOne(id) {
         const product = await this.prisma.product.findUnique({
@@ -65,6 +71,44 @@ let ProductsService = class ProductsService {
         await this.findOne(id);
         return this.prisma.product.delete({
             where: { id },
+        });
+    }
+    async getRecommendations(productId, limit = 3) {
+        const ordersWithProduct = await this.prisma.orderItem.findMany({
+            where: { productId },
+            select: { orderId: true },
+            distinct: ['orderId'],
+            take: 50
+        });
+        const orderIds = ordersWithProduct.map(o => o.orderId);
+        if (orderIds.length === 0)
+            return [];
+        const relatedItems = await this.prisma.orderItem.groupBy({
+            by: ['productId'],
+            where: {
+                orderId: { in: orderIds },
+                productId: { not: productId }
+            },
+            _count: {
+                productId: true
+            },
+            orderBy: {
+                _count: {
+                    productId: 'desc'
+                }
+            },
+            take: limit
+        });
+        const recommendedProductIds = relatedItems.map(item => item.productId);
+        return this.prisma.product.findMany({
+            where: { id: { in: recommendedProductIds }, isAvailable: true }
+        });
+    }
+    async toggleChefRecommendation(id, isChefRecommended) {
+        await this.findOne(id);
+        return this.prisma.product.update({
+            where: { id },
+            data: { isChefRecommended }
         });
     }
 };

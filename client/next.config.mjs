@@ -26,9 +26,6 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    allowedDevOrigins: ['192.168.2.29:3000', 'localhost:3000'],
-  },
   async rewrites() {
     return [
       {

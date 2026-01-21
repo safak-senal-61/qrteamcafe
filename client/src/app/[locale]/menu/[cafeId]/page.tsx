@@ -20,6 +20,7 @@ interface Cafe {
   name: string;
   coverImage?: string;
   logo?: string;
+  showProductRatings?: boolean;
 }
 
 interface Category {
@@ -36,7 +37,53 @@ interface Product {
   categoryId: string;
   isAvailable: boolean;
   stock: number;
+  originalPrice?: number;
+  isChefRecommended?: boolean;
+  averageRating?: number;
+  reviewCount?: number;
 }
+
+const sortCategoriesByTime = (categories: Category[]) => {
+  const now = new Date();
+  const currentHour = now.getHours();
+
+  // Define time slots and priority keywords (Turkish)
+  let priorityKeywords: string[] = [];
+
+  if (currentHour >= 5 && currentHour < 12) {
+    // Sabah (05:00 - 12:00): Kahvaltı öncelikli
+    priorityKeywords = ['kahvaltı', 'börek', 'poğaça', 'simit', 'tost', 'yumurta', 'menemen', 'çay', 'sıcak içecek'];
+  } else if (currentHour >= 12 && currentHour < 17) {
+    // Öğle (12:00 - 17:00): Hızlı yemek ve öğle menüleri
+    priorityKeywords = ['döner', 'burger', 'pide', 'lahmacun', 'kebap', 'ana yemek', 'pizza', 'salata', 'makarna'];
+  } else if (currentHour >= 17 && currentHour < 22) {
+    // Akşam (17:00 - 22:00): Ana yemekler
+    priorityKeywords = ['ana yemek', 'ızgara', 'balık', 'steak', 'makarna', 'pizza', 'kebap', 'başlangıç'];
+  } else {
+    // Gece (22:00 - 05:00): Çorba, tatlı, atıştırmalık
+    priorityKeywords = ['çorba', 'kokoreç', 'sokak', 'tatlı', 'atıştırmalık', 'içecek'];
+  }
+
+  // Helper to check if category matches any keyword
+  const isPriority = (name: string) => {
+    const lowerName = name.toLowerCase();
+    return priorityKeywords.some(keyword => lowerName.includes(keyword));
+  };
+
+  // Separate into two groups while preserving original sortOrder
+  const priorityCats: Category[] = [];
+  const otherCats: Category[] = [];
+
+  categories.forEach(cat => {
+    if (isPriority(cat.name)) {
+      priorityCats.push(cat);
+    } else {
+      otherCats.push(cat);
+    }
+  });
+
+  return [...priorityCats, ...otherCats];
+};
 
 export default function MenuPage() {
   const params = useParams();
@@ -128,7 +175,9 @@ export default function MenuPage() {
         // Fetch Categories
         const catRes = await fetch(`${API_URL}/categories?cafeId=${cafeId}`);
         const catData = await catRes.json();
-        setCategories(catData);
+        // Apply time-based sorting
+        const sortedCats = sortCategoriesByTime(catData);
+        setCategories(sortedCats);
 
         // Fetch Products
         const prodRes = await fetch(`${API_URL}/products?cafeId=${cafeId}`);
@@ -175,6 +224,9 @@ export default function MenuPage() {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
+
+  const chefProducts = products.filter(p => p.isChefRecommended);
+  const popularProducts = [...products].sort((a, b) => (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0)).slice(0, 5);
 
   const handleCancelOrder = async (orderId: string) => {
     try {
@@ -278,7 +330,12 @@ export default function MenuPage() {
       )}>
         <div className="container mx-auto">
           <CategoryNav
-            categories={[{ id: 'all', name: 'Tümü' }, ...categories]}
+            categories={[
+              { id: 'all', name: 'Tümü' },
+              ...(chefProducts.length > 0 ? [{ id: 'chef', name: 'Şefin Önerisi' }] : []),
+              ...(popularProducts.length > 0 ? [{ id: 'popular', name: 'Popüler' }] : []),
+              ...categories
+            ]}
             activeCategory={activeCategory}
             onSelectCategory={handleCategorySelect}
           />
@@ -287,6 +344,64 @@ export default function MenuPage() {
 
       {/* Product List */}
       <div className="container mx-auto px-4 py-8 space-y-12">
+        {/* Chef's Recommendations */}
+        {chefProducts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            id="chef"
+            className="scroll-mt-48"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <span className="w-1.5 h-8 bg-orange-500 rounded-full inline-block" />
+                Şefin Önerisi
+              </h2>
+            </div>
+            <div className="flex overflow-x-auto pb-6 -mx-4 px-4 gap-4 scrollbar-hide snap-x snap-mandatory">
+              {chefProducts.map((product, index) => (
+                <div key={product.id} className="w-[280px] flex-shrink-0 snap-center">
+                  <ProductCard product={{
+                    ...product,
+                    category: product.categoryId,
+                    image: product.imageUrl
+                  }} index={index} showRating={cafe?.showProductRatings} />
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Popular Products */}
+        {popularProducts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            id="popular"
+            className="scroll-mt-48"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <span className="w-1.5 h-8 bg-yellow-400 rounded-full inline-block" />
+                Popüler Ürünler
+              </h2>
+            </div>
+            <div className="flex overflow-x-auto pb-6 -mx-4 px-4 gap-4 scrollbar-hide snap-x snap-mandatory">
+              {popularProducts.map((product, index) => (
+                <div key={product.id} className="w-[280px] flex-shrink-0 snap-center">
+                  <ProductCard product={{
+                    ...product,
+                    category: product.categoryId,
+                    image: product.imageUrl
+                  }} index={index} showRating={cafe?.showProductRatings} />
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {categories.map((category, catIndex) => {
           const categoryProducts = filteredProducts.filter(
             (p) => p.categoryId === category.id
@@ -319,7 +434,7 @@ export default function MenuPage() {
                     ...product,
                     category: category.id,
                     image: product.imageUrl
-                  }} index={index} />
+                  }} index={index} showRating={cafe?.showProductRatings} />
                 ))}
               </div>
             </motion.div>

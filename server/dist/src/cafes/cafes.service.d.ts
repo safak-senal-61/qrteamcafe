@@ -3,14 +3,14 @@ export declare class CafesService {
     private prisma;
     constructor(prisma: PrismaService);
     findOne(id: string): Promise<{
-        phone: string | null;
-        email: string | null;
-        name: string;
         id: string;
-        isActive: boolean;
+        name: string;
+        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        phone: string | null;
+        email: string | null;
+        isActive: boolean;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -24,16 +24,17 @@ export declare class CafesService {
         logoUrl: string | null;
         googleMapsUrl: string | null;
         status: string;
+        showProductRatings: boolean;
     }>;
     update(id: string, data: any): Promise<{
-        phone: string | null;
-        email: string | null;
-        name: string;
         id: string;
-        isActive: boolean;
+        name: string;
+        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        phone: string | null;
+        email: string | null;
+        isActive: boolean;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -47,6 +48,7 @@ export declare class CafesService {
         logoUrl: string | null;
         googleMapsUrl: string | null;
         status: string;
+        showProductRatings: boolean;
     }>;
     getDashboardStats(cafeId: string): Promise<{
         totalOrders: number;
@@ -65,17 +67,22 @@ export declare class CafesService {
             } | null;
             items: ({
                 product: {
-                    name: string;
                     id: string;
                     cafeId: string;
-                    createdAt: Date;
-                    updatedAt: Date;
-                    description: string | null;
                     categoryId: string;
+                    name: string;
+                    description: string | null;
                     price: import("@prisma/client-runtime-utils").Decimal;
+                    originalPrice: import("@prisma/client-runtime-utils").Decimal | null;
                     stock: number;
+                    sortOrder: number;
                     imageUrl: string | null;
                     isAvailable: boolean;
+                    isChefRecommended: boolean;
+                    averageRating: import("@prisma/client-runtime-utils").Decimal;
+                    reviewCount: number;
+                    createdAt: Date;
+                    updatedAt: Date;
                 };
             } & {
                 id: string;
@@ -91,23 +98,28 @@ export declare class CafesService {
             cafeId: string;
             createdAt: Date;
             updatedAt: Date;
+            customerName: string | null;
             status: string;
             totalAmount: import("@prisma/client-runtime-utils").Decimal;
             tableId: string | null;
-            customerName: string | null;
         })[];
         popularProducts: {
-            name: string;
             id: string;
             cafeId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
             categoryId: string;
+            name: string;
+            description: string | null;
             price: import("@prisma/client-runtime-utils").Decimal;
+            originalPrice: import("@prisma/client-runtime-utils").Decimal | null;
             stock: number;
+            sortOrder: number;
             imageUrl: string | null;
             isAvailable: boolean;
+            isChefRecommended: boolean;
+            averageRating: import("@prisma/client-runtime-utils").Decimal;
+            reviewCount: number;
+            createdAt: Date;
+            updatedAt: Date;
         }[];
     }>;
 }

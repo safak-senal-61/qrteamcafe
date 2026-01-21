@@ -11,55 +11,78 @@ export class OrdersService {
   ) {}
 
   async create(cafeId: string, createOrderDto: CreateOrderDto) {
-    // 0. Masa durumunu güncelle (Eğer masa boşsa, dolu yap ve süreyi başlat)
-    if (createOrderDto.tableId) {
-      const table = await this.prisma.table.findUnique({
-        where: { id: createOrderDto.tableId },
-      });
-
-      if (table && !table.isOccupied) {
-        await this.prisma.table.update({
+    return this.prisma.$transaction(async (prisma) => {
+      // 0. Masa durumunu güncelle (Eğer masa boşsa, dolu yap ve süreyi başlat)
+      if (createOrderDto.tableId) {
+        const table = await prisma.table.findUnique({
           where: { id: createOrderDto.tableId },
-          data: {
-            isOccupied: true,
-            lastOccupiedAt: new Date(),
-          },
+        });
+
+        if (table && !table.isOccupied) {
+          await prisma.table.update({
+            where: { id: createOrderDto.tableId },
+            data: {
+              isOccupied: true,
+              lastOccupiedAt: new Date(),
+            },
+          });
+        }
+      }
+
+      // 1. Stok kontrolü ve düşümü
+      for (const item of createOrderDto.items) {
+        const product = await prisma.product.findUnique({
+          where: { id: item.productId },
+        });
+
+        if (!product) {
+          throw new BadRequestException(`Ürün bulunamadı: ${item.productId}`);
+        }
+
+        if (product.stock < item.quantity) {
+          throw new BadRequestException(`${product.name} için yeterli stok yok. Mevcut: ${product.stock}`);
+        }
+
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
         });
       }
-    }
 
-    // 1. Siparişi oluştur
-    const order = await this.prisma.order.create({
-      data: {
-        cafeId,
-        tableId: createOrderDto.tableId,
-        totalAmount: createOrderDto.totalAmount,
-        status: 'PENDING',
-        items: {
-          create: createOrderDto.items.map(
-            (item: { productId: string; quantity: number; price: number }) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              unitPrice: item.price,
-              totalPrice: item.price * item.quantity,
-            }),
-          ),
-        },
-      },
-      include: {
-        table: true,
-        items: {
-          include: {
-            product: true,
+      // 2. Siparişi oluştur
+      const order = await prisma.order.create({
+        data: {
+          cafeId,
+          tableId: createOrderDto.tableId,
+          totalAmount: createOrderDto.totalAmount,
+          status: 'PENDING',
+          items: {
+            create: createOrderDto.items.map(
+              (item: { productId: string; quantity: number; price: number }) => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: item.price,
+                totalPrice: item.price * item.quantity,
+              }),
+            ),
           },
         },
-      },
+        include: {
+          table: true,
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
+
+      // 3. Adminlere socket bildirimi gönder
+      // Note: eventsGateway is outside transaction, but that's fine.
+      this.eventsGateway.notifyNewOrder(cafeId, order);
+
+      return order;
     });
-
-    // 2. Adminlere socket bildirimi gönder
-    this.eventsGateway.notifyNewOrder(cafeId, order);
-
-    return order;
   }
 
   // ... diğer metodlar (findAll, findOne, etc.)
@@ -95,16 +118,13 @@ export class OrdersService {
         throw new BadRequestException('Sadece onay bekleyen siparişler iptal edilebilir.');
       }
 
-      // PENDING -> PREPARING geçişinde stok düş
-      if (order.status === 'PENDING' && status === 'PREPARING') {
+      // PENDING -> PREPARING geçişinde stok düş (ARTIK GEREKSİZ, OLUŞTURURKEN DÜŞTÜK)
+      // Ancak CANCELLED durumunda stoğu iade etmeliyiz
+      if (status === 'CANCELLED') {
         for (const item of order.items) {
-          if (item.product.stock < item.quantity) {
-             throw new BadRequestException(`${item.product.name} için yeterli stok yok. Mevcut: ${item.product.stock}`);
-          }
-
           await prisma.product.update({
             where: { id: item.productId },
-            data: { stock: { decrement: item.quantity } },
+            data: { stock: { increment: item.quantity } },
           });
         }
       }

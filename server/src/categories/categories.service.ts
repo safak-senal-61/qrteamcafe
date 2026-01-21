@@ -28,6 +28,18 @@ export class CategoriesService {
     });
   }
 
+  async reorder(items: { id: string; sortOrder: number }[]) {
+    // Toplu güncelleme işlemi
+    return this.prisma.$transaction(
+      items.map((item) =>
+        this.prisma.category.update({
+          where: { id: item.id },
+          data: { sortOrder: item.sortOrder },
+        }),
+      ),
+    );
+  }
+
   async findOne(id: string) {
     const category = await this.prisma.category.findUnique({
       where: { id },

@@ -14,6 +14,7 @@ import { SuperAdminModule } from './super-admin/super-admin.module';
 import { EventsGateway } from './events/events.gateway';
 import { EventsModule } from './events/events.module';
 import { WaiterCallsModule } from './waiter-calls/waiter-calls.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { WaiterCallsModule } from './waiter-calls/waiter-calls.module';
     SuperAdminModule,
     EventsModule,
     WaiterCallsModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

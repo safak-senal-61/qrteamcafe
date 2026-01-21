@@ -57,9 +57,25 @@ export class ProductsController {
     return this.productsService.findAll(cafeId);
   }
 
+  @Patch('reorder')
+  reorder(@Body() items: { id: string; sortOrder: number }[]) {
+    // Reorder products
+    return this.productsService.reorder(items);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
+  }
+
+  @Get(':id/recommendations')
+  getRecommendations(@Param('id') id: string) {
+    return this.productsService.getRecommendations(id);
+  }
+
+  @Patch(':id/chef-recommendation')
+  toggleChefRecommendation(@Param('id') id: string, @Body('isChefRecommended') isChefRecommended: boolean) {
+    return this.productsService.toggleChefRecommendation(id, isChefRecommended);
   }
 
   @Patch(':id/stock')

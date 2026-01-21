@@ -21,46 +21,63 @@ let OrdersService = class OrdersService {
         this.eventsGateway = eventsGateway;
     }
     async create(cafeId, createOrderDto) {
-        if (createOrderDto.tableId) {
-            const table = await this.prisma.table.findUnique({
-                where: { id: createOrderDto.tableId },
-            });
-            if (table && !table.isOccupied) {
-                await this.prisma.table.update({
+        return this.prisma.$transaction(async (prisma) => {
+            if (createOrderDto.tableId) {
+                const table = await prisma.table.findUnique({
                     where: { id: createOrderDto.tableId },
-                    data: {
-                        isOccupied: true,
-                        lastOccupiedAt: new Date(),
-                    },
+                });
+                if (table && !table.isOccupied) {
+                    await prisma.table.update({
+                        where: { id: createOrderDto.tableId },
+                        data: {
+                            isOccupied: true,
+                            lastOccupiedAt: new Date(),
+                        },
+                    });
+                }
+            }
+            for (const item of createOrderDto.items) {
+                const product = await prisma.product.findUnique({
+                    where: { id: item.productId },
+                });
+                if (!product) {
+                    throw new common_1.BadRequestException(`Ürün bulunamadı: ${item.productId}`);
+                }
+                if (product.stock < item.quantity) {
+                    throw new common_1.BadRequestException(`${product.name} için yeterli stok yok. Mevcut: ${product.stock}`);
+                }
+                await prisma.product.update({
+                    where: { id: item.productId },
+                    data: { stock: { decrement: item.quantity } },
                 });
             }
-        }
-        const order = await this.prisma.order.create({
-            data: {
-                cafeId,
-                tableId: createOrderDto.tableId,
-                totalAmount: createOrderDto.totalAmount,
-                status: 'PENDING',
-                items: {
-                    create: createOrderDto.items.map((item) => ({
-                        productId: item.productId,
-                        quantity: item.quantity,
-                        unitPrice: item.price,
-                        totalPrice: item.price * item.quantity,
-                    })),
-                },
-            },
-            include: {
-                table: true,
-                items: {
-                    include: {
-                        product: true,
+            const order = await prisma.order.create({
+                data: {
+                    cafeId,
+                    tableId: createOrderDto.tableId,
+                    totalAmount: createOrderDto.totalAmount,
+                    status: 'PENDING',
+                    items: {
+                        create: createOrderDto.items.map((item) => ({
+                            productId: item.productId,
+                            quantity: item.quantity,
+                            unitPrice: item.price,
+                            totalPrice: item.price * item.quantity,
+                        })),
                     },
                 },
-            },
+                include: {
+                    table: true,
+                    items: {
+                        include: {
+                            product: true,
+                        },
+                    },
+                },
+            });
+            this.eventsGateway.notifyNewOrder(cafeId, order);
+            return order;
         });
-        this.eventsGateway.notifyNewOrder(cafeId, order);
-        return order;
     }
     findAll(cafeId) {
         return this.prisma.order.findMany({
@@ -87,14 +104,11 @@ let OrdersService = class OrdersService {
             if (status === 'CANCELLED' && order.status !== 'PENDING') {
                 throw new common_1.BadRequestException('Sadece onay bekleyen siparişler iptal edilebilir.');
             }
-            if (order.status === 'PENDING' && status === 'PREPARING') {
+            if (status === 'CANCELLED') {
                 for (const item of order.items) {
-                    if (item.product.stock < item.quantity) {
-                        throw new common_1.BadRequestException(`${item.product.name} için yeterli stok yok. Mevcut: ${item.product.stock}`);
-                    }
                     await prisma.product.update({
                         where: { id: item.productId },
-                        data: { stock: { decrement: item.quantity } },
+                        data: { stock: { increment: item.quantity } },
                     });
                 }
             }
