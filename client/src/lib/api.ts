@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 export const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     // Tarayıcıda çalışıyorsa
@@ -14,3 +16,24 @@ export const getApiUrl = () => {
 
 export const API_URL = getApiUrl();
 export const SOCKET_URL = API_URL;
+
+export const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add token if available
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const storage = localStorage.getItem('customer-storage');
+    if (storage) {
+      const { state } = JSON.parse(storage);
+      if (state?.token) {
+        config.headers.Authorization = `Bearer ${state.token}`;
+      }
+    }
+  }
+  return config;
+});

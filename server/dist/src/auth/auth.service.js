@@ -60,6 +60,106 @@ let AuthService = class AuthService {
         this.mailService = mailService;
         this.jwtService = jwtService;
     }
+    async registerCustomer(dto) {
+        const existingCustomer = await this.prisma.customer.findUnique({
+            where: { email: dto.email },
+        });
+        if (existingCustomer) {
+            throw new common_1.BadRequestException('Bu e-posta adresi zaten kullanımda.');
+        }
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(dto.password, salt);
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000);
+        const customer = await this.prisma.customer.create({
+            data: {
+                email: dto.email,
+                passwordHash,
+                name: dto.name,
+                phone: dto.phone,
+                isVerified: false,
+                verificationCode,
+                verificationCodeExpires,
+            },
+        });
+        await this.mailService.sendVerificationEmail(customer.email, verificationCode);
+        return {
+            message: 'Kayıt başarılı. Lütfen e-posta adresinize gönderilen doğrulama kodunu giriniz.',
+            requiresVerification: true,
+            email: customer.email,
+        };
+    }
+    async verifyCustomer(dto) {
+        const customer = await this.prisma.customer.findUnique({
+            where: { email: dto.email },
+        });
+        if (!customer) {
+            throw new common_1.NotFoundException('Kullanıcı bulunamadı.');
+        }
+        if (customer.isVerified) {
+            throw new common_1.BadRequestException('Hesap zaten doğrulanmış.');
+        }
+        if (customer.verificationCode !== dto.code ||
+            !customer.verificationCodeExpires ||
+            customer.verificationCodeExpires < new Date()) {
+            throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş doğrulama kodu.');
+        }
+        const updatedCustomer = await this.prisma.customer.update({
+            where: { id: customer.id },
+            data: {
+                isVerified: true,
+                verificationCode: null,
+                verificationCodeExpires: null,
+            },
+        });
+        const token = this.jwtService.sign({
+            sub: updatedCustomer.id,
+            email: updatedCustomer.email,
+            role: 'customer',
+        });
+        return {
+            token,
+            customer: {
+                id: updatedCustomer.id,
+                email: updatedCustomer.email,
+                name: updatedCustomer.name,
+                phone: updatedCustomer.phone,
+            },
+        };
+    }
+    async loginCustomer(dto) {
+        const customer = await this.prisma.customer.findUnique({
+            where: { email: dto.email },
+        });
+        if (!customer) {
+            throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
+        }
+        const isPasswordValid = await bcrypt.compare(dto.password, customer.passwordHash);
+        if (!isPasswordValid) {
+            throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
+        }
+        if (!customer.isVerified) {
+            throw new common_1.UnauthorizedException({
+                message: 'Hesabınız henüz doğrulanmamış.',
+                code: 'NOT_VERIFIED',
+                email: customer.email
+            });
+        }
+        const token = this.jwtService.sign({
+            sub: customer.id,
+            email: customer.email,
+            role: 'customer',
+        });
+        return {
+            token,
+            customer: {
+                id: customer.id,
+                email: customer.email,
+                name: customer.name,
+                phone: customer.phone,
+            },
+        };
+    }
     async changePassword(dto) {
         const cafeAdmin = await this.prisma.cafeAdmin.findUnique({
             where: { id: dto.userId },
@@ -246,6 +346,53 @@ let AuthService = class AuthService {
         const passwordHash = await bcrypt.hash(dto.newPassword, salt);
         await this.prisma.cafeAdmin.update({
             where: { id: admin.id },
+            data: {
+                passwordHash,
+                resetCode: null,
+                resetCodeExpires: null,
+            },
+        });
+        return { message: 'Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.' };
+    }
+    async forgotPasswordCustomer(dto) {
+        const customer = await this.prisma.customer.findUnique({
+            where: { email: dto.email },
+        });
+        if (!customer) {
+            throw new common_1.NotFoundException('Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.');
+        }
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires = new Date(Date.now() + 15 * 60 * 1000);
+        await this.prisma.customer.update({
+            where: { id: customer.id },
+            data: {
+                resetCode: code,
+                resetCodeExpires: expires,
+            },
+        });
+        await this.mailService.sendPasswordResetEmail(customer.email, code);
+        return { message: 'Şifre sıfırlama kodu e-posta adresinize gönderildi.' };
+    }
+    async verifyResetCodeCustomer(dto) {
+        const customer = await this.prisma.customer.findUnique({
+            where: { email: dto.email },
+        });
+        if (!customer || customer.resetCode !== dto.code || !customer.resetCodeExpires || customer.resetCodeExpires < new Date()) {
+            throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş kod.');
+        }
+        return { message: 'Kod doğrulandı.' };
+    }
+    async resetPasswordCustomer(dto) {
+        const customer = await this.prisma.customer.findUnique({
+            where: { email: dto.email },
+        });
+        if (!customer || customer.resetCode !== dto.code || !customer.resetCodeExpires || customer.resetCodeExpires < new Date()) {
+            throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş kod.');
+        }
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(dto.newPassword, salt);
+        await this.prisma.customer.update({
+            where: { id: customer.id },
             data: {
                 passwordHash,
                 resetCode: null,

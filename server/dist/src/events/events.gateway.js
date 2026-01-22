@@ -22,9 +22,15 @@ let EventsGateway = class EventsGateway {
         const info = this.clientMap.get(client.id);
         if (info) {
             if (info.role === 'client' && info.tableId) {
-                this.checkAndRemoveTable(info.cafeId, info.tableId, client.id);
+                console.log(`Client ${client.id} disconnected from table ${info.tableId}. Waiting 10s before removal.`);
+                this.clientMap.delete(client.id);
+                setTimeout(() => {
+                    this.checkAndRemoveTable(info.cafeId, info.tableId, client.id);
+                }, 10000);
             }
-            this.clientMap.delete(client.id);
+            else {
+                this.clientMap.delete(client.id);
+            }
         }
     }
     checkAndRemoveTable(cafeId, tableId, leavingSocketId) {
@@ -38,6 +44,7 @@ let EventsGateway = class EventsGateway {
             }
         }
         if (!isTableStillActive) {
+            console.log(`Table ${tableId} in cafe ${cafeId} is empty. Removing from active tables.`);
             const tables = this.activeTables.get(cafeId);
             if (tables) {
                 tables.delete(tableId);
@@ -49,6 +56,9 @@ let EventsGateway = class EventsGateway {
                 }
                 this.emitActiveTablesUpdate(cafeId);
             }
+        }
+        else {
+            console.log(`Table ${tableId} in cafe ${cafeId} is still active. Keeping.`);
         }
     }
     handleJoinTable(client, payload) {

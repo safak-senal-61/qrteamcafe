@@ -50,7 +50,14 @@ let ProductsService = class ProductsService {
         return product;
     }
     async update(id, updateProductDto) {
-        await this.findOne(id);
+        const product = await this.findOne(id);
+        const newPrice = updateProductDto.price !== undefined ? updateProductDto.price : product.price;
+        const newOriginalPrice = updateProductDto.originalPrice !== undefined ? updateProductDto.originalPrice : product.originalPrice;
+        if (newOriginalPrice !== null && newOriginalPrice !== undefined) {
+            if (newOriginalPrice < newPrice) {
+                throw new common_1.BadRequestException('İndirimsiz fiyat, satış fiyatından küçük olamaz.');
+            }
+        }
         return this.prisma.product.update({
             where: { id },
             data: updateProductDto,

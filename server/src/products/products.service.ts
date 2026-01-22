@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -48,7 +48,18 @@ export class ProductsService {
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    await this.findOne(id);
+    const product = await this.findOne(id);
+
+    // Validate prices if either price or originalPrice is being updated
+    const newPrice = updateProductDto.price !== undefined ? updateProductDto.price : product.price;
+    const newOriginalPrice = updateProductDto.originalPrice !== undefined ? updateProductDto.originalPrice : product.originalPrice;
+
+    if (newOriginalPrice !== null && newOriginalPrice !== undefined) {
+      if (newOriginalPrice < newPrice) {
+        throw new BadRequestException('İndirimsiz fiyat, satış fiyatından küçük olamaz.');
+      }
+    }
+
     return this.prisma.product.update({
       where: { id },
       data: updateProductDto,

@@ -49,20 +49,25 @@ export class OrdersService {
         });
       }
 
+      // Calculate total amount
+      const totalAmount = createOrderDto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+
       // 2. Siparişi oluştur
       const order = await prisma.order.create({
         data: {
           cafeId,
           tableId: createOrderDto.tableId,
-          totalAmount: createOrderDto.totalAmount,
+          customerId: createOrderDto.customerId,
+          totalAmount: totalAmount,
           status: 'PENDING',
           items: {
             create: createOrderDto.items.map(
-              (item: { productId: string; quantity: number; price: number }) => ({
+              (item) => ({
                 productId: item.productId,
                 quantity: item.quantity,
-                unitPrice: item.price,
-                totalPrice: item.price * item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: item.unitPrice * item.quantity,
+                note: item.note,
               }),
             ),
           },
@@ -89,11 +94,30 @@ export class OrdersService {
   // Basitlik için sadece create'i implemente ettim, diğerlerini olduğu gibi bırakabiliriz
   // veya daha önce varsa koruyabiliriz. Şimdilik create önemli.
 
+  findAllByCustomer(customerId: string) {
+    return this.prisma.order.findMany({
+      where: { customerId },
+      include: {
+        table: true,
+        reviews: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
   findAll(cafeId: string) {
     return this.prisma.order.findMany({
       where: { cafeId },
       include: {
         table: true,
+        reviews: true,
         items: {
           include: {
             product: true,

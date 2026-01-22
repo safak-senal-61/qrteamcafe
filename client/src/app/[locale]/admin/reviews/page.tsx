@@ -14,7 +14,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Star, Loader2, Save, MessageCircle } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Star, Loader2, Save, MessageCircle, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import {
   Dialog,
@@ -32,6 +33,7 @@ interface Review {
   comment: string;
   adminScore: number | null;
   adminReply: string | null;
+  isVisible: boolean;
   createdAt: string;
   product: {
     name: string;
@@ -121,6 +123,29 @@ export default function AdminReviewsPage() {
     }
   };
 
+  const handleVisibilityToggle = async (id: string, currentVisibility: boolean) => {
+    setUpdating(id);
+    try {
+      const res = await fetch(`${API_URL}/reviews/${id}/visibility`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isVisible: !currentVisibility }),
+      });
+
+      if (res.ok) {
+        toast.success(currentVisibility ? 'Yorum gizlendi.' : 'Yorum görünür yapıldı.');
+        setReviews(prev => prev.map(r => r.id === id ? { ...r, isVisible: !currentVisibility } : r));
+      } else {
+        toast.error('Görünürlük güncellenemedi.');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Bir hata oluştu.');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   const openReplyDialog = (review: Review) => {
     setReplyingReview(review);
     setReplyText(review.adminReply || '');
@@ -153,6 +178,7 @@ export default function AdminReviewsPage() {
               <TableHead>Puan</TableHead>
               <TableHead className="w-[300px]">Yorum</TableHead>
               <TableHead>Tarih</TableHead>
+              <TableHead>Durum</TableHead>
               <TableHead>İşletme Yanıtı</TableHead>
               <TableHead>İşletme Puanı</TableHead>
             </TableRow>
@@ -204,6 +230,18 @@ export default function AdminReviewsPage() {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(review.createdAt).toLocaleDateString('tr-TR')}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={review.isVisible}
+                        onCheckedChange={() => handleVisibilityToggle(review.id, review.isVisible)}
+                        disabled={updating === review.id}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {review.isVisible ? 'Görünür' : 'Gizli'}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-2">

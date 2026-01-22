@@ -22,4 +22,8 @@ export class CreateReviewDto {
   @IsOptional()
   @IsString()
   customerName?: string;
+
+  @IsOptional()
+  @IsUUID()
+  customerId?: string;
 }

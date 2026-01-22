@@ -7,8 +7,11 @@ import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 // OrdersSheet is no longer used in this component
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
+import { CustomerAuthDialog } from '@/components/menu/CustomerAuthDialog';
+import { CustomerProfileDialog } from '@/components/menu/CustomerProfileDialog';
+import { useCustomerStore } from '@/store/customer-store';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2, Wifi, Instagram, Facebook, Twitter, Info, Lock } from 'lucide-react';
+import { Search, Loader2, Wifi, Instagram, Facebook, Twitter, Info, Lock, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -62,26 +65,37 @@ interface Product {
   reviewCount?: number;
 }
 
+const getPriorityKeywords = (currentHour: number) => {
+  if (currentHour >= 5 && currentHour < 12) {
+    // Sabah (05:00 - 12:00): Kahvaltı öncelikli
+    return ['kahvaltı', 'börek', 'poğaça', 'simit', 'tost', 'yumurta', 'menemen', 'çay', 'sıcak içecek'];
+  } else if (currentHour >= 12 && currentHour < 17) {
+    // Öğle (12:00 - 17:00): Hızlı yemek ve öğle menüleri
+    return ['döner', 'burger', 'pide', 'lahmacun', 'kebap', 'ana yemek', 'pizza', 'salata', 'makarna', 'çorba'];
+  } else if (currentHour >= 17 && currentHour < 22) {
+    // Akşam (17:00 - 22:00): Ana yemekler
+    return ['ana yemek', 'ızgara', 'balık', 'steak', 'makarna', 'pizza', 'kebap', 'başlangıç'];
+  } else {
+    // Gece (22:00 - 05:00): Çorba, tatlı, atıştırmalık
+    return ['çorba', 'kokoreç', 'sokak', 'tatlı', 'atıştırmalık', 'içecek', 'kahve'];
+  }
+};
+
+const getProductTimeScore = (product: Product, categories: Category[], keywords: string[]) => {
+  const lowerName = product.name.toLowerCase();
+  const category = categories.find(c => c.id === product.categoryId);
+  const lowerCatName = category ? category.name.toLowerCase() : '';
+
+  let score = 0;
+  if (keywords.some(k => lowerName.includes(k))) score += 10;
+  if (keywords.some(k => lowerCatName.includes(k))) score += 5;
+  return score;
+};
+
 const sortCategoriesByTime = (categories: Category[]) => {
   const now = new Date();
   const currentHour = now.getHours();
-
-  // Define time slots and priority keywords (Turkish)
-  let priorityKeywords: string[] = [];
-
-  if (currentHour >= 5 && currentHour < 12) {
-    // Sabah (05:00 - 12:00): Kahvaltı öncelikli
-    priorityKeywords = ['kahvaltı', 'börek', 'poğaça', 'simit', 'tost', 'yumurta', 'menemen', 'çay', 'sıcak içecek'];
-  } else if (currentHour >= 12 && currentHour < 17) {
-    // Öğle (12:00 - 17:00): Hızlı yemek ve öğle menüleri
-    priorityKeywords = ['döner', 'burger', 'pide', 'lahmacun', 'kebap', 'ana yemek', 'pizza', 'salata', 'makarna'];
-  } else if (currentHour >= 17 && currentHour < 22) {
-    // Akşam (17:00 - 22:00): Ana yemekler
-    priorityKeywords = ['ana yemek', 'ızgara', 'balık', 'steak', 'makarna', 'pizza', 'kebap', 'başlangıç'];
-  } else {
-    // Gece (22:00 - 05:00): Çorba, tatlı, atıştırmalık
-    priorityKeywords = ['çorba', 'kokoreç', 'sokak', 'tatlı', 'atıştırmalık', 'içecek'];
-  }
+  const priorityKeywords = getPriorityKeywords(currentHour);
 
   // Helper to check if category matches any keyword
   const isPriority = (name: string) => {
@@ -109,7 +123,9 @@ export default function MenuPage() {
   const searchParams = useSearchParams();
   const cafeId = params.cafeId as string;
   const tableNumber = searchParams.get('table');
+  const { customer, setAuthDialogOpen, isGuest, isAuthDialogOpen } = useCustomerStore();
   
+  const [isProfileDialogOpen, setProfileDialogOpen] = useState(false);
   const [cafe, setCafe] = useState<Cafe | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -162,13 +178,24 @@ export default function MenuPage() {
           console.log('Order status update received:', updatedOrder);
           setActiveOrders(prev => prev.map(o => o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o));
           
+          const hasPrepItems = updatedOrder.items?.some((item: any) => item.product?.requiresPreparation !== false) ?? true;
           let statusText = '';
+          
           switch(updatedOrder.status) {
-            case 'PREPARING': statusText = 'Hazırlanıyor'; break;
-            case 'DELIVERED': statusText = 'Teslim Edildi'; break;
-            case 'CANCELLED': statusText = 'İptal Edildi'; break;
-            case 'READY': statusText = 'Hazır'; break;
-            default: statusText = updatedOrder.status;
+            case 'PREPARING': 
+              statusText = hasPrepItems ? 'Hazırlanıyor' : 'Sipariş Alındı'; 
+              break;
+            case 'DELIVERED': 
+              statusText = 'Teslim Edildi'; 
+              break;
+            case 'CANCELLED': 
+              statusText = 'İptal Edildi'; 
+              break;
+            case 'READY': 
+              statusText = hasPrepItems ? 'Hazır' : 'Servise Hazır'; 
+              break;
+            default: 
+              statusText = updatedOrder.status;
           }
           
           toast.info(`Sipariş durumu güncellendi: ${statusText}`);
@@ -205,7 +232,13 @@ export default function MenuPage() {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (!customer && !isGuest) {
+      setAuthDialogOpen(true);
+    }
+  }, [customer, isGuest, setAuthDialogOpen]);
+
+  useEffect(() => {
+    const fetchMenu = async () => {
       try {
         // Fetch Cafe Details
         const cafeRes = await fetch(`${API_URL}/cafes/${cafeId}`);
@@ -237,7 +270,7 @@ export default function MenuPage() {
     };
 
     if (cafeId) {
-      fetchData();
+      fetchMenu();
     }
 
     const handleScroll = () => {
@@ -365,6 +398,28 @@ export default function MenuPage() {
       {/* Header Image */}
       <div className="relative h-64 md:h-80 w-full overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-background z-10" />
+        
+        {/* Profile/Login Button */}
+        <div className="absolute top-4 right-4 z-50 flex gap-2">
+          {customer ? (
+            <div 
+              onClick={() => setProfileDialogOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-white/50 cursor-pointer active:scale-95 transition-all hover:bg-white text-primary font-medium"
+            >
+              <User className="h-4 w-4" />
+              <span className="text-sm">{customer.name || 'Hesabım'}</span>
+            </div>
+          ) : (
+            <div 
+              onClick={() => setAuthDialogOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-white/50 cursor-pointer active:scale-95 transition-all hover:bg-white text-primary font-medium"
+            >
+              <User className="h-4 w-4" />
+              <span className="text-sm">Giriş Yap</span>
+            </div>
+          )}
+        </div>
+
         <motion.img
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
@@ -601,6 +656,8 @@ export default function MenuPage() {
       </footer>
 
       <CartSheet 
+        cafeId={cafeId}
+        tableId={currentTableId || undefined}
         onOrderSuccess={() => {
           setIsCartOpen(true);
           fetchActiveOrders();
@@ -634,6 +691,11 @@ export default function MenuPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <CustomerAuthDialog />
+      <CustomerProfileDialog 
+        open={isProfileDialogOpen}
+        onOpenChange={setProfileDialogOpen}
+      />
     </div>
   );
 }

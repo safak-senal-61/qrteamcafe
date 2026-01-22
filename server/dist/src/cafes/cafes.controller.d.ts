@@ -37,6 +37,7 @@ export declare class CafesController {
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+        autoApproveReviews: boolean;
     }>;
     getDashboardStats(id: string): Promise<{
         totalOrders: number;
@@ -66,6 +67,7 @@ export declare class CafesController {
                     sortOrder: number;
                     imageUrl: string | null;
                     isAvailable: boolean;
+                    requiresPreparation: boolean;
                     isChefRecommended: boolean;
                     averageRating: import("@prisma/client/runtime/library").Decimal;
                     reviewCount: number;
@@ -75,11 +77,12 @@ export declare class CafesController {
             } & {
                 id: string;
                 createdAt: Date;
-                orderId: string;
                 productId: string;
+                orderId: string;
                 quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
                 totalPrice: import("@prisma/client/runtime/library").Decimal;
+                note: string | null;
             })[];
         } & {
             id: string;
@@ -87,6 +90,7 @@ export declare class CafesController {
             createdAt: Date;
             updatedAt: Date;
             customerName: string | null;
+            customerId: string | null;
             status: string;
             totalAmount: import("@prisma/client/runtime/library").Decimal;
             tableId: string | null;
@@ -103,6 +107,7 @@ export declare class CafesController {
             sortOrder: number;
             imageUrl: string | null;
             isAvailable: boolean;
+            requiresPreparation: boolean;
             isChefRecommended: boolean;
             averageRating: import("@prisma/client/runtime/library").Decimal;
             reviewCount: number;
@@ -144,6 +149,7 @@ export declare class CafesController {
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+        autoApproveReviews: boolean;
     }>;
     uploadCoverImage(id: string, file: Express.Multer.File): Promise<{
         id: string;
@@ -179,6 +185,7 @@ export declare class CafesController {
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+        autoApproveReviews: boolean;
     }>;
     update(id: string, updateCafeDto: UpdateCafeDto): Promise<{
         id: string;
@@ -214,5 +221,6 @@ export declare class CafesController {
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+        autoApproveReviews: boolean;
     }>;
 }

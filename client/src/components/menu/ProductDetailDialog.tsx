@@ -17,6 +17,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Product, useCartStore } from '@/store/cart-store';
+import { useCustomerStore } from '@/store/customer-store';
 import { toast } from 'sonner';
 
 interface ProductDetailDialogProps {
@@ -37,6 +38,7 @@ interface Review {
 
 export function ProductDetailDialog({ product, open, onOpenChange, showRating = true }: ProductDetailDialogProps) {
   const { addItem } = useCartStore();
+  const { customer, setAuthDialogOpen } = useCustomerStore();
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -84,15 +86,24 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
   };
 
   const handleAddToCart = () => {
+    // Customer check removed to allow guest cart building. Login enforced at checkout.
+    
+    if (product.stock && quantity > product.stock) {
+      toast.error(`Stok yetersiz. En fazla ${product.stock} adet ekleyebilirsiniz.`);
+      return;
+    }
+
+    // Add item with note logic...
+    // The addItem function in cart-store handles adding.
+    // We call addItem multiple times or pass quantity if supported.
+    // cart-store addItem signature: (product: Product, note?: string) => void
+    // It adds 1 item. So loop is correct.
     for (let i = 0; i < quantity; i++) {
       addItem(product, note);
     }
     
     toast.success(`${quantity} adet ${product.name} sepete eklendi.`);
     onOpenChange(false);
-    // State will be reset by handleOpenChange since we called onOpenChange(false) which might not trigger the wrapper if passed directly?
-    // Wait, onOpenChange passed to Dialog is the wrapper. But here we call the PROP onOpenChange directly.
-    // So we should manually reset here too, or call handleOpenChange(false).
     setQuantity(1);
     setNote('');
   };
@@ -111,7 +122,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md sm:max-w-3xl p-0 gap-0 overflow-hidden bg-white/95 backdrop-blur-xl border-none shadow-2xl h-[90vh] sm:h-[85vh] flex flex-col sm:flex-row">
+      <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-3xl p-0 gap-0 overflow-hidden bg-white/95 backdrop-blur-xl border-none shadow-2xl h-[90vh] sm:h-[85vh] flex flex-col sm:flex-row">
         
         {/* Left Side - Image */}
         <div className="relative h-[35vh] sm:h-full w-full sm:w-[45%] bg-white shrink-0 flex items-center justify-center p-8">
@@ -144,7 +155,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
             <div className="flex justify-between items-end">
               <div>
                 <DialogTitle className="text-2xl font-bold leading-tight mb-1 text-white text-left">{product.name}</DialogTitle>
-                {Number(product.averageRating) > 0 && (
+                {showRating && Number(product.averageRating) > 0 && (
                   <div className="flex items-center gap-1 text-yellow-400 mb-1">
                     <Star className="w-4 h-4 fill-current" />
                     <span className="font-bold text-white">{Number(product.averageRating).toFixed(1)}</span>

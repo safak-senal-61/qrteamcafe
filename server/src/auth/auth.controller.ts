@@ -10,10 +10,42 @@ import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
+import { RegisterCustomerDto } from './dto/register-customer.dto';
+
 @UseGuards(ThrottlerGuard)
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('customer/register')
+  async registerCustomer(@Body() dto: RegisterCustomerDto) {
+    return this.authService.registerCustomer(dto);
+  }
+
+  @Post('customer/verify')
+  async verifyCustomer(@Body() dto: VerifyCodeDto) {
+    return this.authService.verifyCustomer(dto);
+  }
+
+  @Post('customer/login')
+  async loginCustomer(@Body() dto: LoginDto) {
+    return this.authService.loginCustomer(dto);
+  }
+
+  @Post('customer/forgot-password')
+  async forgotPasswordCustomer(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPasswordCustomer(dto);
+  }
+
+  @Post('customer/verify-code')
+  async verifyCodeCustomer(@Body() dto: VerifyCodeDto) {
+    return this.authService.verifyResetCodeCustomer(dto);
+  }
+
+  @Post('customer/reset-password')
+  async resetPasswordCustomer(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPasswordCustomer(dto);
+  }
 
   @Post('change-password')
   async changePassword(@Body() dto: ChangePasswordDto) {

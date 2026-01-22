@@ -36,7 +36,7 @@ export class CafesService {
         googleMapsUrl: data.googleMapsUrl,
         showProductRatings: data.showProductRatings,
         // New Settings
-        coverImageUrl: data.coverImageUrl,
+        coverImageUrl: data.coverImageUrl, // Schema synced
         brandColor: data.brandColor,
         menuViewMode: data.menuViewMode,
         welcomeMessage: data.welcomeMessage,
@@ -47,6 +47,7 @@ export class CafesService {
         wifiPassword: data.wifiPassword,
         waiterCallOptions: data.waiterCallOptions,
         isMaintenanceMode: data.isMaintenanceMode,
+        autoApproveReviews: data.autoApproveReviews,
       },
     });
   }

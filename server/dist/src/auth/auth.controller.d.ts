@@ -6,9 +6,42 @@ import { VerifyCodeDto } from './dto/verify-code.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import type { Request } from 'express';
+import { RegisterCustomerDto } from './dto/register-customer.dto';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
+    registerCustomer(dto: RegisterCustomerDto): Promise<{
+        message: string;
+        requiresVerification: boolean;
+        email: string;
+    }>;
+    verifyCustomer(dto: VerifyCodeDto): Promise<{
+        token: string;
+        customer: {
+            id: string;
+            email: string;
+            name: string | null;
+            phone: string | null;
+        };
+    }>;
+    loginCustomer(dto: LoginDto): Promise<{
+        token: string;
+        customer: {
+            id: string;
+            email: string;
+            name: string | null;
+            phone: string | null;
+        };
+    }>;
+    forgotPasswordCustomer(dto: ForgotPasswordDto): Promise<{
+        message: string;
+    }>;
+    verifyCodeCustomer(dto: VerifyCodeDto): Promise<{
+        message: string;
+    }>;
+    resetPasswordCustomer(dto: ResetPasswordDto): Promise<{
+        message: string;
+    }>;
     changePassword(dto: ChangePasswordDto): Promise<{
         message: string;
     }>;

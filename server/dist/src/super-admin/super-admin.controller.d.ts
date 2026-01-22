@@ -15,10 +15,10 @@ export declare class SuperAdminController {
             updatedAt: Date;
             email: string;
             passwordHash: string;
-            isActive: boolean;
-            isApproved: boolean;
             resetCode: string | null;
             resetCodeExpires: Date | null;
+            isActive: boolean;
+            isApproved: boolean;
             twoFactorSecret: string | null;
             isTwoFactorEnabled: boolean;
         }[];
@@ -56,6 +56,7 @@ export declare class SuperAdminController {
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+        autoApproveReviews: boolean;
     })[]>;
     getStats(): Promise<{
         totalCafes: number;
@@ -73,10 +74,10 @@ export declare class SuperAdminController {
             updatedAt: Date;
             email: string;
             passwordHash: string;
-            isActive: boolean;
-            isApproved: boolean;
             resetCode: string | null;
             resetCodeExpires: Date | null;
+            isActive: boolean;
+            isApproved: boolean;
             twoFactorSecret: string | null;
             isTwoFactorEnabled: boolean;
         }[];
@@ -114,6 +115,7 @@ export declare class SuperAdminController {
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+        autoApproveReviews: boolean;
     })[]>;
     getSettings(): Promise<Record<string, string>>;
     updateSetting(body: {
@@ -159,6 +161,7 @@ export declare class SuperAdminController {
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+        autoApproveReviews: boolean;
     }>;
     rejectCafe(id: string): Promise<{
         id: string;
@@ -194,5 +197,6 @@ export declare class SuperAdminController {
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+        autoApproveReviews: boolean;
     }>;
 }

@@ -29,4 +29,9 @@ export class ReviewsController {
   updateReply(@Param('id') id: string, @Body('reply') reply: string) {
     return this.reviewsService.updateAdminReply(id, reply);
   }
+
+  @Patch(':id/visibility')
+  toggleVisibility(@Param('id') id: string, @Body('isVisible') isVisible: boolean) {
+    return this.reviewsService.toggleVisibility(id, isVisible);
+  }
 }

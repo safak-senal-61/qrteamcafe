@@ -661,6 +661,18 @@ export default function SettingsPage() {
                     onCheckedChange={(checked) => setFormData({ ...formData, showProductRatings: checked })}
                   />
                 </div>
+
+                <div className="flex items-center justify-between border p-3 rounded-lg mt-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Otomatik Yorum Onayı</Label>
+                    <p className="text-sm text-muted-foreground">Müşteri yorumları kontrol edilmeden otomatik yayınlansın.</p>
+                  </div>
+                  <Switch
+                    checked={formData.autoApproveReviews}
+                    onCheckedChange={(checked) => setFormData({ ...formData, autoApproveReviews: checked })}
+                    disabled={!formData.showProductRatings}
+                  />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

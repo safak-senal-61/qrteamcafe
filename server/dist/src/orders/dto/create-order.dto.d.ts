@@ -1,9 +1,11 @@
 export declare class CreateOrderDto {
-    tableId: string;
-    totalAmount: number;
+    tableId?: string;
+    customerId?: string;
+    totalAmount?: number;
     items: {
         productId: string;
         quantity: number;
-        price: number;
+        unitPrice: number;
+        note?: string;
     }[];
 }

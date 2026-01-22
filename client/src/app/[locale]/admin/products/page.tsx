@@ -277,6 +277,20 @@ export default function MenuPage() {
       const user = JSON.parse(userStr);
       const cafeId = user.cafeId;
 
+      const price = parseFloat(productForm.price);
+      const originalPrice = productForm.originalPrice ? parseFloat(productForm.originalPrice) : null;
+
+      if (originalPrice !== null) {
+        if (originalPrice < 0) {
+          toast.error('İndirimsiz fiyat 0\'dan küçük olamaz.');
+          return;
+        }
+        if (originalPrice < price) {
+          toast.error('İndirimsiz fiyat, satış fiyatından küçük olamaz.');
+          return;
+        }
+      }
+
       const url = editingProduct 
         ? `${API_URL}/products/${editingProduct.id}`
         : `${API_URL}/products?cafeId=${cafeId}`;
@@ -288,10 +302,11 @@ export default function MenuPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...productForm,
-          price: parseFloat(productForm.price),
-          originalPrice: productForm.originalPrice ? parseFloat(productForm.originalPrice) : null,
+          price,
+          originalPrice,
           stock: parseInt(productForm.stock) || 0,
-          isChefRecommended: productForm.isChefRecommended
+          isChefRecommended: productForm.isChefRecommended,
+          requiresPreparation: productForm.requiresPreparation
         })
       });
 
@@ -372,7 +387,8 @@ export default function MenuPage() {
       description: '',
       imageUrl: '',
       isAvailable: true,
-      isChefRecommended: false
+      isChefRecommended: false,
+      requiresPreparation: true
     });
   };
 
@@ -388,7 +404,8 @@ export default function MenuPage() {
         description: product.description || '',
         imageUrl: product.imageUrl || '',
         isAvailable: product.isAvailable,
-        isChefRecommended: product.isChefRecommended || false
+        isChefRecommended: product.isChefRecommended || false,
+        requiresPreparation: product.requiresPreparation !== undefined ? product.requiresPreparation : true
       });
     } else {
       setEditingProduct(null);
@@ -682,6 +699,7 @@ export default function MenuPage() {
                     <Label>Satış Fiyatı (₺)</Label>
                     <Input 
                       type="number" 
+                      min="0"
                       step="0.01" 
                       value={productForm.price} 
                       onChange={e => setProductForm({ ...productForm, price: e.target.value })}
@@ -692,6 +710,7 @@ export default function MenuPage() {
                     <Label>İndirimsiz Fiyat (Opsiyonel)</Label>
                     <Input 
                       type="number" 
+                      min="0"
                       step="0.01" 
                       value={productForm.originalPrice} 
                       onChange={e => setProductForm({ ...productForm, originalPrice: e.target.value })}
@@ -702,6 +721,7 @@ export default function MenuPage() {
                     <Label>Stok Adedi</Label>
                     <Input 
                       type="number" 
+                      min="0"
                       value={productForm.stock} 
                       onChange={e => setProductForm({ ...productForm, stock: e.target.value })}
                       placeholder="0"
@@ -722,6 +742,14 @@ export default function MenuPage() {
                   <Switch 
                     checked={productForm.isChefRecommended} 
                     onCheckedChange={checked => setProductForm({ ...productForm, isChefRecommended: checked })}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between border p-3 rounded-lg">
+                  <Label>Mutfak Hazırlığı Gerektirir</Label>
+                  <Switch 
+                    checked={productForm.requiresPreparation} 
+                    onCheckedChange={checked => setProductForm({ ...productForm, requiresPreparation: checked })}
                   />
                 </div>
               </div>

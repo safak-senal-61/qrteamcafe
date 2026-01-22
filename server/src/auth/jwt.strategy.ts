@@ -18,6 +18,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    if (payload.role === 'customer') {
+      const customer = await this.prisma.customer.findUnique({
+        where: { id: payload.sub },
+      });
+      if (!customer) {
+        throw new UnauthorizedException();
+      }
+      return { ...customer, role: 'customer' };
+    }
+
     // Check if session exists (for "terminate session" feature)
     if (payload.sessionId) {
       const session = await this.prisma.adminSession.findUnique({

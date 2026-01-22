@@ -37,6 +37,7 @@ export declare class CafesService {
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+        autoApproveReviews: boolean;
     }>;
     update(id: string, data: UpdateCafeDto): Promise<{
         id: string;
@@ -72,6 +73,7 @@ export declare class CafesService {
         googleMapsUrl: string | null;
         status: string;
         showProductRatings: boolean;
+        autoApproveReviews: boolean;
     }>;
     getDashboardStats(cafeId: string): Promise<{
         totalOrders: number;
@@ -101,6 +103,7 @@ export declare class CafesService {
                     sortOrder: number;
                     imageUrl: string | null;
                     isAvailable: boolean;
+                    requiresPreparation: boolean;
                     isChefRecommended: boolean;
                     averageRating: import("@prisma/client/runtime/library").Decimal;
                     reviewCount: number;
@@ -110,11 +113,12 @@ export declare class CafesService {
             } & {
                 id: string;
                 createdAt: Date;
-                orderId: string;
                 productId: string;
+                orderId: string;
                 quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
                 totalPrice: import("@prisma/client/runtime/library").Decimal;
+                note: string | null;
             })[];
         } & {
             id: string;
@@ -122,6 +126,7 @@ export declare class CafesService {
             createdAt: Date;
             updatedAt: Date;
             customerName: string | null;
+            customerId: string | null;
             status: string;
             totalAmount: import("@prisma/client/runtime/library").Decimal;
             tableId: string | null;
@@ -138,6 +143,7 @@ export declare class CafesService {
             sortOrder: number;
             imageUrl: string | null;
             isAvailable: boolean;
+            requiresPreparation: boolean;
             isChefRecommended: boolean;
             averageRating: import("@prisma/client/runtime/library").Decimal;
             reviewCount: number;

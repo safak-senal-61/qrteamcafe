@@ -16,6 +16,7 @@ export declare class ProductsService {
         sortOrder: number;
         imageUrl: string | null;
         isAvailable: boolean;
+        requiresPreparation: boolean;
         isChefRecommended: boolean;
         averageRating: import("@prisma/client/runtime/library").Decimal;
         reviewCount: number;
@@ -43,6 +44,7 @@ export declare class ProductsService {
         sortOrder: number;
         imageUrl: string | null;
         isAvailable: boolean;
+        requiresPreparation: boolean;
         isChefRecommended: boolean;
         averageRating: import("@prisma/client/runtime/library").Decimal;
         reviewCount: number;
@@ -64,6 +66,7 @@ export declare class ProductsService {
         sortOrder: number;
         imageUrl: string | null;
         isAvailable: boolean;
+        requiresPreparation: boolean;
         isChefRecommended: boolean;
         averageRating: import("@prisma/client/runtime/library").Decimal;
         reviewCount: number;
@@ -91,6 +94,7 @@ export declare class ProductsService {
         sortOrder: number;
         imageUrl: string | null;
         isAvailable: boolean;
+        requiresPreparation: boolean;
         isChefRecommended: boolean;
         averageRating: import("@prisma/client/runtime/library").Decimal;
         reviewCount: number;
@@ -109,6 +113,7 @@ export declare class ProductsService {
         sortOrder: number;
         imageUrl: string | null;
         isAvailable: boolean;
+        requiresPreparation: boolean;
         isChefRecommended: boolean;
         averageRating: import("@prisma/client/runtime/library").Decimal;
         reviewCount: number;
@@ -127,6 +132,7 @@ export declare class ProductsService {
         sortOrder: number;
         imageUrl: string | null;
         isAvailable: boolean;
+        requiresPreparation: boolean;
         isChefRecommended: boolean;
         averageRating: import("@prisma/client/runtime/library").Decimal;
         reviewCount: number;
@@ -145,6 +151,7 @@ export declare class ProductsService {
         sortOrder: number;
         imageUrl: string | null;
         isAvailable: boolean;
+        requiresPreparation: boolean;
         isChefRecommended: boolean;
         averageRating: import("@prisma/client/runtime/library").Decimal;
         reviewCount: number;
@@ -163,6 +170,7 @@ export declare class ProductsService {
         sortOrder: number;
         imageUrl: string | null;
         isAvailable: boolean;
+        requiresPreparation: boolean;
         isChefRecommended: boolean;
         averageRating: import("@prisma/client/runtime/library").Decimal;
         reviewCount: number;
@@ -181,6 +189,7 @@ export declare class ProductsService {
         sortOrder: number;
         imageUrl: string | null;
         isAvailable: boolean;
+        requiresPreparation: boolean;
         isChefRecommended: boolean;
         averageRating: import("@prisma/client/runtime/library").Decimal;
         reviewCount: number;

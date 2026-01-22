@@ -7,4 +7,6 @@ export declare class CreateProductDto {
     isAvailable?: boolean;
     stock?: number;
     originalPrice?: number;
+    isChefRecommended?: boolean;
+    requiresPreparation?: boolean;
 }

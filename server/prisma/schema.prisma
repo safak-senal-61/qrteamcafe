@@ -49,6 +49,7 @@ model Cafe {
   isActive  Boolean     @default(true) @map("is_active")
   status    String      @default("PENDING") // PENDING, APPROVED, REJECTED
   showProductRatings Boolean @default(true) @map("show_product_ratings")
+  autoApproveReviews Boolean @default(false) @map("auto_approve_reviews")
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
 
@@ -163,6 +164,7 @@ model Product {
   sortOrder   Int         @default(0) @map("sort_order")
   imageUrl    String?     @map("image_url")
   isAvailable Boolean     @default(true) @map("is_available")
+  requiresPreparation Boolean @default(true) @map("requires_preparation")
   isChefRecommended Boolean @default(false) @map("is_chef_recommended")
   averageRating Decimal   @default(0) @db.Decimal(3, 2) @map("average_rating")
   reviewCount   Int       @default(0) @map("review_count")
@@ -209,7 +211,33 @@ model Order {
   items        OrderItem[]
   payment      Payment?
 
+  customerId   String?     @map("customer_id")
+  customer     Customer?   @relation(fields: [customerId], references: [id])
+  reviews      Review[]
+
   @@map("orders")
+}
+
+model Customer {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String?
+  phone        String?
+  isVerified   Boolean   @default(false) @map("is_verified")
+  verificationCode String? @map("verification_code")
+  verificationCodeExpires DateTime? @map("verification_code_expires")
+  
+  resetCode        String?   @map("reset_code")
+  resetCodeExpires DateTime? @map("reset_code_expires")
+
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  orders       Order[]
+  reviews      Review[]
+
+  @@map("customers")
 }
 
 model OrderItem {
@@ -219,6 +247,7 @@ model OrderItem {
   quantity   Int
   unitPrice  Decimal  @db.Decimal(10, 2) @map("unit_price")
   totalPrice Decimal  @db.Decimal(10, 2) @map("total_price")
+  note       String?
   createdAt  DateTime @default(now()) @map("created_at")
 
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -246,13 +275,17 @@ model Review {
   productId   String   @map("product_id")
   orderId     String?  @map("order_id")
   customerName String? @map("customer_name")
+  customerId  String?  @map("customer_id")
   rating      Int
   comment     String?
   adminScore  Int?     @map("admin_score")
   adminReply  String?  @map("admin_reply")
+  isVisible   Boolean  @default(true) @map("is_visible")
   createdAt   DateTime @default(now()) @map("created_at")
 
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  order       Order?    @relation(fields: [orderId], references: [id])
 
   @@map("reviews")
 }

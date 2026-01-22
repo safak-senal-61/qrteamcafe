@@ -21,6 +21,8 @@ class CreateProductDto {
     isAvailable;
     stock;
     originalPrice;
+    isChefRecommended;
+    requiresPreparation;
 }
 exports.CreateProductDto = CreateProductDto;
 __decorate([
@@ -42,6 +44,7 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)({ message: 'Fiyat gereklidir.' }),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsNumber)({}, { message: 'Fiyat sayı olmalıdır.' }),
+    (0, class_validator_1.Min)(0, { message: 'Fiyat 0 veya daha büyük olmalıdır.' }),
     __metadata("design:type", Number)
 ], CreateProductDto.prototype, "price", void 0);
 __decorate([
@@ -58,12 +61,24 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsNumber)({}, { message: 'Stok sayı olmalıdır.' }),
+    (0, class_validator_1.Min)(0, { message: 'Stok 0 veya daha büyük olmalıdır.' }),
     __metadata("design:type", Number)
 ], CreateProductDto.prototype, "stock", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsNumber)({}, { message: 'İndirimsiz fiyat sayı olmalıdır.' }),
+    (0, class_validator_1.Min)(0, { message: 'İndirimsiz fiyat 0 veya daha büyük olmalıdır.' }),
     __metadata("design:type", Number)
 ], CreateProductDto.prototype, "originalPrice", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateProductDto.prototype, "isChefRecommended", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateProductDto.prototype, "requiresPreparation", void 0);
 //# sourceMappingURL=create-product.dto.js.map

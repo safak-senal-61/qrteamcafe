@@ -1,62 +1,80 @@
-"use client"
+'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
-import { API_URL } from '@/lib/api';
+import Image from 'next/image';
+import { useCustomerStore } from '@/store/customer-store';
+import { useCartStore } from '@/store/cart-store';
+import { API_URL, api } from '@/lib/api';
 import { toast } from 'sonner';
-import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Loader2, ClipboardList, Clock, CheckCircle2, XCircle, ChefHat, Star } from 'lucide-react';
-import { ReviewDialog } from './ReviewDialog';
+import { CreateReviewDialog } from './CreateReviewDialog';
+import { 
+  ShoppingBag, 
+  Trash2, 
+  Plus, 
+  Minus, 
+  ArrowRight, 
+  Loader2, 
+  ClipboardList, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  ChefHat,
+  MessageSquare
+} from 'lucide-react';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { useCartStore } from '@/store/cart-store';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CartSheetProps {
-  onOrderSuccess: () => void;
-  activeOrders?: any[];
-  onCancelOrder?: (id: string) => void;
+  cafeId?: string;
+  tableId?: string;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  activeOrders?: any[];
+  onOrderSuccess?: () => void;
+  onCancelOrder?: (orderId: string) => void;
 }
 
-export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, isOpen, onOpenChange }: CartSheetProps) {
+export function CartSheet({ 
+  cafeId, 
+  tableId, 
+  isOpen, 
+  onOpenChange, 
+  activeOrders = [], 
+  onOrderSuccess, 
+  onCancelOrder 
+}: CartSheetProps) {
+  // Internal state for uncontrolled mode if needed, though we prefer controlled from MenuPage
   const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = isOpen !== undefined;
+  const isControlled = isOpen !== undefined && onOpenChange !== undefined;
   const open = isControlled ? isOpen : internalOpen;
-  const setOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
-  
+  const setOpen = isControlled ? onOpenChange : setInternalOpen;
+
   const [loading, setLoading] = useState(false);
-  const [reviewOrder, setReviewOrder] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState('cart');
-  const { items, removeItem, updateQuantity, clearCart } = useCartStore();
-  const totalPrice = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const params = useParams();
-  const searchParams = useSearchParams();
-  const cafeId = params.cafeId as string;
-  const tableNumber = searchParams.get('table');
-
-  const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
-  const activeOrdersCount = activeOrders.filter(o => o.status !== 'PAID' && o.status !== 'CANCELLED').length;
-  const totalBadgeCount = totalItems + activeOrdersCount;
   
-  const activeOrdersTotal = activeOrders
-    .filter(o => o.status !== 'PAID' && o.status !== 'CANCELLED')
-    .reduce((acc, order) => acc + Number(order.totalAmount), 0);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedOrderForReview, setSelectedOrderForReview] = useState<any>(null);
+  
+  const { items, removeItem, updateQuantity, clearCart, getTotalPrice, getTotalItems } = useCartStore();
+  const { customer, setAuthDialogOpen, isGuest } = useCustomerStore();
 
-  const grandTotal = totalPrice + activeOrdersTotal;
+  const totalItems = getTotalItems();
+  const totalPrice = getTotalPrice();
+  const activeOrdersCount = activeOrders.length;
+  const totalBadgeCount = totalItems + activeOrdersCount;
 
+  // Auto-switch tab based on activity
   useEffect(() => {
     if (open) {
       if (items.length > 0) {
@@ -68,54 +86,45 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
   }, [open, items.length, activeOrders.length]);
 
   const handleCheckout = async () => {
-    if (!tableNumber) {
-      toast.error('Lütfen bir masa seçiniz (QR kodu okutunuz).');
+    if (!customer && !isGuest) {
+      toast.info('Sipariş vermek için lütfen giriş yapınız veya misafir olarak devam ediniz');
+      // setOpen(false); // Keep cart open so user can continue easily after auth dialog closes
+      setAuthDialogOpen(true);
+      return;
+    }
+
+    if (!cafeId || !tableId) {
+      toast.error('Masa veya kafe bilgisi eksik. Lütfen QR kodu tekrar okutunuz.');
       return;
     }
 
     setLoading(true);
     try {
-      const tablesRes = await fetch(`${API_URL}/tables?cafeId=${cafeId}`);
-      if (!tablesRes.ok) throw new Error('Masa bilgisi alınamadı');
-      
-      const tables = await tablesRes.json();
-      const currentTable = tables.find((t: any) => t.tableNumber === parseInt(tableNumber));
-      
-      if (!currentTable) {
-        toast.error('Geçersiz masa numarası.');
-        return;
-      }
-
       const orderData = {
-        tableId: currentTable.id,
-        totalAmount: totalPrice,
-        items: items.map(item => ({
+        tableId,
+        items: items.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
-          price: item.price
-        }))
+          unitPrice: item.price,
+          note: item.note
+        })),
+        customerId: customer?.id,
       };
 
-      const res = await fetch(`${API_URL}/orders?cafeId=${cafeId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
-      });
+      const response = await api.post(`/orders?cafeId=${cafeId}`, orderData);
 
-      if (res.ok) {
-        toast.success('Siparişiniz alındı! Teşekkürler.');
-        clearCart();
-        setOpen(false);
-        if (onOrderSuccess) {
-          onOrderSuccess();
-        }
-      } else {
-        const errorData = await res.json();
-        toast.error(errorData.message || 'Sipariş verilirken bir hata oluştu.');
+      toast.success('Siparişiniz başarıyla alındı!');
+      clearCart();
+      
+      if (onOrderSuccess) {
+        onOrderSuccess();
       }
-    } catch (error) {
-      console.error(error);
-      toast.error('Bir hata oluştu.');
+      
+      // Switch to orders tab
+      setActiveTab('orders');
+    } catch (error: any) {
+      console.error('Order error:', error);
+      toast.error(error.response?.data?.message || 'Sipariş oluşturulurken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -173,7 +182,7 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
           </div>
 
           <TabsContent value="cart" className="flex-1 overflow-hidden relative mt-0 data-[state=inactive]:hidden">
-            <div className="flex-1 overflow-hidden relative h-full">
+            <div className="flex-1 overflow-hidden relative h-full flex flex-col">
               {items.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-6 p-8 text-center animate-in fade-in zoom-in duration-500">
                   <div className="bg-secondary p-8 rounded-full">
@@ -187,111 +196,110 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
                   </div>
                 </div>
               ) : (
-                <ScrollArea className="h-full px-6 py-4">
-                  <AnimatePresence initial={false}>
-                    <div className="space-y-4 pb-32">
-                      {items.map((item) => (
-                        <motion.div
-                          key={item.cartItemId}
-                          layout
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -100 }}
-                          className="group flex items-center space-x-4 bg-white p-3 rounded-2xl shadow-sm border border-border/50 hover:shadow-md transition-all"
-                        >
-                          <div className="relative h-20 w-20 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">
-                            <Image
-                              src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
-                              alt={item.name}
-                              fill
-                              sizes="80px"
-                              className="object-cover transition-transform group-hover:scale-110"
-                              unoptimized={!!item.image?.includes('localhost') || !!item.image?.includes('127.0.0.1') || !!item.image?.startsWith('/uploads/')}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0 py-1">
-                            <h4 className="font-bold truncate text-base mb-1">{item.name}</h4>
-                            {item.note && (
-                              <p className="text-xs text-muted-foreground mb-1 italic">
-                                Not: {item.note}
-                              </p>
-                            )}
-                            <p className="text-primary font-extrabold text-lg">
-                              {(item.price * item.quantity).toFixed(2)} ₺
-                            </p>
-                            <div className="flex items-center mt-2 space-x-1">
-                              <Button
-                                variant="secondary"
-                                size="icon"
-                                className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
-                                onClick={() =>
-                                  updateQuantity(item.cartItemId, item.quantity - 1)
-                                }
-                              >
-                                <Minus className="h-3.5 w-3.5" />
-                              </Button>
-                              <span className="text-sm font-bold w-6 text-center tabular-nums">
-                                {item.quantity}
-                              </span>
-                              <Button
-                                variant="secondary"
-                                size="icon"
-                                className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
-                                onClick={() => {
-                                    if (item.quantity < item.stock) {
-                                        updateQuantity(item.cartItemId, item.quantity + 1)
-                                    }
-                                }}
-                                disabled={item.quantity >= item.stock}
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-xl h-10 w-10 transition-all"
-                            onClick={() => removeItem(item.id)}
+                <>
+                  <ScrollArea className="flex-1 px-6 py-4">
+                    <AnimatePresence initial={false}>
+                      <div className="space-y-4 pb-4">
+                        {items.map((item) => (
+                          <motion.div
+                            key={item.cartItemId}
+                            layout
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -100 }}
+                            className="group flex items-center space-x-4 bg-white p-3 rounded-2xl shadow-sm border border-border/50 hover:shadow-md transition-all"
                           >
-                            <Trash2 className="h-5 w-5" />
-                          </Button>
-                        </motion.div>
-                      ))}
+                            <div className="relative h-20 w-20 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">
+                              <Image
+                                src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
+                                alt={item.name}
+                                fill
+                                sizes="80px"
+                                className="object-cover transition-transform group-hover:scale-110"
+                                unoptimized={!!item.image?.includes('localhost') || !!item.image?.includes('127.0.0.1') || !!item.image?.startsWith('/uploads/')}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0 py-1">
+                              <h4 className="font-bold truncate text-base mb-1">{item.name}</h4>
+                              {item.note && (
+                                <p className="text-xs text-muted-foreground mb-1 italic">
+                                  Not: {item.note}
+                                </p>
+                              )}
+                              <p className="text-primary font-extrabold text-lg">
+                                {(item.price * item.quantity).toFixed(2)} ₺
+                              </p>
+                              <div className="flex items-center mt-2 space-x-1">
+                                <Button
+                                  variant="secondary"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                  onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
+                                >
+                                  <Minus className="h-3.5 w-3.5" />
+                                </Button>
+                                <span className="text-sm font-bold w-6 text-center tabular-nums">
+                                  {item.quantity}
+                                </span>
+                                <Button
+                                  variant="secondary"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
+                                  onClick={() => {
+                                      if (item.stock && item.quantity < item.stock) {
+                                          updateQuantity(item.cartItemId, item.quantity + 1)
+                                      }
+                                  }}
+                                  disabled={!!item.stock && item.quantity >= item.stock}
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-xl h-10 w-10 transition-all"
+                              onClick={() => removeItem(item.cartItemId)}
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </Button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </AnimatePresence>
+                  </ScrollArea>
+                  
+                  <div className="bg-background/80 backdrop-blur-xl border-t p-6 space-y-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Ara Toplam</span>
+                        <span>{totalPrice.toFixed(2)} ₺</span>
+                      </div>
+                      <Separator className="bg-border/50" />
+                      <div className="flex justify-between items-end">
+                        <span className="text-lg font-bold">Toplam Tutar</span>
+                        <span className="text-2xl font-extrabold text-primary">{totalPrice.toFixed(2)} ₺</span>
+                      </div>
                     </div>
-                  </AnimatePresence>
-                </ScrollArea>
+                    <Button 
+                      className="w-full h-14 text-lg font-bold rounded-2xl shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all active:scale-[0.98] group"
+                      onClick={handleCheckout}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      ) : (
+                        <>
+                          Siparişi Tamamla
+                          <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </>
               )}
             </div>
-            {items.length > 0 && (
-              <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t p-6 space-y-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Ara Toplam</span>
-                    <span>{totalPrice.toFixed(2)} ₺</span>
-                  </div>
-                  <Separator className="bg-border/50" />
-                  <div className="flex justify-between items-end">
-                    <span className="text-lg font-bold">Toplam Tutar</span>
-                    <span className="text-2xl font-extrabold text-primary">{totalPrice.toFixed(2)} ₺</span>
-                  </div>
-                </div>
-                <Button 
-                  className="w-full h-14 text-lg font-bold rounded-2xl shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all active:scale-[0.98] group"
-                  onClick={handleCheckout}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  ) : (
-                    <>
-                      Siparişi Tamamla
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
           </TabsContent>
 
           <TabsContent value="orders" className="flex-1 overflow-hidden relative mt-0 data-[state=inactive]:hidden">
@@ -326,13 +334,16 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
                             order.status === 'DELIVERED' ? 'bg-green-700 hover:bg-green-800' : 
                             order.status === 'CANCELLED' ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-500'
                          }>
-                            {
-                              order.status === 'PENDING' ? <><Clock className="w-3 h-3 mr-1" /> Bekliyor</> :
-                              order.status === 'PREPARING' ? <><ChefHat className="w-3 h-3 mr-1" /> Hazırlanıyor</> :
-                              order.status === 'READY' ? <><CheckCircle2 className="w-3 h-3 mr-1" /> Hazır</> :
-                              order.status === 'DELIVERED' ? <><CheckCircle2 className="w-3 h-3 mr-1" /> Teslim Edildi</> : 
-                              order.status === 'CANCELLED' ? <><XCircle className="w-3 h-3 mr-1" /> İptal Edildi</> : order.status
-                            }
+                            {(() => {
+                              const hasPrepItems = order.items?.some((item: any) => item.product?.requiresPreparation !== false) ?? true;
+                              
+                              if (order.status === 'PENDING') return <><Clock className="w-3 h-3 mr-1" /> Bekliyor</>;
+                              if (order.status === 'PREPARING') return hasPrepItems ? <><ChefHat className="w-3 h-3 mr-1" /> Hazırlanıyor</> : <><CheckCircle2 className="w-3 h-3 mr-1" /> Sipariş Alındı</>;
+                              if (order.status === 'READY') return hasPrepItems ? <><CheckCircle2 className="w-3 h-3 mr-1" /> Hazır</> : <><CheckCircle2 className="w-3 h-3 mr-1" /> Servise Hazır</>;
+                              if (order.status === 'DELIVERED') return <><CheckCircle2 className="w-3 h-3 mr-1" /> Teslim Edildi</>;
+                              if (order.status === 'CANCELLED') return <><XCircle className="w-3 h-3 mr-1" /> İptal Edildi</>;
+                              return order.status;
+                            })()}
                          </Badge>
                        </div>
                        
@@ -362,49 +373,29 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
                              className="w-full"
                              onClick={() => onCancelOrder(order.id)}
                            >
-                             Siparişi İptal Et
+                             İptal Et
                            </Button>
                          </div>
                        )}
 
-                       {order.status === 'DELIVERED' && (
+                       {['READY', 'DELIVERED', 'COMPLETED', 'PAID'].includes(order.status) && (
                          <div className="mt-4 pl-3">
                            <Button 
-                             variant="outline" 
-                             size="sm" 
-                             className="w-full border-primary/20 text-primary hover:bg-primary/5"
-                             onClick={() => setReviewOrder(order)}
+                             variant="outline"
+                             size="sm"
+                             className="w-full gap-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200"
+                             onClick={() => {
+                               setSelectedOrderForReview(order);
+                               setReviewDialogOpen(true);
+                             }}
                            >
-                             <Star className="w-4 h-4 mr-2" />
-                             Siparişi Değerlendir
+                             <MessageSquare className="w-4 h-4" />
+                             {order.reviews && order.reviews.length > 0 ? 'Değerlendirmeyi Düzenle' : 'Değerlendir'}
                            </Button>
                          </div>
                        )}
                     </div>
                   ))}
-                  
-                  {activeOrders.length > 0 && (
-                     <div className="bg-primary/5 rounded-xl p-4 border border-primary/10 mt-6">
-                        <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium text-muted-foreground">Aktif Siparişler Toplamı</span>
-                            <span className="font-bold text-lg">{activeOrdersTotal.toFixed(2)} ₺</span>
-                        </div>
-                        {items.length > 0 && (
-                            <div className="flex justify-between items-center mb-1">
-                                <span className="text-sm font-medium text-muted-foreground">Sepetteki Ürünler</span>
-                                <span className="font-bold text-lg">{totalPrice.toFixed(2)} ₺</span>
-                            </div>
-                        )}
-                        <Separator className="my-2 bg-primary/20" />
-                        <div className="flex justify-between items-center">
-                            <span className="font-bold text-lg text-primary">Genel Toplam</span>
-                            <span className="font-extrabold text-2xl text-primary">{grandTotal.toFixed(2)} ₺</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2 text-center">
-                            *Ödeme kasada yapılacaktır.
-                        </p>
-                     </div>
-                  )}
                 </div>
               )}
              </ScrollArea>
@@ -412,14 +403,16 @@ export function CartSheet({ onOrderSuccess, activeOrders = [], onCancelOrder, is
         </Tabs>
       </SheetContent>
 
-      {reviewOrder && (
-        <ReviewDialog
-          isOpen={!!reviewOrder}
-          onClose={() => setReviewOrder(null)}
-          orderItems={reviewOrder.items}
-          orderId={reviewOrder.id}
-        />
-      )}
+      <CreateReviewDialog 
+        open={reviewDialogOpen} 
+        onOpenChange={(open) => {
+          setReviewDialogOpen(open);
+          if (!open && onOrderSuccess) onOrderSuccess();
+        }}
+        orderId={selectedOrderForReview?.id || ''}
+        items={selectedOrderForReview?.items || []}
+        existingReviews={selectedOrderForReview?.reviews || []}
+      />
     </Sheet>
   );
 }

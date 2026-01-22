@@ -51,18 +51,21 @@ let OrdersService = class OrdersService {
                     data: { stock: { decrement: item.quantity } },
                 });
             }
+            const totalAmount = createOrderDto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
             const order = await prisma.order.create({
                 data: {
                     cafeId,
                     tableId: createOrderDto.tableId,
-                    totalAmount: createOrderDto.totalAmount,
+                    customerId: createOrderDto.customerId,
+                    totalAmount: totalAmount,
                     status: 'PENDING',
                     items: {
                         create: createOrderDto.items.map((item) => ({
                             productId: item.productId,
                             quantity: item.quantity,
-                            unitPrice: item.price,
-                            totalPrice: item.price * item.quantity,
+                            unitPrice: item.unitPrice,
+                            totalPrice: item.unitPrice * item.quantity,
+                            note: item.note,
                         })),
                     },
                 },
@@ -77,6 +80,23 @@ let OrdersService = class OrdersService {
             });
             this.eventsGateway.notifyNewOrder(cafeId, order);
             return order;
+        });
+    }
+    findAllByCustomer(customerId) {
+        return this.prisma.order.findMany({
+            where: { customerId },
+            include: {
+                table: true,
+                reviews: true,
+                items: {
+                    include: {
+                        product: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
         });
     }
     findAll(cafeId) {

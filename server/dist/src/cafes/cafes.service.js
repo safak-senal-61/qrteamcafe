@@ -57,6 +57,7 @@ let CafesService = class CafesService {
                 wifiPassword: data.wifiPassword,
                 waiterCallOptions: data.waiterCallOptions,
                 isMaintenanceMode: data.isMaintenanceMode,
+                autoApproveReviews: data.autoApproveReviews,
             },
         });
     }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -8,20 +8,41 @@ export class ReviewsService {
   constructor(private prisma: PrismaService) {}
 
   async create(createReviewDto: CreateReviewDto) {
-    // 1. Create Review
-    const review = await this.prisma.review.create({
-      data: createReviewDto,
+    // Get product to find cafeId and check autoApproveReviews setting
+    const product = await this.prisma.product.findUnique({
+      where: { id: createReviewDto.productId },
+      include: { cafe: true }
     });
 
-    // 2. Update Product Average Rating
-    await this.updateProductRating(createReviewDto.productId);
+    if (!product) {
+      throw new NotFoundException('Ürün bulunamadı');
+    }
+
+    const isVisible = product.cafe.autoApproveReviews;
+
+    // 1. Create Review
+    const review = await this.prisma.review.create({
+      data: {
+        ...createReviewDto,
+        isVisible,
+      },
+    });
+
+    // 2. Update Product Average Rating (only if visible? No, usually average includes all, or maybe only visible ones?)
+    // If not visible, it shouldn't affect the rating shown to customers yet.
+    if (isVisible) {
+      await this.updateProductRating(createReviewDto.productId);
+    }
 
     return review;
   }
 
   private async updateProductRating(productId: string) {
     const aggregate = await this.prisma.review.aggregate({
-      where: { productId },
+      where: { 
+        productId,
+        isVisible: true // Only count visible reviews
+      },
       _avg: { rating: true },
       _count: { rating: true },
     });
@@ -33,38 +54,52 @@ export class ReviewsService {
         reviewCount: aggregate._count.rating || 0,
       },
     });
-  }
+  } 
   
-  async findAllByProduct(productId: string) {
-    return this.prisma.review.findMany({
-      where: { productId },
-      orderBy: { createdAt: 'desc' },
-      take: 20
-    });
-  }
+  async findAllByProduct(productId: string) { 
+    return this.prisma.review.findMany({ 
+      where: { 
+        productId, 
+        isVisible: true 
+      }, 
+      orderBy: { createdAt: 'desc' }, 
+      take: 20 
+    }); 
+  } 
 
-  async findAll() {
-    return this.prisma.review.findMany({
-      include: {
-        product: {
-          select: { name: true, imageUrl: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-  }
+  async findAll() { 
+    return this.prisma.review.findMany({ 
+      include: { 
+        product: { 
+          select: { name: true, imageUrl: true } 
+        } 
+      }, 
+      orderBy: { createdAt: 'desc' } 
+    }); 
+  } 
 
-  async updateAdminScore(id: string, score: number) {
-    return this.prisma.review.update({
+  async updateAdminScore(id: string, score: number) { 
+    return this.prisma.review.update({ 
+      where: { id }, 
+      data: { adminScore: score } 
+    }); 
+  } 
+
+  async updateAdminReply(id: string, reply: string) { 
+    return this.prisma.review.update({ 
+      where: { id }, 
+      data: { adminReply: reply } 
+    }); 
+  } 
+
+  async toggleVisibility(id: string, isVisible: boolean) {
+    const review = await this.prisma.review.update({
       where: { id },
-      data: { adminScore: score }
+      data: { isVisible }
     });
-  }
 
-  async updateAdminReply(id: string, reply: string) {
-    return this.prisma.review.update({
-      where: { id },
-      data: { adminReply: reply }
-    });
-  }
+    await this.updateProductRating(review.productId);
+
+    return review;
+  } 
 }

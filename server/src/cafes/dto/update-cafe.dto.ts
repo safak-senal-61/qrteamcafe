@@ -69,6 +69,10 @@ export class UpdateCafeDto {
   @IsBoolean()
   showProductRatings?: boolean;
 
+  @IsOptional()
+  @IsBoolean()
+  autoApproveReviews?: boolean;
+
   // New Settings
   @IsOptional()
   @IsString()

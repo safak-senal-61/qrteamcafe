@@ -23,10 +23,29 @@ const reset_password_dto_1 = require("./dto/reset-password.dto");
 const change_password_dto_1 = require("./dto/change-password.dto");
 const passport_1 = require("@nestjs/passport");
 const throttler_1 = require("@nestjs/throttler");
+const register_customer_dto_1 = require("./dto/register-customer.dto");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
         this.authService = authService;
+    }
+    async registerCustomer(dto) {
+        return this.authService.registerCustomer(dto);
+    }
+    async verifyCustomer(dto) {
+        return this.authService.verifyCustomer(dto);
+    }
+    async loginCustomer(dto) {
+        return this.authService.loginCustomer(dto);
+    }
+    async forgotPasswordCustomer(dto) {
+        return this.authService.forgotPasswordCustomer(dto);
+    }
+    async verifyCodeCustomer(dto) {
+        return this.authService.verifyResetCodeCustomer(dto);
+    }
+    async resetPasswordCustomer(dto) {
+        return this.authService.resetPasswordCustomer(dto);
     }
     async changePassword(dto) {
         return this.authService.changePassword(dto);
@@ -71,6 +90,48 @@ let AuthController = class AuthController {
     }
 };
 exports.AuthController = AuthController;
+__decorate([
+    (0, common_1.Post)('customer/register'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [register_customer_dto_1.RegisterCustomerDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "registerCustomer", null);
+__decorate([
+    (0, common_1.Post)('customer/verify'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [verify_code_dto_1.VerifyCodeDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "verifyCustomer", null);
+__decorate([
+    (0, common_1.Post)('customer/login'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [login_dto_1.LoginDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "loginCustomer", null);
+__decorate([
+    (0, common_1.Post)('customer/forgot-password'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [forgot_password_dto_1.ForgotPasswordDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "forgotPasswordCustomer", null);
+__decorate([
+    (0, common_1.Post)('customer/verify-code'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [verify_code_dto_1.VerifyCodeDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "verifyCodeCustomer", null);
+__decorate([
+    (0, common_1.Post)('customer/reset-password'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [reset_password_dto_1.ResetPasswordDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "resetPasswordCustomer", null);
 __decorate([
     (0, common_1.Post)('change-password'),
     __param(0, (0, common_1.Body)()),

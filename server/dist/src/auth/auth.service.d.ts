@@ -7,11 +7,35 @@ import { VerifyCodeDto } from './dto/verify-code.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtService } from '@nestjs/jwt';
+import { RegisterCustomerDto } from './dto/register-customer.dto';
 export declare class AuthService {
     private prisma;
     private mailService;
     private jwtService;
     constructor(prisma: PrismaService, mailService: MailService, jwtService: JwtService);
+    registerCustomer(dto: RegisterCustomerDto): Promise<{
+        message: string;
+        requiresVerification: boolean;
+        email: string;
+    }>;
+    verifyCustomer(dto: VerifyCodeDto): Promise<{
+        token: string;
+        customer: {
+            id: string;
+            email: string;
+            name: string | null;
+            phone: string | null;
+        };
+    }>;
+    loginCustomer(dto: LoginDto): Promise<{
+        token: string;
+        customer: {
+            id: string;
+            email: string;
+            name: string | null;
+            phone: string | null;
+        };
+    }>;
     changePassword(dto: ChangePasswordDto): Promise<{
         message: string;
     }>;
@@ -38,6 +62,15 @@ export declare class AuthService {
         message: string;
     }>;
     resetPassword(dto: ResetPasswordDto): Promise<{
+        message: string;
+    }>;
+    forgotPasswordCustomer(dto: ForgotPasswordDto): Promise<{
+        message: string;
+    }>;
+    verifyResetCodeCustomer(dto: VerifyCodeDto): Promise<{
+        message: string;
+    }>;
+    resetPasswordCustomer(dto: ResetPasswordDto): Promise<{
         message: string;
     }>;
     getProfile(userId: string): Promise<{

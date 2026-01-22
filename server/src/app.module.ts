@@ -16,6 +16,7 @@ import { EventsModule } from './events/events.module';
 import { WaiterCallsModule } from './waiter-calls/waiter-calls.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { CustomersModule } from './customers/customers.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     EventsModule,
     WaiterCallsModule,
     ReviewsModule,
+    CustomersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
