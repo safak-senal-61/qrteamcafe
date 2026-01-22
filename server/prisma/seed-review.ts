@@ -37,6 +37,7 @@ async function main() {
     // 2. Create a review
     const review = await prisma.review.create({
       data: {
+        cafeId: product.cafeId,
         productId: product.id,
         rating: 5,
         comment: 'Harika bir lezzet! Kesinlikle tavsiye ederim.',

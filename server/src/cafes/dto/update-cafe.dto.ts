@@ -117,4 +117,12 @@ export class UpdateCafeDto {
   @IsOptional()
   @IsBoolean()
   isMaintenanceMode?: boolean;
+
+  @IsOptional()
+  @IsString()
+  templateId?: string;
+
+  @IsOptional()
+  @IsString()
+  themeConfig?: string;
 }

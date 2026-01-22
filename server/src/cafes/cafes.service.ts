@@ -14,6 +14,14 @@ export class CafesService {
     return cafe;
   }
 
+  async findBySlug(slug: string) {
+    const cafe = await this.prisma.cafe.findUnique({
+      where: { slug },
+    });
+    if (!cafe) throw new NotFoundException('Cafe bulunamadı');
+    return cafe;
+  }
+
   async update(id: string, data: UpdateCafeDto) {
     return this.prisma.cafe.update({
       where: { id },
@@ -48,6 +56,8 @@ export class CafesService {
         waiterCallOptions: data.waiterCallOptions,
         isMaintenanceMode: data.isMaintenanceMode,
         autoApproveReviews: data.autoApproveReviews,
+        templateId: data.templateId,
+        themeConfig: data.themeConfig,
       },
     });
   }

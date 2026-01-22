@@ -43,7 +43,7 @@ let OrdersService = class OrdersService {
                 if (!product) {
                     throw new common_1.BadRequestException(`Ürün bulunamadı: ${item.productId}`);
                 }
-                if (product.stock < item.quantity) {
+                if ((product.stock || 0) < item.quantity) {
                     throw new common_1.BadRequestException(`${product.name} için yeterli stok yok. Mevcut: ${product.stock}`);
                 }
                 await prisma.product.update({
@@ -104,6 +104,7 @@ let OrdersService = class OrdersService {
             where: { cafeId },
             include: {
                 table: true,
+                reviews: true,
                 items: {
                     include: {
                         product: true,

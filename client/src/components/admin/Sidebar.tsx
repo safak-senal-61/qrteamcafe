@@ -14,6 +14,7 @@ import {
   Bell,
   Receipt,
   MessageSquare,
+  LayoutTemplate,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -47,6 +48,11 @@ const menuItems = [
     title: 'Masalar & QR',
     href: '/admin/tables',
     icon: QrCode,
+  },
+  {
+    title: 'Şablonlar',
+    href: '/admin/templates',
+    icon: LayoutTemplate,
   },
   {
     title: 'İstatistikler',

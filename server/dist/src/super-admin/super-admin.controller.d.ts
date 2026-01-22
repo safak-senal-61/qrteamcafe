@@ -13,12 +13,12 @@ export declare class SuperAdminController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            isApproved: boolean;
             email: string;
             passwordHash: string;
             resetCode: string | null;
             resetCodeExpires: Date | null;
             isActive: boolean;
-            isApproved: boolean;
             twoFactorSecret: string | null;
             isTwoFactorEnabled: boolean;
         }[];
@@ -26,11 +26,13 @@ export declare class SuperAdminController {
         id: string;
         name: string;
         description: string | null;
+        preparationTime: number | null;
         createdAt: Date;
         updatedAt: Date;
         phone: string | null;
         email: string | null;
         isActive: boolean;
+        slug: string;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -39,7 +41,6 @@ export declare class SuperAdminController {
         authorizedPerson: string | null;
         serviceType: string | null;
         workingHours: string | null;
-        preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
         coverImageUrl: string | null;
@@ -57,6 +58,8 @@ export declare class SuperAdminController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        templateId: string | null;
+        themeConfig: string | null;
     })[]>;
     getStats(): Promise<{
         totalCafes: number;
@@ -72,12 +75,12 @@ export declare class SuperAdminController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            isApproved: boolean;
             email: string;
             passwordHash: string;
             resetCode: string | null;
             resetCodeExpires: Date | null;
             isActive: boolean;
-            isApproved: boolean;
             twoFactorSecret: string | null;
             isTwoFactorEnabled: boolean;
         }[];
@@ -85,11 +88,13 @@ export declare class SuperAdminController {
         id: string;
         name: string;
         description: string | null;
+        preparationTime: number | null;
         createdAt: Date;
         updatedAt: Date;
         phone: string | null;
         email: string | null;
         isActive: boolean;
+        slug: string;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -98,7 +103,6 @@ export declare class SuperAdminController {
         authorizedPerson: string | null;
         serviceType: string | null;
         workingHours: string | null;
-        preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
         coverImageUrl: string | null;
@@ -116,13 +120,17 @@ export declare class SuperAdminController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        templateId: string | null;
+        themeConfig: string | null;
     })[]>;
     getSettings(): Promise<Record<string, string>>;
     updateSetting(body: {
         key: string;
         value: string;
     }): Promise<{
+        id: string;
         description: string | null;
+        createdAt: Date;
         updatedAt: Date;
         key: string;
         value: string;
@@ -131,11 +139,13 @@ export declare class SuperAdminController {
         id: string;
         name: string;
         description: string | null;
+        preparationTime: number | null;
         createdAt: Date;
         updatedAt: Date;
         phone: string | null;
         email: string | null;
         isActive: boolean;
+        slug: string;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -144,7 +154,6 @@ export declare class SuperAdminController {
         authorizedPerson: string | null;
         serviceType: string | null;
         workingHours: string | null;
-        preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
         coverImageUrl: string | null;
@@ -162,16 +171,20 @@ export declare class SuperAdminController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        templateId: string | null;
+        themeConfig: string | null;
     }>;
     rejectCafe(id: string): Promise<{
         id: string;
         name: string;
         description: string | null;
+        preparationTime: number | null;
         createdAt: Date;
         updatedAt: Date;
         phone: string | null;
         email: string | null;
         isActive: boolean;
+        slug: string;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -180,7 +193,6 @@ export declare class SuperAdminController {
         authorizedPerson: string | null;
         serviceType: string | null;
         workingHours: string | null;
-        preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
         coverImageUrl: string | null;
@@ -198,5 +210,7 @@ export declare class SuperAdminController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        templateId: string | null;
+        themeConfig: string | null;
     }>;
 }

@@ -9,6 +9,11 @@ import { UpdateCafeDto } from './dto/update-cafe.dto';
 export class CafesController {
   constructor(private readonly cafesService: CafesService) {}
 
+  @Get('slug/:slug')
+  findBySlug(@Param('slug') slug: string) {
+    return this.cafesService.findBySlug(slug);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.cafesService.findOne(id);

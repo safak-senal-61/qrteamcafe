@@ -56,7 +56,9 @@ export class AuthService {
     });
 
     // Send verification email
-    await this.mailService.sendVerificationEmail(customer.email, verificationCode);
+    if (customer.email) {
+      await this.mailService.sendVerificationEmail(customer.email, verificationCode);
+    }
 
     return {
       message: 'Kayıt başarılı. Lütfen e-posta adresinize gönderilen doğrulama kodunu giriniz.',
@@ -120,6 +122,10 @@ export class AuthService {
     });
 
     if (!customer) {
+      throw new UnauthorizedException('E-posta veya şifre hatalı.');
+    }
+
+    if (!customer.passwordHash) {
       throw new UnauthorizedException('E-posta veya şifre hatalı.');
     }
 
@@ -220,10 +226,16 @@ export class AuthService {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(dto.password, salt);
 
+    const slug = dto.cafeName
+      .toLowerCase()
+      .replace(/ /g, '-')
+      .replace(/[^\w-]+/g, '');
+
     const result = await this.prisma.$transaction(async (prisma) => {
       const cafe = await prisma.cafe.create({
         data: {
           name: dto.cafeName,
+          slug: `${slug}-${Date.now()}`,
           phone: dto.phone,
           status: 'PENDING',
         },
@@ -428,7 +440,9 @@ export class AuthService {
       },
     });
 
-    await this.mailService.sendPasswordResetEmail(customer.email, code);
+    if (customer.email) {
+      await this.mailService.sendPasswordResetEmail(customer.email, code);
+    }
 
     return { message: 'Şifre sıfırlama kodu e-posta adresinize gönderildi.' };
   }

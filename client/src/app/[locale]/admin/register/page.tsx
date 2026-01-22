@@ -65,14 +65,15 @@ export default function RegisterPage() {
     if (!selectedImage || !croppedAreaPixels) return;
 
     try {
-      const croppedBlob = await getCroppedImg(selectedImage, croppedAreaPixels);
+      const mimeType = 'image/png';
+      const croppedBlob = await getCroppedImg(selectedImage, croppedAreaPixels, 0, { horizontal: false, vertical: false }, mimeType);
       if (!croppedBlob) {
         toast.error('Resim kırpılamadı.');
         return;
       }
 
       // Convert Blob to File
-      const file = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
+      const file = new File([croppedBlob], 'logo.png', { type: mimeType });
       
       // Update preview and selected file
       setLogoPreview(URL.createObjectURL(croppedBlob));

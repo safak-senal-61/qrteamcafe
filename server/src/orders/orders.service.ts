@@ -39,7 +39,7 @@ export class OrdersService {
           throw new BadRequestException(`Ürün bulunamadı: ${item.productId}`);
         }
 
-        if (product.stock < item.quantity) {
+        if ((product.stock || 0) < item.quantity) {
           throw new BadRequestException(`${product.name} için yeterli stok yok. Mevcut: ${product.stock}`);
         }
 

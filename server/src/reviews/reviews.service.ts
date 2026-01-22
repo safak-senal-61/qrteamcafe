@@ -24,6 +24,7 @@ export class ReviewsService {
     const review = await this.prisma.review.create({
       data: {
         ...createReviewDto,
+        cafeId: product.cafe.id,
         isVisible,
       },
     });
@@ -37,7 +38,9 @@ export class ReviewsService {
     return review;
   }
 
-  private async updateProductRating(productId: string) {
+  private async updateProductRating(productId: string | null) {
+    if (!productId) return;
+
     const aggregate = await this.prisma.review.aggregate({
       where: { 
         productId,
@@ -98,7 +101,9 @@ export class ReviewsService {
       data: { isVisible }
     });
 
-    await this.updateProductRating(review.productId);
+    if (review.productId) {
+      await this.updateProductRating(review.productId);
+    }
 
     return review;
   } 

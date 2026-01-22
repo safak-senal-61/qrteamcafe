@@ -10,6 +10,8 @@ export declare class TablesService {
         updatedAt: Date;
         isOccupied: boolean;
         tableNumber: number;
+        qrCode: string | null;
+        capacity: number | null;
         lastOccupiedAt: Date | null;
     }>;
     findAll(cafeId: string): Promise<({
@@ -29,6 +31,8 @@ export declare class TablesService {
         updatedAt: Date;
         isOccupied: boolean;
         tableNumber: number;
+        qrCode: string | null;
+        capacity: number | null;
         lastOccupiedAt: Date | null;
     })[]>;
     remove(id: string): Promise<{
@@ -38,6 +42,8 @@ export declare class TablesService {
         updatedAt: Date;
         isOccupied: boolean;
         tableNumber: number;
+        qrCode: string | null;
+        capacity: number | null;
         lastOccupiedAt: Date | null;
     }>;
     moveTable(cafeId: string, fromTableId: string, toTableId: string): Promise<{

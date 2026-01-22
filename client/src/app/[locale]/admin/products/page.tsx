@@ -78,7 +78,8 @@ export default function MenuPage() {
     description: '',
     imageUrl: '',
     isAvailable: true,
-    isChefRecommended: false
+    isChefRecommended: false,
+    requiresPreparation: true
   });
   const [uploading, setUploading] = useState(false);
 

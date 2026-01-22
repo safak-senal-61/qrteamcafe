@@ -10,6 +10,7 @@ datasource db {
 model Cafe {
   id        String      @id @default(uuid())
   name      String
+  slug      String      @unique // EKLENDİ
   description String?
   type      String?     // restaurant, cafe, etc.
   city      String?
@@ -50,6 +51,11 @@ model Cafe {
   status    String      @default("PENDING") // PENDING, APPROVED, REJECTED
   showProductRatings Boolean @default(true) @map("show_product_ratings")
   autoApproveReviews Boolean @default(false) @map("auto_approve_reviews")
+  
+  // Theme & Template
+  templateId      String?   @default("classic") @map("template_id")
+  themeConfig     String?   @map("theme_config") // JSON string for advanced customization
+
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
 
@@ -93,12 +99,11 @@ model CafeAdmin {
   twoFactorSecret String? @map("two_factor_secret")
   isTwoFactorEnabled Boolean @default(false) @map("is_two_factor_enabled")
   
-  sessions     AdminSession[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  cafe         Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  cafe      Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  sessions  AdminSession[]
 
   @@map("cafe_admins")
 }
@@ -106,8 +111,8 @@ model CafeAdmin {
 model AdminSession {
   id        String   @id @default(uuid())
   adminId   String   @map("admin_id")
-  token     String   @unique // Store the JWT or a hash of it to identify/revoke
-  device    String?  // User-Agent info (e.g., "Chrome on Windows")
+  token     String   @unique // JWT token signature or a random session ID
+  device    String?  // User Agent or device info
   ip        String?
   lastActive DateTime @default(now()) @map("last_active")
   createdAt DateTime @default(now()) @map("created_at")
@@ -129,52 +134,62 @@ model SuperAdmin {
   @@map("super_admins")
 }
 
+// System Settings for Super Admin
 model SystemSetting {
-  key         String   @id
-  value       String
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
   description String?
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("system_settings")
 }
 
 model Category {
-  id        String    @id @default(uuid())
-  cafeId    String    @map("cafe_id")
+  id        String   @id @default(uuid())
+  cafeId    String   @map("cafe_id")
   name      String
-  sortOrder Int       @default(0) @map("sort_order")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  cafe      Cafe      @relation(fields: [cafeId], references: [id], onDelete: Cascade)
-  products  Product[]
+  cafe     Cafe      @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  products Product[]
 
   @@map("categories")
 }
 
 model Product {
-  id          String      @id @default(uuid())
-  cafeId      String      @map("cafe_id")
-  categoryId  String      @map("category_id")
+  id          String   @id @default(uuid())
+  cafeId      String   @map("cafe_id")
+  categoryId  String   @map("category_id")
   name        String
   description String?
-  price       Decimal     @db.Decimal(10, 2)
-  originalPrice Decimal?  @map("original_price") @db.Decimal(10, 2)
-  stock       Int         @default(0)
-  sortOrder   Int         @default(0) @map("sort_order")
-  imageUrl    String?     @map("image_url")
-  isAvailable Boolean     @default(true) @map("is_available")
-  requiresPreparation Boolean @default(true) @map("requires_preparation")
+  price       Decimal  @db.Decimal(10, 2)
+  originalPrice Decimal? @db.Decimal(10, 2) @map("original_price") // For discounts
+  imageUrl    String?  @map("image_url")
+  isAvailable Boolean  @default(true) @map("is_available")
+  preparationTime Int? @map("preparation_time") // minutes
+  sortOrder   Int      @default(0) @map("sort_order")
+  
+  // New Features
   isChefRecommended Boolean @default(false) @map("is_chef_recommended")
-  averageRating Decimal   @default(0) @db.Decimal(3, 2) @map("average_rating")
-  reviewCount   Int       @default(0) @map("review_count")
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  requiresPreparation Boolean @default(true) @map("requires_preparation")
+  stock       Int?      @default(9999) // Simple stock management
+  
+  averageRating Decimal? @default(0) @db.Decimal(3, 2) @map("average_rating")
+  reviewCount   Int      @default(0) @map("review_count")
 
-  cafe        Cafe        @relation(fields: [cafeId], references: [id], onDelete: Cascade)
-  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  orderItems  OrderItem[]
-  reviews     Review[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  cafe     Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+  reviews    Review[]
 
   @@map("products")
 }
@@ -183,56 +198,40 @@ model Table {
   id          String   @id @default(uuid())
   cafeId      String   @map("cafe_id")
   tableNumber Int      @map("table_number")
+  qrCode      String?  @map("qr_code") // URL or Base64
+  capacity    Int?
   isOccupied  Boolean  @default(false) @map("is_occupied")
   lastOccupiedAt DateTime? @map("last_occupied_at")
+  
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  cafe        Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
-  orders      Order[]
+  cafe     Cafe      @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  orders   Order[]
   waiterCalls WaiterCall[]
 
   @@unique([cafeId, tableNumber])
   @@map("tables")
 }
 
-model Order {
-  id           String      @id @default(uuid())
-  cafeId       String      @map("cafe_id")
-  tableId      String?     @map("table_id")
-  customerName String?     @map("customer_name")
-  status       String      @default("pending") // pending, preparing, delivered
-  totalAmount  Decimal     @default(0) @db.Decimal(10, 2) @map("total_amount")
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
-
-  cafe         Cafe        @relation(fields: [cafeId], references: [id], onDelete: Cascade)
-  table        Table?      @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  items        OrderItem[]
-  payment      Payment?
-
-  customerId   String?     @map("customer_id")
-  customer     Customer?   @relation(fields: [customerId], references: [id])
-  reviews      Review[]
-
-  @@map("orders")
-}
-
 model Customer {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
+  id           String   @id @default(uuid())
   name         String?
-  phone        String?
-  isVerified   Boolean   @default(false) @map("is_verified")
+  phone        String?  @unique
+  email        String?  @unique
+  passwordHash String?  @map("password_hash")
+  isVerified   Boolean  @default(false) @map("is_verified")
+  
+  // Verification
   verificationCode String? @map("verification_code")
   verificationCodeExpires DateTime? @map("verification_code_expires")
   
-  resetCode        String?   @map("reset_code")
+  // Password Reset
+  resetCode String? @map("reset_code")
   resetCodeExpires DateTime? @map("reset_code_expires")
 
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   orders       Order[]
   reviews      Review[]
@@ -240,52 +239,71 @@ model Customer {
   @@map("customers")
 }
 
-model OrderItem {
-  id         String   @id @default(uuid())
-  orderId    String   @map("order_id")
-  productId  String   @map("product_id")
-  quantity   Int
-  unitPrice  Decimal  @db.Decimal(10, 2) @map("unit_price")
-  totalPrice Decimal  @db.Decimal(10, 2) @map("total_price")
-  note       String?
-  createdAt  DateTime @default(now()) @map("created_at")
+model Order {
+  id          String   @id @default(uuid())
+  cafeId      String   @map("cafe_id")
+  tableId     String?  @map("table_id") // Optional for takeaway
+  customerId  String?  @map("customer_id") // Optional for guest
+  
+  status      String   @default("PENDING") // PENDING, PREPARING, READY, DELIVERED, COMPLETED, CANCELLED
+  paymentStatus String @default("PENDING") // PENDING, PAID, REFUNDED
+  paymentMethod String? @map("payment_method") // CASH, CREDIT_CARD
+  
+  totalAmount Decimal  @db.Decimal(10, 2) @map("total_amount")
+  note        String?
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cafe     Cafe      @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  table    Table?    @relation(fields: [tableId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+  items    OrderItem[]
+  reviews  Review[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  productId String   @map("product_id")
+  
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2) @map("unit_price")
+  totalPrice Decimal @db.Decimal(10, 2) @map("total_price")
+  options   String?  // JSON string for selected options
+  note      String?
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 
   @@map("order_items")
 }
 
-model Payment {
-  id            String   @id @default(uuid())
-  orderId       String   @unique @map("order_id")
-  amount        Decimal  @db.Decimal(10, 2)
-  status        String   @default("pending") // pending, completed, failed
-  receiptNumber String?  @map("receipt_number")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@map("payments")
-}
-
 model Review {
-  id          String   @id @default(uuid())
-  productId   String   @map("product_id")
-  orderId     String?  @map("order_id")
+  id        String   @id @default(uuid())
+  cafeId    String   @map("cafe_id") 
+  productId String?  @map("product_id")
+  customerId String? @map("customer_id")
+  orderId   String?  @map("order_id")
+  
+  rating    Int      // 1-5
+  comment   String?
   customerName String? @map("customer_name")
-  customerId  String?  @map("customer_id")
-  rating      Int
-  comment     String?
-  adminScore  Int?     @map("admin_score")
-  adminReply  String?  @map("admin_reply")
-  isVisible   Boolean  @default(true) @map("is_visible")
-  createdAt   DateTime @default(now()) @map("created_at")
+  
+  isVisible  Boolean @default(true) @map("is_visible")
+  isApproved Boolean @default(false) @map("is_approved") // Admin moderation
+  
+  adminReply String? @map("admin_reply")
+  adminScore Int?    @map("admin_score") // Admin internal score for customer
 
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  customer    Customer? @relation(fields: [customerId], references: [id])
-  order       Order?    @relation(fields: [orderId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
+  product  Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  order    Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  
   @@map("reviews")
 }

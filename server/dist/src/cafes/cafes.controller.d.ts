@@ -3,15 +3,17 @@ import { UpdateCafeDto } from './dto/update-cafe.dto';
 export declare class CafesController {
     private readonly cafesService;
     constructor(cafesService: CafesService);
-    findOne(id: string): Promise<{
+    findBySlug(slug: string): Promise<{
         id: string;
         name: string;
         description: string | null;
+        preparationTime: number | null;
         createdAt: Date;
         updatedAt: Date;
         phone: string | null;
         email: string | null;
         isActive: boolean;
+        slug: string;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -20,7 +22,6 @@ export declare class CafesController {
         authorizedPerson: string | null;
         serviceType: string | null;
         workingHours: string | null;
-        preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
         coverImageUrl: string | null;
@@ -38,6 +39,47 @@ export declare class CafesController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        templateId: string | null;
+        themeConfig: string | null;
+    }>;
+    findOne(id: string): Promise<{
+        id: string;
+        name: string;
+        description: string | null;
+        preparationTime: number | null;
+        createdAt: Date;
+        updatedAt: Date;
+        phone: string | null;
+        email: string | null;
+        isActive: boolean;
+        slug: string;
+        type: string | null;
+        city: string | null;
+        district: string | null;
+        address: string | null;
+        website: string | null;
+        authorizedPerson: string | null;
+        serviceType: string | null;
+        workingHours: string | null;
+        paymentMethods: string | null;
+        logoUrl: string | null;
+        coverImageUrl: string | null;
+        brandColor: string | null;
+        menuViewMode: string | null;
+        welcomeMessage: string | null;
+        instagramUrl: string | null;
+        facebookUrl: string | null;
+        twitterUrl: string | null;
+        wifiSsid: string | null;
+        wifiPassword: string | null;
+        waiterCallOptions: string | null;
+        isMaintenanceMode: boolean;
+        googleMapsUrl: string | null;
+        status: string;
+        showProductRatings: boolean;
+        autoApproveReviews: boolean;
+        templateId: string | null;
+        themeConfig: string | null;
     }>;
     getDashboardStats(id: string): Promise<{
         totalOrders: number;
@@ -52,6 +94,8 @@ export declare class CafesController {
                 updatedAt: Date;
                 isOccupied: boolean;
                 tableNumber: number;
+                qrCode: string | null;
+                capacity: number | null;
                 lastOccupiedAt: Date | null;
             } | null;
             items: ({
@@ -63,37 +107,40 @@ export declare class CafesController {
                     description: string | null;
                     price: import("@prisma/client/runtime/library").Decimal;
                     originalPrice: import("@prisma/client/runtime/library").Decimal | null;
-                    stock: number;
-                    sortOrder: number;
                     imageUrl: string | null;
                     isAvailable: boolean;
-                    requiresPreparation: boolean;
+                    preparationTime: number | null;
+                    sortOrder: number;
                     isChefRecommended: boolean;
-                    averageRating: import("@prisma/client/runtime/library").Decimal;
+                    requiresPreparation: boolean;
+                    stock: number | null;
+                    averageRating: import("@prisma/client/runtime/library").Decimal | null;
                     reviewCount: number;
                     createdAt: Date;
                     updatedAt: Date;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 productId: string;
                 orderId: string;
+                options: string | null;
+                note: string | null;
                 quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
                 totalPrice: import("@prisma/client/runtime/library").Decimal;
-                note: string | null;
             })[];
         } & {
             id: string;
             cafeId: string;
             createdAt: Date;
             updatedAt: Date;
-            customerName: string | null;
             customerId: string | null;
             status: string;
             totalAmount: import("@prisma/client/runtime/library").Decimal;
             tableId: string | null;
+            paymentStatus: string;
+            paymentMethod: string | null;
+            note: string | null;
         })[];
         popularProducts: {
             id: string;
@@ -103,13 +150,14 @@ export declare class CafesController {
             description: string | null;
             price: import("@prisma/client/runtime/library").Decimal;
             originalPrice: import("@prisma/client/runtime/library").Decimal | null;
-            stock: number;
-            sortOrder: number;
             imageUrl: string | null;
             isAvailable: boolean;
-            requiresPreparation: boolean;
+            preparationTime: number | null;
+            sortOrder: number;
             isChefRecommended: boolean;
-            averageRating: import("@prisma/client/runtime/library").Decimal;
+            requiresPreparation: boolean;
+            stock: number | null;
+            averageRating: import("@prisma/client/runtime/library").Decimal | null;
             reviewCount: number;
             createdAt: Date;
             updatedAt: Date;
@@ -119,11 +167,13 @@ export declare class CafesController {
         id: string;
         name: string;
         description: string | null;
+        preparationTime: number | null;
         createdAt: Date;
         updatedAt: Date;
         phone: string | null;
         email: string | null;
         isActive: boolean;
+        slug: string;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -132,7 +182,6 @@ export declare class CafesController {
         authorizedPerson: string | null;
         serviceType: string | null;
         workingHours: string | null;
-        preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
         coverImageUrl: string | null;
@@ -150,16 +199,20 @@ export declare class CafesController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        templateId: string | null;
+        themeConfig: string | null;
     }>;
     uploadCoverImage(id: string, file: Express.Multer.File): Promise<{
         id: string;
         name: string;
         description: string | null;
+        preparationTime: number | null;
         createdAt: Date;
         updatedAt: Date;
         phone: string | null;
         email: string | null;
         isActive: boolean;
+        slug: string;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -168,7 +221,6 @@ export declare class CafesController {
         authorizedPerson: string | null;
         serviceType: string | null;
         workingHours: string | null;
-        preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
         coverImageUrl: string | null;
@@ -186,16 +238,20 @@ export declare class CafesController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        templateId: string | null;
+        themeConfig: string | null;
     }>;
     update(id: string, updateCafeDto: UpdateCafeDto): Promise<{
         id: string;
         name: string;
         description: string | null;
+        preparationTime: number | null;
         createdAt: Date;
         updatedAt: Date;
         phone: string | null;
         email: string | null;
         isActive: boolean;
+        slug: string;
         type: string | null;
         city: string | null;
         district: string | null;
@@ -204,7 +260,6 @@ export declare class CafesController {
         authorizedPerson: string | null;
         serviceType: string | null;
         workingHours: string | null;
-        preparationTime: number | null;
         paymentMethods: string | null;
         logoUrl: string | null;
         coverImageUrl: string | null;
@@ -222,5 +277,7 @@ export declare class CafesController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        templateId: string | null;
+        themeConfig: string | null;
     }>;
 }

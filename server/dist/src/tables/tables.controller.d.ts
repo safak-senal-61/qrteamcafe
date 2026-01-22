@@ -10,6 +10,8 @@ export declare class TablesController {
         updatedAt: Date;
         isOccupied: boolean;
         tableNumber: number;
+        qrCode: string | null;
+        capacity: number | null;
         lastOccupiedAt: Date | null;
     }>;
     moveTable(cafeId: string, body: {
@@ -35,6 +37,8 @@ export declare class TablesController {
         updatedAt: Date;
         isOccupied: boolean;
         tableNumber: number;
+        qrCode: string | null;
+        capacity: number | null;
         lastOccupiedAt: Date | null;
     })[]>;
     remove(id: string): Promise<{
@@ -44,6 +48,8 @@ export declare class TablesController {
         updatedAt: Date;
         isOccupied: boolean;
         tableNumber: number;
+        qrCode: string | null;
+        capacity: number | null;
         lastOccupiedAt: Date | null;
     }>;
 }

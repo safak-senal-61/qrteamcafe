@@ -16,13 +16,13 @@ export declare class AuthService {
     registerCustomer(dto: RegisterCustomerDto): Promise<{
         message: string;
         requiresVerification: boolean;
-        email: string;
+        email: string | null;
     }>;
     verifyCustomer(dto: VerifyCodeDto): Promise<{
         token: string;
         customer: {
             id: string;
-            email: string;
+            email: string | null;
             name: string | null;
             phone: string | null;
         };
@@ -31,7 +31,7 @@ export declare class AuthService {
         token: string;
         customer: {
             id: string;
-            email: string;
+            email: string | null;
             name: string | null;
             phone: string | null;
         };

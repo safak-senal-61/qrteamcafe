@@ -174,6 +174,7 @@ export function CustomerProfileDialog({ open, onOpenChange }: CustomerProfileDia
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white/80 backdrop-blur-xl h-[85vh] sm:h-[600px] flex flex-col">
+        <DialogTitle className="sr-only">Müşteri Profili</DialogTitle>
         {/* Header */}
         <div className="relative h-32 bg-gradient-to-r from-emerald-500 to-teal-600 shrink-0">
           <div className="absolute inset-0 opacity-20">

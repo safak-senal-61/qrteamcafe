@@ -13,6 +13,8 @@ export declare class WaiterCallsService {
             updatedAt: Date;
             isOccupied: boolean;
             tableNumber: number;
+            qrCode: string | null;
+            capacity: number | null;
             lastOccupiedAt: Date | null;
         };
     } & {
@@ -32,6 +34,8 @@ export declare class WaiterCallsService {
             updatedAt: Date;
             isOccupied: boolean;
             tableNumber: number;
+            qrCode: string | null;
+            capacity: number | null;
             lastOccupiedAt: Date | null;
         };
     } & {

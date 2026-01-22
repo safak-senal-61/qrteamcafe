@@ -80,6 +80,7 @@ export default function SettingsPage() {
     paymentMethods: [] as string[],
     waiterCallOptions: ['bill', 'waiter'] as string[],
     showProductRatings: true,
+    autoApproveReviews: false,
     isMaintenanceMode: false,
     createdAt: '',
   });
@@ -164,6 +165,7 @@ export default function SettingsPage() {
           paymentMethods: parseList(data.paymentMethods),
           waiterCallOptions: parseList(data.waiterCallOptions).length > 0 ? parseList(data.waiterCallOptions) : ['bill', 'waiter'],
           showProductRatings: data.showProductRatings ?? true,
+          autoApproveReviews: data.autoApproveReviews ?? false,
           isMaintenanceMode: data.isMaintenanceMode ?? false,
           createdAt: data.createdAt,
         });
@@ -213,13 +215,16 @@ export default function SettingsPage() {
     if (!selectedImage || !croppedAreaPixels) return;
 
     try {
-      const croppedBlob = await getCroppedImg(selectedImage, croppedAreaPixels);
+      const mimeType = 'image/png';
+      const extension = 'png';
+      const croppedBlob = await getCroppedImg(selectedImage, croppedAreaPixels, 0, { horizontal: false, vertical: false }, mimeType);
+      
       if (!croppedBlob) {
         toast.error('Resim kırpılamadı.');
         return;
       }
 
-      const file = new File([croppedBlob], `${cropTarget}.jpg`, { type: 'image/jpeg' });
+      const file = new File([croppedBlob], `${cropTarget}.${extension}`, { type: mimeType });
       
       if (cropTarget === 'logo') {
         await handleLogoUpload(file);
@@ -743,7 +748,7 @@ export default function SettingsPage() {
                 zoom={zoom}
                 aspect={cropTarget === 'logo' ? 1 : 16 / 9}
                 onCropChange={setCrop}
-                onCropComplete={setCroppedAreaPixels}
+                onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}
                 onZoomChange={setZoom}
               />
             )}

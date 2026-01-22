@@ -25,6 +25,14 @@ let CafesService = class CafesService {
             throw new common_1.NotFoundException('Cafe bulunamadı');
         return cafe;
     }
+    async findBySlug(slug) {
+        const cafe = await this.prisma.cafe.findUnique({
+            where: { slug },
+        });
+        if (!cafe)
+            throw new common_1.NotFoundException('Cafe bulunamadı');
+        return cafe;
+    }
     async update(id, data) {
         return this.prisma.cafe.update({
             where: { id },
@@ -58,6 +66,8 @@ let CafesService = class CafesService {
                 waiterCallOptions: data.waiterCallOptions,
                 isMaintenanceMode: data.isMaintenanceMode,
                 autoApproveReviews: data.autoApproveReviews,
+                templateId: data.templateId,
+                themeConfig: data.themeConfig,
             },
         });
     }

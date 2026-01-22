@@ -217,6 +217,7 @@ export function CustomerAuthDialog() {
         overlayClassName="bg-black/5 backdrop-blur-[1px]"
         aria-describedby="auth-description"
       >
+        <DialogTitle className="sr-only">Müşteri Girişi</DialogTitle>
         <div id="auth-description" className="sr-only">
           Müşteri giriş, kayıt veya misafir girişi seçenekleri
         </div>

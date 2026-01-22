@@ -11,6 +11,7 @@ export declare class CategoriesController {
         sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
     }>;
     findAll(cafeId: string): Promise<({
         _count: {
@@ -23,6 +24,7 @@ export declare class CategoriesController {
         sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
     })[]>;
     reorder(items: {
         id: string;
@@ -34,6 +36,7 @@ export declare class CategoriesController {
         sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
     }[]>;
     findOne(id: string): Promise<{
         id: string;
@@ -42,6 +45,7 @@ export declare class CategoriesController {
         sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
     }>;
     update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<{
         id: string;
@@ -50,6 +54,7 @@ export declare class CategoriesController {
         sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -58,5 +63,6 @@ export declare class CategoriesController {
         sortOrder: number;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
     }>;
 }
