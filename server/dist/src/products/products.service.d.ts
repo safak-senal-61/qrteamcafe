@@ -8,14 +8,16 @@ export declare class ProductsService {
         imageUrl: string;
         category: {
             id: string;
+            cafeId: string;
             name: string;
             sortOrder: number;
             createdAt: Date;
             updatedAt: Date;
-            cafeId: string;
             isActive: boolean;
         };
         id: string;
+        cafeId: string;
+        categoryId: string;
         name: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -30,21 +32,21 @@ export declare class ProductsService {
         reviewCount: number;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
-        categoryId: string;
     }>;
     findAll(cafeId: string): Promise<{
         imageUrl: string;
         category: {
             id: string;
+            cafeId: string;
             name: string;
             sortOrder: number;
             createdAt: Date;
             updatedAt: Date;
-            cafeId: string;
             isActive: boolean;
         };
         id: string;
+        cafeId: string;
+        categoryId: string;
         name: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -59,14 +61,14 @@ export declare class ProductsService {
         reviewCount: number;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
-        categoryId: string;
     }[]>;
     reorder(items: {
         id: string;
         sortOrder: number;
     }[]): Promise<{
         id: string;
+        cafeId: string;
+        categoryId: string;
         name: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -82,21 +84,21 @@ export declare class ProductsService {
         reviewCount: number;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
-        categoryId: string;
     }[]>;
     findOne(id: string): Promise<{
         imageUrl: string;
         category: {
             id: string;
+            cafeId: string;
             name: string;
             sortOrder: number;
             createdAt: Date;
             updatedAt: Date;
-            cafeId: string;
             isActive: boolean;
         };
         id: string;
+        cafeId: string;
+        categoryId: string;
         name: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -111,21 +113,21 @@ export declare class ProductsService {
         reviewCount: number;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
-        categoryId: string;
     }>;
     update(id: string, updateProductDto: UpdateProductDto): Promise<{
         imageUrl: string;
         category: {
             id: string;
+            cafeId: string;
             name: string;
             sortOrder: number;
             createdAt: Date;
             updatedAt: Date;
-            cafeId: string;
             isActive: boolean;
         };
         id: string;
+        cafeId: string;
+        categoryId: string;
         name: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -140,11 +142,11 @@ export declare class ProductsService {
         reviewCount: number;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
-        categoryId: string;
     }>;
     updateStock(id: string, quantity: number): Promise<{
         id: string;
+        cafeId: string;
+        categoryId: string;
         name: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -160,11 +162,11 @@ export declare class ProductsService {
         reviewCount: number;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
-        categoryId: string;
     }>;
     remove(id: string): Promise<{
         id: string;
+        cafeId: string;
+        categoryId: string;
         name: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -180,21 +182,21 @@ export declare class ProductsService {
         reviewCount: number;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
-        categoryId: string;
     }>;
     getRecommendations(productId: string, limit?: number): Promise<{
         imageUrl: string;
         category: {
             id: string;
+            cafeId: string;
             name: string;
             sortOrder: number;
             createdAt: Date;
             updatedAt: Date;
-            cafeId: string;
             isActive: boolean;
         };
         id: string;
+        cafeId: string;
+        categoryId: string;
         name: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -209,11 +211,11 @@ export declare class ProductsService {
         reviewCount: number;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
-        categoryId: string;
     }[]>;
     toggleChefRecommendation(id: string, isChefRecommended: boolean): Promise<{
         id: string;
+        cafeId: string;
+        categoryId: string;
         name: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -229,7 +231,5 @@ export declare class ProductsService {
         reviewCount: number;
         createdAt: Date;
         updatedAt: Date;
-        cafeId: string;
-        categoryId: string;
     }>;
 }

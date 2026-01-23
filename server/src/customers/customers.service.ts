@@ -1,13 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { getProductImage } from '../products/product-images.util';
+import { MailService } from '../auth/mail.service';
 
 @Injectable()
 export class CustomersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mailService: MailService
+  ) {}
 
   create(createCustomerDto: CreateCustomerDto) {
     return 'This action adds a new customer';
@@ -43,20 +47,28 @@ export class CustomersService {
     const totalSpent = orders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
 
     // Calculate favorites
-    const productCounts: Record<string, { count: number; name: string; image: string }> = {};
+    const productCounts: Record<string, { count: number; orderCount: number; name: string; image: string }> = {};
     const categoryCounts: Record<string, { count: number; name: string }> = {};
 
     orders.forEach((order) => {
+      const productsInOrder = new Set<string>();
+
       order.items.forEach((item) => {
         // Product Stats
         if (!productCounts[item.productId]) {
           productCounts[item.productId] = { 
             count: 0, 
+            orderCount: 0,
             name: item.product.name, 
             image: getProductImage(item.product.name, item.product.category?.name, item.product.imageUrl)
           };
         }
         productCounts[item.productId].count += item.quantity;
+
+        if (!productsInOrder.has(item.productId)) {
+          productCounts[item.productId].orderCount += 1;
+          productsInOrder.add(item.productId);
+        }
 
         // Category Stats
         const catId = item.product.categoryId;
@@ -70,7 +82,10 @@ export class CustomersService {
       });
     });
 
-    const favoriteProduct = Object.values(productCounts).sort((a, b) => b.count - a.count)[0] || null;
+    // "2 siparişten sonra" -> orderCount > 2 (En az 3 farklı siparişte geçmeli)
+    const favoriteProduct = Object.values(productCounts)
+      .filter(p => p.orderCount > 2)
+      .sort((a, b) => b.count - a.count)[0] || null;
     const favoriteCategory = Object.values(categoryCounts).sort((a, b) => b.count - a.count)[0] || null;
 
     return {
@@ -139,16 +154,72 @@ export class CustomersService {
 
   async update(id: string, updateCustomerDto: UpdateCustomerDto) {
     const data: any = { ...updateCustomerDto };
+    const { email, ...otherData } = data;
     
-    if (data.password) {
+    // Handle Password
+    if (otherData.password) {
       const salt = await bcrypt.genSalt(10);
-      data.passwordHash = await bcrypt.hash(data.password, salt);
-      delete data.password;
+      otherData.passwordHash = await bcrypt.hash(otherData.password, salt);
+      delete otherData.password;
+    }
+
+    // Handle Email Change
+    let emailVerificationRequired = false;
+    if (email) {
+      const currentCustomer = await this.prisma.customer.findUnique({ where: { id } });
+      
+      if (currentCustomer && currentCustomer.email !== email) {
+        // Check if new email is taken
+        const existing = await this.prisma.customer.findUnique({ where: { email } });
+        if (existing) {
+          throw new BadRequestException('Bu e-posta adresi zaten kullanımda.');
+        }
+
+        // Generate code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+        // Save temp email and code
+        otherData.tempEmail = email;
+        otherData.verificationCode = verificationCode;
+        otherData.verificationCodeExpires = verificationCodeExpires;
+        
+        emailVerificationRequired = true;
+        
+        // Send email
+        await this.mailService.sendEmailChangeVerificationEmail(email, verificationCode);
+      }
+    }
+
+    const updatedCustomer = await this.prisma.customer.update({
+      where: { id },
+      data: otherData,
+    });
+
+    return {
+      ...updatedCustomer,
+      emailVerificationRequired,
+    };
+  }
+
+  async verifyEmailChange(id: string, code: string) {
+    const customer = await this.prisma.customer.findUnique({ where: { id } });
+    if (!customer || !customer.tempEmail) {
+      throw new BadRequestException('Bekleyen bir e-posta değişikliği bulunamadı.');
+    }
+
+    if (customer.verificationCode !== code || !customer.verificationCodeExpires || new Date() > customer.verificationCodeExpires) {
+      throw new BadRequestException('Geçersiz veya süresi dolmuş kod.');
     }
 
     return this.prisma.customer.update({
       where: { id },
-      data,
+      data: {
+        email: customer.tempEmail,
+        tempEmail: null,
+        verificationCode: null,
+        verificationCodeExpires: null,
+      },
     });
   }
 

@@ -230,6 +230,9 @@ model Customer {
   resetCode String? @map("reset_code")
   resetCodeExpires DateTime? @map("reset_code_expires")
 
+  // Email Change Verification
+  tempEmail String? @map("temp_email")
+
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

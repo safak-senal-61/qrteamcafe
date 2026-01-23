@@ -37,6 +37,11 @@ export class CustomersController {
     return this.customersService.update(id, updateCustomerDto);
   }
 
+  @Post(':id/verify-email-change')
+  verifyEmailChange(@Param('id') id: string, @Body('code') code: string) {
+    return this.customersService.verifyEmailChange(id, code);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.customersService.remove(id);
