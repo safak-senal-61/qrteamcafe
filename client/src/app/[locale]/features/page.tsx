@@ -2,8 +2,11 @@
 
 import { motion, Variants } from 'framer-motion';
 import { CheckCircle2, Zap, Shield, Smartphone, BarChart3, Globe } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function FeaturesPage() {
+  const t = useTranslations('FeaturesPage');
+
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
@@ -30,33 +33,33 @@ export default function FeaturesPage() {
   const features = [
     {
       icon: <Smartphone className="h-8 w-8 text-primary" />,
-      title: 'Mobil Uyumlu QR Menü',
-      description: 'Tüm cihazlarda kusursuz çalışan, hızlı ve modern bir menü deneyimi. Uygulama indirmeye gerek yok.'
+      title: t('items.mobile.title'),
+      description: t('items.mobile.description')
     },
     {
       icon: <Zap className="h-8 w-8 text-yellow-500" />,
-      title: 'Hızlı Sipariş Sistemi',
-      description: 'Müşterileriniz garson beklemeden sipariş versin, operasyon hızınız %30 artsın.'
+      title: t('items.fastOrder.title'),
+      description: t('items.fastOrder.description')
     },
     {
       icon: <BarChart3 className="h-8 w-8 text-blue-500" />,
-      title: 'Detaylı Analizler',
-      description: 'Hangi ürün ne zaman satılıyor? Veriye dayalı kararlar alarak cironuzu artırın.'
+      title: t('items.analytics.title'),
+      description: t('items.analytics.description')
     },
     {
       icon: <Globe className="h-8 w-8 text-green-500" />,
-      title: 'Çoklu Dil Desteği',
-      description: 'Menünüzü otomatik olarak farklı dillere çevirin, turist müşterilerinizi memnun edin.'
+      title: t('items.multiLang.title'),
+      description: t('items.multiLang.description')
     },
     {
       icon: <Shield className="h-8 w-8 text-purple-500" />,
-      title: 'Güvenli Altyapı',
-      description: 'KVKK uyumlu, güvenli ve yedekli sunucu altyapısı ile verileriniz güvende.'
+      title: t('items.security.title'),
+      description: t('items.security.description')
     },
     {
       icon: <CheckCircle2 className="h-8 w-8 text-red-500" />,
-      title: 'Kolay Yönetim Paneli',
-      description: 'Ürünlerinizi, fiyatlarınızı ve stok durumunuzu saniyeler içinde güncelleyin.'
+      title: t('items.management.title'),
+      description: t('items.management.description')
     }
   ];
 
@@ -71,13 +74,13 @@ export default function FeaturesPage() {
         >
           <div className="text-center space-y-4">
             <motion.h1 variants={itemVariants} className="text-3xl md:text-6xl font-bold tracking-tight">
-              İşletmenizi Güçlendiren <br />
+              {t('title')} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">
-                Gelişmiş Özellikler
+                {t('titleHighlight')}
               </span>
             </motion.h1>
             <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              QR Team Cafe, bir menüden çok daha fazlası. İşletmenizin tüm ihtiyaçlarını karşılayan kapsamlı bir çözüm.
+              {t('subtitle')}
             </motion.p>
           </div>
 

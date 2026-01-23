@@ -133,7 +133,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background overflow-x-hidden">
       {/* Scroll Progress Bar */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-purple-500 to-pink-500 transform origin-left z-[60]"
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-green-500 to-emerald-500 transform origin-left z-[60]"
         style={{ scaleX: scrollYProgress }}
       />
 
@@ -153,8 +153,8 @@ export default function Home() {
             >
               <QrCode className="h-7 w-7" />
             </motion.div>
-            <span className="font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
-              QR Team Cafe
+            <span className="font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-green-600">
+              QR Team <span className="text-foreground">Cafe</span>
             </span>
           </Link>
           <nav className="flex items-center gap-4">
@@ -167,7 +167,7 @@ export default function Home() {
             </Link>
             <Link href="/menu/demo-cafe">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="rounded-full shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-purple-600 border-0 relative overflow-hidden">
+                <Button className="rounded-full shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-green-600 border-0 relative overflow-hidden">
                   <span className="relative z-10 flex items-center">{t('demo')} <ChevronRight className="ml-1 h-4 w-4 rtl:rotate-180" /></span>
                   <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full hover:animate-shimmer"></div>
                 </Button>
@@ -195,7 +195,7 @@ export default function Home() {
                 y: [0, 30, 0]
               }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute top-0 -left-4 w-96 h-96 bg-purple-300/30 rounded-full mix-blend-multiply filter blur-3xl"
+              className="absolute top-0 -left-4 w-96 h-96 bg-green-300/30 rounded-full mix-blend-multiply filter blur-3xl"
             />
             <motion.div 
               animate={{ 
@@ -205,7 +205,7 @@ export default function Home() {
                 y: [0, 50, 0]
               }}
               transition={{ duration: 15, repeat: Infinity, ease: "linear", delay: 2 }}
-              className="absolute top-0 -right-4 w-96 h-96 bg-yellow-300/30 rounded-full mix-blend-multiply filter blur-3xl"
+              className="absolute top-0 -right-4 w-96 h-96 bg-emerald-300/30 rounded-full mix-blend-multiply filter blur-3xl"
             />
             <motion.div 
               animate={{ 
@@ -215,7 +215,7 @@ export default function Home() {
                 y: [0, -40, 0]
               }}
               transition={{ duration: 18, repeat: Infinity, ease: "linear", delay: 4 }}
-              className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-300/30 rounded-full mix-blend-multiply filter blur-3xl"
+              className="absolute -bottom-8 left-20 w-96 h-96 bg-teal-300/30 rounded-full mix-blend-multiply filter blur-3xl"
             />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-background/80 via-background to-background" />
           </div>
@@ -246,7 +246,7 @@ export default function Home() {
                   >
                     {t('title')}
                   </motion.span> <br className="hidden sm:inline" />
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-600 to-pink-600 animate-gradient-x">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-green-500 to-emerald-600 animate-gradient-x">
                     {t('innovation')}
                   </span>
                 </h1>
@@ -261,7 +261,7 @@ export default function Home() {
               <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto px-4 sm:px-0">
                 <Link href="/menu/demo-cafe" className="w-full sm:w-auto">
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
-                    <Button size="lg" className="w-full sm:w-auto h-14 md:h-16 px-6 md:px-10 rounded-full text-base md:text-lg font-bold shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all duration-300 bg-gradient-to-r from-primary to-purple-600 border-0">
+                    <Button size="lg" className="w-full sm:w-auto h-14 md:h-16 px-6 md:px-10 rounded-full text-base md:text-lg font-bold shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all duration-300 bg-gradient-to-r from-primary to-green-600 border-0">
                       {t('demo')} <Utensils className="ml-2 h-5 w-5 rtl:mr-2 rtl:ml-0" />
                     </Button>
                   </motion.div>
@@ -328,11 +328,11 @@ export default function Home() {
                   }}
                   className="group relative overflow-hidden rounded-[2rem] bg-background p-8 shadow-lg border border-primary/5 transition-all duration-300"
                 >
-                  <div className="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 blur-3xl transition-all group-hover:scale-150 duration-500" />
+                  <div className="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 rounded-full bg-gradient-to-br from-primary/20 to-green-500/20 blur-3xl transition-all group-hover:scale-150 duration-500" />
                   
                   <motion.div 
                     whileHover={{ rotate: 10, scale: 1.1 }}
-                    className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-purple-500/10 text-primary shadow-inner"
+                    className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-green-500/10 text-primary shadow-inner"
                   >
                     {feature.icon}
                   </motion.div>
@@ -356,7 +356,7 @@ export default function Home() {
               <div className="space-y-8" data-aos="fade-right">
                 <motion.div 
                   whileHover={{ scale: 1.05 }}
-                  className="inline-block px-4 py-1.5 rounded-full bg-purple-100 text-purple-700 font-semibold text-sm mb-2"
+                  className="inline-block px-4 py-1.5 rounded-full bg-green-100 text-green-700 font-semibold text-sm mb-2"
                 >
                   🚀 {t('innovation')}
                 </motion.div>
@@ -399,7 +399,7 @@ export default function Home() {
 
               <div className="relative" data-aos="fade-left">
                 {/* Decorative Elements */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-primary to-purple-600 rounded-[2.5rem] opacity-20 blur-2xl animate-pulse" />
+                <div className="absolute -inset-4 bg-gradient-to-r from-primary to-green-600 rounded-[2.5rem] opacity-20 blur-2xl animate-pulse" />
                 <motion.div 
                   whileHover={{ rotateY: 5, rotateX: 5 }}
                   style={{ perspective: 1000 }}

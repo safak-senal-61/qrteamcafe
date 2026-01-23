@@ -55,7 +55,7 @@ const menuItems = [
     icon: LayoutTemplate,
   },
   {
-    title: 'İstatistikler',
+    title: 'İstatistikler & Stoklar',
     href: '/admin/statistics',
     icon: TrendingUp,
   },

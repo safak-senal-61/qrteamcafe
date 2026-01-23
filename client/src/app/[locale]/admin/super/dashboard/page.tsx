@@ -24,7 +24,8 @@ import {
   Settings,
   Power,
   Globe,
-  BellRing
+  BellRing,
+  Gift
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -36,6 +37,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { API_URL } from '@/lib/api';
+import { RewardsManagement } from '@/components/admin/RewardsManagement';
 
 interface CafeAdmin {
   id: string;
@@ -381,147 +383,154 @@ export default function SuperAdminDashboard() {
                 <TabsTrigger value="pending" className="rounded-lg">Bekleyenler</TabsTrigger>
                 <TabsTrigger value="active" className="rounded-lg">Aktif İşletmeler</TabsTrigger>
                 <TabsTrigger value="rejected" className="rounded-lg">Reddedilenler</TabsTrigger>
+                <TabsTrigger value="rewards" className="rounded-lg flex items-center gap-2"><Gift className="w-4 h-4" /> Hediye Kataloğu</TabsTrigger>
                 <TabsTrigger value="all" className="rounded-lg">Tümü</TabsTrigger>
               </TabsList>
 
-              <TabsContent value={activeTab} className="mt-0">
-                {loading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-64 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
-                    ))}
-                  </div>
-                ) : filteredCafes.length === 0 ? (
-                  <div className="text-center py-20">
-                    <div className="bg-slate-100 dark:bg-slate-800 h-20 w-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Store className="h-10 w-10 text-slate-400" />
-                    </div>
-                    <h3 className="text-lg font-medium">Kayıt Bulunamadı</h3>
-                    <p className="text-slate-500">Bu kategoride gösterilecek işletme yok.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCafes.map((cafe) => (
-                      <motion.div
-                        key={cafe.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all bg-white dark:bg-slate-900 group">
-                          <div className={`h-2 w-full ${
-                            cafe.status === 'APPROVED' ? 'bg-green-500' :
-                            cafe.status === 'PENDING' ? 'bg-yellow-500' : 'bg-red-500'
-                          }`} />
-                          <CardHeader className="pb-4">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <CardTitle className="text-lg font-bold flex items-center gap-2 group-hover:text-indigo-600 transition-colors">
-                                  {cafe.name}
-                                </CardTitle>
-                                <CardDescription className="flex items-center mt-1 text-xs">
-                                  <Calendar className="h-3 w-3 mr-1" />
-                                  {format(new Date(cafe.createdAt), 'd MMMM yyyy HH:mm', { locale: tr })}
-                                </CardDescription>
-                              </div>
-                              <Badge variant={
-                                cafe.status === 'APPROVED' ? 'default' :
-                                cafe.status === 'PENDING' ? 'secondary' : 'destructive'
-                              } className={
-                                cafe.status === 'APPROVED' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
-                                cafe.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : ''
-                              }>
-                                {cafe.status === 'APPROVED' ? 'Aktif' :
-                                 cafe.status === 'PENDING' ? 'Bekliyor' : 'Pasif'}
-                              </Badge>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
-                              <div className="flex items-center text-sm">
-                                <User className="h-4 w-4 mr-3 text-indigo-500" />
-                                <span className="font-medium">{cafe.admins[0]?.name || 'Yönetici Yok'}</span>
-                              </div>
-                              <div className="flex items-center text-sm">
-                                <Mail className="h-4 w-4 mr-3 text-indigo-500" />
-                                <span className="truncate" title={cafe.admins[0]?.email}>{cafe.admins[0]?.email || '-'}</span>
-                              </div>
-                              <div className="flex items-center text-sm">
-                                <Phone className="h-4 w-4 mr-3 text-indigo-500" />
-                                <span>{cafe.phone}</span>
-                              </div>
-                            </div>
+              <TabsContent value="rewards" className="mt-0">
+                <RewardsManagement cafes={cafes} />
+              </TabsContent>
 
-                            <div className="pt-2 flex gap-3">
-                              {cafe.status === 'PENDING' ? (
-                                <>
-                                  <Button
-                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20"
-                                    onClick={() => handleAction(cafe.id, 'approve')}
-                                    disabled={processingState?.id === cafe.id}
-                                  >
-                                    {processingState?.id === cafe.id && processingState?.action === 'approve' ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <>
-                                        <CheckCircle2 className="h-4 w-4 mr-2" /> Onayla
-                                      </>
-                                    )}
-                                  </Button>
+              {activeTab !== 'rewards' && (
+                <TabsContent value={activeTab} className="mt-0">
+                  {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-64 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+                      ))}
+                    </div>
+                  ) : filteredCafes.length === 0 ? (
+                    <div className="text-center py-20">
+                      <div className="bg-slate-100 dark:bg-slate-800 h-20 w-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Store className="h-10 w-10 text-slate-400" />
+                      </div>
+                      <h3 className="text-lg font-medium">Kayıt Bulunamadı</h3>
+                      <p className="text-slate-500">Bu kategoride gösterilecek işletme yok.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredCafes.map((cafe) => (
+                        <motion.div
+                          key={cafe.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all bg-white dark:bg-slate-900 group">
+                            <div className={`h-2 w-full ${
+                              cafe.status === 'APPROVED' ? 'bg-green-500' :
+                              cafe.status === 'PENDING' ? 'bg-yellow-500' : 'bg-red-500'
+                            }`} />
+                            <CardHeader className="pb-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <CardTitle className="text-lg font-bold flex items-center gap-2 group-hover:text-indigo-600 transition-colors">
+                                    {cafe.name}
+                                  </CardTitle>
+                                  <CardDescription className="flex items-center mt-1 text-xs">
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    {format(new Date(cafe.createdAt), 'd MMMM yyyy HH:mm', { locale: tr })}
+                                  </CardDescription>
+                                </div>
+                                <Badge variant={
+                                  cafe.status === 'APPROVED' ? 'default' :
+                                  cafe.status === 'PENDING' ? 'secondary' : 'destructive'
+                                } className={
+                                  cafe.status === 'APPROVED' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
+                                  cafe.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : ''
+                               }>
+                                  {cafe.status === 'APPROVED' ? 'Aktif' :
+                                  cafe.status === 'PENDING' ? 'Bekliyor' : 'Pasif'}
+                                </Badge>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
+                                <div className="flex items-center text-sm">
+                                  <User className="h-4 w-4 mr-3 text-indigo-500" />
+                                  <span className="font-medium">{cafe.admins[0]?.name || 'Yönetici Yok'}</span>
+                                </div>
+                                <div className="flex items-center text-sm">
+                                  <Mail className="h-4 w-4 mr-3 text-indigo-500" />
+                                  <span className="truncate" title={cafe.admins[0]?.email}>{cafe.admins[0]?.email || '-'}</span>
+                                </div>
+                                <div className="flex items-center text-sm">
+                                  <Phone className="h-4 w-4 mr-3 text-indigo-500" />
+                                  <span>{cafe.phone}</span>
+                                </div>
+                              </div>
+
+                              <div className="pt-2 flex gap-3">
+                                {cafe.status === 'PENDING' ? (
+                                  <>
+                                    <Button
+                                      className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20"
+                                      onClick={() => handleAction(cafe.id, 'approve')}
+                                      disabled={processingState?.id === cafe.id}
+                                    >
+                                      {processingState?.id === cafe.id && processingState?.action === 'approve' ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <CheckCircle2 className="h-4 w-4 mr-2" /> Onayla
+                                        </>
+                                      )}
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                                      onClick={() => handleAction(cafe.id, 'reject')}
+                                      disabled={processingState?.id === cafe.id}
+                                    >
+                                      {processingState?.id === cafe.id && processingState?.action === 'reject' ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <XCircle className="h-4 w-4 mr-2" /> Reddet
+                                        </>
+                                      )}
+                                    </Button>
+                                  </>
+                                ) : cafe.status === 'APPROVED' ? (
                                   <Button
                                     variant="outline"
-                                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                                    className="w-full border-red-200 text-red-600 hover:bg-red-50"
                                     onClick={() => handleAction(cafe.id, 'reject')}
                                     disabled={processingState?.id === cafe.id}
                                   >
-                                    {processingState?.id === cafe.id && processingState?.action === 'reject' ? (
+                                    {processingState?.id === cafe.id ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />
                                     ) : (
                                       <>
-                                        <XCircle className="h-4 w-4 mr-2" /> Reddet
+                                        <XCircle className="h-4 w-4 mr-2" /> Askıya Al / Pasifleştir
                                       </>
                                     )}
                                   </Button>
-                                </>
-                              ) : cafe.status === 'APPROVED' ? (
-                                <Button
-                                  variant="outline"
-                                  className="w-full border-red-200 text-red-600 hover:bg-red-50"
-                                  onClick={() => handleAction(cafe.id, 'reject')}
-                                  disabled={processingState?.id === cafe.id}
-                                >
-                                  {processingState?.id === cafe.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <>
-                                      <XCircle className="h-4 w-4 mr-2" /> Askıya Al / Pasifleştir
-                                    </>
-                                  )}
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  className="w-full border-green-200 text-green-600 hover:bg-green-50"
-                                  onClick={() => handleAction(cafe.id, 'approve')}
-                                  disabled={processingState?.id === cafe.id}
-                                >
-                                  {processingState?.id === cafe.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <>
-                                      <CheckCircle2 className="h-4 w-4 mr-2" /> Tekrar Aktifleştir
-                                    </>
-                                  )}
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    className="w-full border-green-200 text-green-600 hover:bg-green-50"
+                                    onClick={() => handleAction(cafe.id, 'approve')}
+                                    disabled={processingState?.id === cafe.id}
+                                  >
+                                    {processingState?.id === cafe.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <CheckCircle2 className="h-4 w-4 mr-2" /> Tekrar Aktifleştir
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              )} 
             </Tabs>
           </CardContent>
         </Card>

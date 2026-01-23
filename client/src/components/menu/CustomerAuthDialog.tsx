@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
@@ -47,6 +48,7 @@ const registerSchema = z.object({
   email: z.string().email('Geçerli bir e-posta adresi giriniz'),
   phone: z.string().min(10, 'Geçerli bir telefon numarası giriniz'),
   password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır'),
+  referralCode: z.string().optional(),
 });
 
 const verifySchema = z.object({
@@ -67,10 +69,14 @@ const resetPasswordSchema = z.object({
 type AuthView = 'welcome' | 'login' | 'register' | 'verification' | 'forgot-password' | 'reset-password';
 
 export function CustomerAuthDialog() {
+  const router = useRouter();
+  const params = useParams();
+  const searchParams = useSearchParams();
   const { isAuthDialogOpen, setAuthDialogOpen, setCustomer, setGuest } = useCustomerStore();
   const [view, setView] = useState<AuthView>('welcome');
   const [loading, setLoading] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [hasHandledReferral, setHasHandledReferral] = useState(false);
 
   const handleGuestContinue = () => {
     setGuest(true);
@@ -93,8 +99,19 @@ export function CustomerAuthDialog() {
       email: '',
       phone: '',
       password: '',
+      referralCode: '',
     },
   });
+
+  useEffect(() => {
+    const referralCode = searchParams.get('referralCode');
+    if (referralCode && !hasHandledReferral && !isAuthDialogOpen) {
+      setAuthDialogOpen(true);
+      setView('register');
+      registerForm.setValue('referralCode', referralCode);
+      setHasHandledReferral(true);
+    }
+  }, [searchParams, hasHandledReferral, isAuthDialogOpen, setAuthDialogOpen, registerForm]);
 
   const verifyForm = useForm<z.infer<typeof verifySchema>>({
     resolver: zodResolver(verifySchema),
@@ -122,6 +139,9 @@ export function CustomerAuthDialog() {
       toast.success('Giriş başarılı! Hoş geldiniz.');
       setAuthDialogOpen(false);
       loginForm.reset();
+      if (params.locale && params.cafeId) {
+        router.push(`/${params.locale}/menu/${params.cafeId}/profile`);
+      }
     } catch (error: any) {
       if (error.response?.data?.code === 'NOT_VERIFIED') {
         toast.error('Hesabınız henüz doğrulanmamış. Lütfen doğrulama kodunu giriniz.');
@@ -151,6 +171,9 @@ export function CustomerAuthDialog() {
         toast.success('Kayıt başarılı! Aramıza hoş geldiniz.');
         setAuthDialogOpen(false);
         registerForm.reset();
+        if (params.locale && params.cafeId) {
+          router.push(`/${params.locale}/menu/${params.cafeId}/profile`);
+        }
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Kayıt yapılamadı');
@@ -167,6 +190,9 @@ export function CustomerAuthDialog() {
       toast.success('Hesap doğrulandı! Hoş geldiniz.');
       setAuthDialogOpen(false);
       verifyForm.reset();
+      if (params.locale && params.cafeId) {
+        router.push(`/${params.locale}/menu/${params.cafeId}/profile`);
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Doğrulama başarısız');
     } finally {
@@ -552,6 +578,19 @@ export function CustomerAuthDialog() {
                             <FormLabel className="text-gray-700">Şifre</FormLabel>
                             <FormControl>
                               <Input type="password" placeholder="******" {...field} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={registerForm.control}
+                        name="referralCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-gray-700">Davet Kodu (İsteğe Bağlı)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Varsa davet kodunuzu girin" {...field} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

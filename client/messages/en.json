@@ -73,7 +73,7 @@
     "company": "Company",
     "legal": "Legal",
     "description": "Next generation digital menu and order management system for restaurants and cafes.",
-    "rights": "© 2024 QR Team Cafe. All rights reserved."
+    "rights": "© 2026 QR Team Cafe. All rights reserved."
   },
   "NotFound": {
     "title": "Page Not Found",
@@ -148,6 +148,339 @@
           "3": "Dedicated Account Manager",
           "4": "Unlimited Branch Management"
         }
+      }
+    }
+  },
+  "PrivacyPage": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last Updated: January 21, 2026",
+    "subtitle": "Your data security and privacy is our top priority.",
+    "intro": "As QR Team Cafe (\"We\", \"Company\"), we attach great importance to the privacy of our customers and users. This policy transparently explains how your personal data is collected, used, protected, and shared when you use our services.",
+    "sections": {
+      "1": {
+        "title": "1. Collected Personal Data",
+        "content": "When you use our services, we may collect the following data categories:",
+        "list": {
+          "0": "Identity Information: Your name, surname, ID number (if required for invoicing).",
+          "1": "Contact Information: Email address, phone number, business address.",
+          "2": "Business Data: Restaurant/Cafe name, menu contents, pricing policies, table layout.",
+          "3": "Financial Information: Payment history, invoice details (Your credit card information is processed directly by our payment provider and is not stored on our servers).",
+          "4": "Technical Data: IP address, browser type, device information, operating system, and access times."
+        }
+      },
+      "2": {
+        "title": "2. Purposes of Use of Data",
+        "content": "Your collected data is processed for the following purposes:",
+        "list": {
+          "0": "Service Provision: Operation of the QR menu system, management of orders, and account creation processes.",
+          "1": "Improvement and Analysis: Improving user experience, monitoring system performance, and fixing errors.",
+          "2": "Customer Support: Resolving your problems and responding to your requests.",
+          "3": "Legal Compliance: Fulfilling tax legislation and other legal obligations.",
+          "4": "Security: Ensuring the security of your account and our system, detecting suspicious transactions."
+        }
+      },
+      "3": {
+        "title": "3. Data Security and Storage",
+        "content": "The security of your data is our top priority:",
+        "list": {
+          "0": "Encryption: All data transmission is protected by SSL/TLS encryption protocols.",
+          "1": "Access Control: Only our authorized personnel and relevant institutions in case of legal obligation can access your data.",
+          "2": "Infrastructure: Your data is stored on modern and secure cloud servers with regular backups.",
+          "3": "Retention Period: Your data is kept for as long as you receive service and for legal retention periods (e.g., 10 years for invoice records)."
+        }
+      },
+      "4": {
+        "title": "4. Sharing with Third Parties",
+        "content": "We never sell your data to third parties. However, sharing with some providers may be required for the sustainability of the service:",
+        "list": {
+          "0": "Infrastructure Providers: Server and database services (e.g., AWS, Vercel).",
+          "1": "Payment Processors: For secure processing of credit card payments (e.g., Iyzico, Stripe).",
+          "2": "Analysis Tools: To anonymously analyze service usage (e.g., Google Analytics).",
+          "3": "Legal Authorities: Competent public institutions in case of a court order or legal obligation."
+        }
+      },
+      "5": {
+        "title": "5. Cookie Policy",
+        "content": "We use cookies to improve your experience on our site. Essential cookies are necessary for the site to function. Analytical cookies help us understand how you use our site. You can manage cookies from your browser settings."
+      },
+      "6": {
+        "title": "6. Your Rights (KVKK/GDPR)",
+        "content": "You have the following rights regarding your personal data:",
+        "list": {
+          "0": "To learn whether your data is processed.",
+          "1": "To request information about your processed data.",
+          "2": "To request correction of incorrect or incomplete data.",
+          "3": "To request deletion or destruction of your data (subject to legal retention obligations).",
+          "4": "To request compensation for damages if you suffer damage due to unlawful processing of your data."
+        }
+      }
+    },
+    "contact": {
+      "title": "Have Questions?",
+      "description": "You can contact us for more information about our privacy policy or your data.",
+      "button": "Contact Us"
+    }
+  },
+  "TermsPage": {
+    "title": "Terms of Use",
+    "lastUpdated": "Last Updated: January 21, 2026",
+    "subtitle": "Rules and legal responsibilities you must follow when using our services.",
+    "intro": "As QR Team Cafe (\"We\", \"Platform\"), we aim to provide you with the best digital menu and restaurant management experience. The following terms have been established to ensure the fair, secure, and lawful use of our platform.",
+    "sections": {
+      "1": {
+        "title": "1. Definition and Acceptance of Service",
+        "content": "QR Team Cafe is a cloud-based SaaS (Software as a Service) platform that offers digital menu, order management, staff tracking, and reporting services for restaurants and cafes.",
+        "content2": "By using our services or accessing our platform, you declare that you have read, understood, and agreed to abide by these Terms of Use."
+      },
+      "2": {
+        "title": "2. Account Security and Usage",
+        "content": "You are responsible for the security of the account you create to use the platform:",
+        "list": {
+          "0": "You must provide accurate and up-to-date information during registration.",
+          "1": "You must keep your password secure and not share it with third parties.",
+          "2": "You are directly responsible for all transactions occurring in your account.",
+          "3": "You must notify us immediately in case of suspicion of unauthorized use."
+        }
+      },
+      "3": {
+        "title": "3. Usage Rules and Prohibitions",
+        "content": "It is strictly forbidden to use the platform in the following ways:",
+        "list": {
+          "0": "Hosting illegal, threatening, insulting, or harmful content.",
+          "1": "Attempting to compromise the security, integrity, or performance of the system (e.g., DDoS attacks, reverse engineering).",
+          "2": "Preventing other users from benefiting from the service.",
+          "3": "Using the platform to send spam or unsolicited commercial messages."
+        }
+      },
+      "4": {
+        "title": "4. Payment, Subscription, and Cancellation",
+        "content": "The following conditions apply to our paid services:",
+        "list": {
+          "0": "Subscriptions: Automatically renewed monthly or annually according to the selected plan.",
+          "1": "Payments: Collected securely via the specified payment methods.",
+          "2": "Cancellation: You can cancel your subscription at any time via the panel. Cancellation takes effect at the end of the current billing period.",
+          "3": "Refund: Subject to the legal right of withdrawal, no refunds are made for used service periods."
+        }
+      },
+      "5": {
+        "title": "5. Intellectual Property Rights",
+        "content": "All software, design, graphics, logos, trademarks, and content on the platform are the property of QR Team Cafe or its licensors. Unauthorized copying, reproduction, distribution, or creation of derivative works is prohibited."
+      },
+      "6": {
+        "title": "6. Disclaimer and Limitations",
+        "content": "Our services are provided \"as is\" and \"as available\":",
+        "list": {
+          "0": "We do not guarantee that the platform will run uninterrupted, error-free, or virus-free.",
+          "1": "We cannot be held responsible for user errors, data losses, or problems caused by third-party services.",
+          "2": "To the maximum extent permitted by law, we are not liable for indirect or incidental damages (loss of profit, data loss, etc.)."
+        }
+      },
+      "7": {
+        "title": "7. Changes and Enforcement",
+        "content": "We may change these terms of use from time to time due to legal requirements or service updates. We will notify you via email or in-platform notification when significant changes are made. Changes come into force on the date they are published, and your continued use of the service means you accept the new terms."
+      }
+    },
+    "contact": {
+      "title": "Have Questions?",
+      "description": "You can contact our legal department for any questions about the terms of use.",
+      "button": "Contact Us"
+    }
+  },
+  "KvkkPage": {
+    "title": "KVKK Clarification Text",
+    "lastUpdated": "Last Updated: January 21, 2026",
+    "subtitle": "Information within the Scope of the Law on the Protection of Personal Data No. 6698",
+    "intro": "In accordance with our principle of transparency and trust, we would like to inform you in the clearest way about how your personal data is processed, to whom it is transferred, and your rights.",
+    "sections": {
+      "1": {
+        "title": "1. Data Controller and Purpose",
+        "content": "As QR Team Cafe (\"Company\"), our purposes for processing your personal data as a data controller pursuant to the Law on the Protection of Personal Data No. 6698 (\"KVKK\") are as follows:",
+        "list": {
+          "0": "Provision of our products and services to you and their uninterrupted continuity.",
+          "1": "Management of customer relations and follow-up of satisfaction processes.",
+          "2": "Fulfillment of legal obligations (invoice issuance, tax legislation, etc.).",
+          "3": "Execution of information security processes."
+        }
+      },
+      "2": {
+        "title": "2. Processed Personal Data Categories",
+        "content": "The following data categories are processed within the scope of our activities:",
+        "list": {
+          "0": "Identity Information: Name, surname, ID number (in case of legal obligation).",
+          "1": "Contact Information: Email address, phone number, notification address.",
+          "2": "Customer Transaction Information: Order history, request and complaint information.",
+          "3": "Financial Information: Payment information, invoice details.",
+          "4": "Transaction Security: IP address, access logs, password information."
+        }
+      },
+      "3": {
+        "title": "3. Transfer of Personal Data",
+        "content": "Your personal data may be shared with the following parties in accordance with the conditions specified in Articles 8 and 9 of the Law:",
+        "list": {
+          "0": "Legally authorized public institutions and organizations (e.g., Revenue Administration, Courts).",
+          "1": "Business partners and suppliers from whom we receive services (e.g., data center service, payment infrastructure providers).",
+          "2": "Our legal advisors for the purpose of resolving legal disputes."
+        }
+      },
+      "4": {
+        "title": "4. Data Collection Method and Legal Reason",
+        "content": "Your personal data is collected electronically through our website, mobile application, email, call center, and social media channels.",
+        "content2": "This data is processed based on the legal reasons of \"Performance of the contract\", \"Prescribed by law\", \"Legal obligation of the data controller\", and \"Legitimate interest of the data controller, provided that it does not harm the fundamental rights and freedoms of the data subject\"."
+      },
+      "5": {
+        "title": "5. Rights of the Data Subject (Article 11)",
+        "content": "As a data owner pursuant to Article 11 of KVKK, you have the following rights:",
+        "list": {
+          "0": "To learn whether your personal data is processed.",
+          "1": "To request information if it has been processed.",
+          "2": "To learn the purpose of processing and whether it is used in accordance with its purpose.",
+          "3": "To know the third parties to whom it is transferred domestically or abroad.",
+          "4": "To request correction if it is incomplete or incorrectly processed.",
+          "5": "To request deletion or destruction within the framework of Article 7 of KVKK.",
+          "6": "To object to the occurrence of a result against you by analyzing the processed data exclusively through automated systems.",
+          "7": "To request compensation for damages in case you suffer damage due to unlawful processing."
+        }
+      }
+    },
+    "contact": {
+      "title": "KVKK Application",
+      "description": "You can contact us to exercise your rights or get more information.",
+      "button": "Contact Us"
+    }
+  },
+  "AboutPage": {
+    "hero": {
+      "badge": "Leader in Restaurant Technologies",
+      "title": "Designing the Future",
+      "titleHighlight": "Restaurant Experience",
+      "description": "QR Team Cafe is an end-to-end technology solution that carries your business to the digital age, simplifies operations and increases customer satisfaction.",
+      "buttonContact": "Meet Us",
+      "buttonFeatures": "Discover Features"
+    },
+    "stats": {
+      "happyBusiness": "Happy Business",
+      "digitalMenu": "Digital Menu",
+      "monthlyTransaction": "Monthly Transaction",
+      "citiesServed": "Cities Served"
+    },
+    "mission": {
+      "title": "Our Mission:",
+      "highlight": "Focus on Your Business",
+      "description": "Our goal is to turn technology from a complex burden into an invisible power that grows your business. While you focus on creating delicious food and a great atmosphere, we manage all digital processes from order to payment, stock to customer loyalty.",
+      "list": {
+        "0": "Operational Efficiency",
+        "1": "Perfect Customer Experience",
+        "2": "Data-Driven Growth"
+      }
+    },
+    "vision": {
+      "title": "Our Vision",
+      "description": "To be the standard setter in the digital transformation of restaurants and cafes around the world. To democratize the use of technology in the gastronomy sector with our AI-supported solutions and to ensure that businesses of all sizes provide services at global standards."
+    },
+    "values": {
+      "title": "Our Values",
+      "subtitle": "Our fundamental principles that make us who we are and guide us in every decision.",
+      "transparency": {
+        "title": "Transparency",
+        "description": "No hidden fees or complex contracts. We communicate honestly and openly at every step."
+      },
+      "innovation": {
+        "title": "Innovation",
+        "description": "We don't follow technology, we shape it. Stay ahead of your competitors with constantly evolving features."
+      },
+      "customerFocus": {
+        "title": "Customer Focus",
+        "description": "Our success depends on your success. We are always with you with 24/7 support and solutions tailored for you."
+      }
+    },
+    "team": {
+      "title": "Meet Our Team",
+      "subtitle": "Passionate, experienced and innovative. Here is the power behind QR Team Cafe.",
+      "roles": {
+        "founder": "Founder & CEO",
+        "cto": "CTO",
+        "productManager": "Product Manager",
+        "designLead": "Design Lead"
+      }
+    }
+  },
+  "FeaturesPage": {
+    "title": "Empowering Your Business",
+    "titleHighlight": "Advanced Features",
+    "subtitle": "QR Team Cafe is much more than a menu. A comprehensive solution that meets all your business needs.",
+    "items": {
+      "mobile": {
+        "title": "Mobile Friendly QR Menu",
+        "description": "A seamless, fast and modern menu experience on all devices. No need to download an app."
+      },
+      "fastOrder": {
+        "title": "Fast Order System",
+        "description": "Let your customers order without waiting for a waiter, increase your operation speed by 30%."
+      },
+      "analytics": {
+        "title": "Detailed Analytics",
+        "description": "Which product sells when? Increase your turnover by making data-driven decisions."
+      },
+      "multiLang": {
+        "title": "Multi-Language Support",
+        "description": "Automatically translate your menu into different languages, delight your tourist customers."
+      },
+      "security": {
+        "title": "Secure Infrastructure",
+        "description": "Your data is safe with KVKK compliant, secure and redundant server infrastructure."
+      },
+      "management": {
+        "title": "Easy Management Panel",
+        "description": "Update your products, prices and stock status in seconds."
+      }
+    }
+  },
+  "IntegrationsPage": {
+    "title": "Powerful",
+    "titleHighlight": "Integrations",
+    "subtitle": "Works seamlessly with your existing systems. Connect your POS, payment and accounting software with a single click.",
+    "categories": {
+      "pos": "POS Systems",
+      "payment": "Payment Systems",
+      "delivery": "Food Delivery",
+      "accounting": "Accounting"
+    },
+    "items": {
+      "pos": ["Micros", "Simpra", "Omni", "Vectron"],
+      "payment": ["Iyzico", "Stripe", "PayTR", "Garanti Virtual POS"],
+      "delivery": ["Yemeksepeti", "GetirYemek", "Trendyol Yemek"],
+      "accounting": ["Paraşüt", "Logo", "Mikro"]
+    }
+  },
+  "RoadmapPage": {
+    "title": "Road",
+    "titleHighlight": "Map",
+    "subtitle": "We are building the future now. Here are our plans and goals.",
+    "status": {
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "planned": "Planned"
+    },
+    "milestones": {
+      "q1_2026": {
+        "quarter": "2026 Q1",
+        "title": "Inception",
+        "items": ["QR Menu Launch", "Basic Admin Panel", "Multi-Language Support"]
+      },
+      "q2_2026": {
+        "quarter": "2026 Q2",
+        "title": "Growth",
+        "items": ["POS Integrations", "Stock Tracking Module", "Waiter Call System"]
+      },
+      "q3_2026": {
+        "quarter": "2026 Q3",
+        "title": "Expansion",
+        "items": ["AI Powered Recommendations", "Loyalty Program", "Mobile App"]
+      },
+      "q4_2026": {
+        "quarter": "2026 Q4",
+        "title": "Global",
+        "items": ["International Expansion", "Marketplace Integration", "Advanced API"]
       }
     }
   }

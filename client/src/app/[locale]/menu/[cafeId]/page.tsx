@@ -15,6 +15,8 @@ import { PremiumTemplate } from '@/components/menu/templates/PremiumTemplate';
 import { BistroTemplate } from '@/components/menu/templates/BistroTemplate';
 import { TemplateProps, Cafe, Category, Product } from '@/components/menu/templates/types';
 
+import { MenuService } from '@/services/menu.service';
+
 // Helper functions
 const getPriorityKeywords = (currentHour: number) => {
   if (currentHour >= 5 && currentHour < 12) {
@@ -63,7 +65,7 @@ export default function MenuPage() {
   const searchParams = useSearchParams();
   const cafeId = params.cafeId as string;
   const tableNumber = searchParams.get('table');
-  const { customer, setAuthDialogOpen, isGuest, isAuthDialogOpen } = useCustomerStore();
+  const { customer, setAuthDialogOpen, isGuest, isAuthDialogOpen, _hasHydrated } = useCustomerStore();
   
   const [cafe, setCafe] = useState<Cafe | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -136,21 +138,20 @@ export default function MenuPage() {
     return () => {
       if (socket) socket.disconnect();
     };
-  }, [cafeId, currentTableId]);
+  }, [cafe?.id, currentTableId]);
 
-  const fetchActiveOrders = async () => {
-      if (!cafeId || !tableNumber) return;
+  const fetchActiveOrders = async (cId?: string) => {
+      const targetCafeId = cId || cafe?.id;
+      if (!targetCafeId || !tableNumber) return;
       try {
-          const tablesRes = await fetch(`${API_URL}/tables?cafeId=${cafeId}`);
-          if (tablesRes.ok) {
-              const tables = await tablesRes.json();
+          const tables = await MenuService.getTables(targetCafeId);
+          if (tables) {
               const currentTable = tables.find((t: any) => t.tableNumber === parseInt(tableNumber));
               
               if (currentTable) {
                   setCurrentTableId(currentTable.id);
-                  const ordersRes = await fetch(`${API_URL}/orders?cafeId=${cafeId}`);
-                  if (ordersRes.ok) {
-                      const allOrders = await ordersRes.json();
+                  const allOrders = await MenuService.getActiveOrders(targetCafeId);
+                  if (allOrders) {
                       // Sadece bu masaya ait ve ödenmemiş siparişleri al
                       const tableOrders = allOrders.filter((o: any) => o.tableId === currentTable.id && o.status !== 'PAID');
                       setActiveOrders(tableOrders);
@@ -163,34 +164,44 @@ export default function MenuPage() {
   };
 
   useEffect(() => {
-    if (!customer && !isGuest) {
-      setAuthDialogOpen(true);
-    }
-  }, [customer, isGuest, setAuthDialogOpen]);
+    if (!_hasHydrated) return;
+
+    const timer = setTimeout(() => {
+      // Re-check state after delay to ensure hydration is fully settled
+      // and prevent race conditions where dialog opens despite user being logged in
+      const currentCustomer = useCustomerStore.getState().customer;
+      const currentIsGuest = useCustomerStore.getState().isGuest;
+      
+      if (!currentCustomer && !currentIsGuest) {
+        setAuthDialogOpen(true);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [_hasHydrated, customer, isGuest, setAuthDialogOpen]);
 
   useEffect(() => {
     const fetchMenu = async () => {
       try {
         // Fetch Cafe Details
-        const cafeRes = await fetch(`${API_URL}/cafes/${cafeId}`);
-        if (!cafeRes.ok) throw new Error('Cafe not found');
-        const cafeData = await cafeRes.json();
+        const cafeData = await MenuService.getCafe(cafeId);
         setCafe(cafeData);
+        
+        // Use the real UUID for subsequent calls
+        const realCafeId = cafeData.id;
 
         // Fetch Categories
-        const catRes = await fetch(`${API_URL}/categories?cafeId=${cafeId}`);
-        const catData = await catRes.json();
+        const catData = await MenuService.getCategories(realCafeId);
         // Apply time-based sorting
         const sortedCats = sortCategoriesByTime(catData);
         setCategories(sortedCats);
 
         // Fetch Products
-        const prodRes = await fetch(`${API_URL}/products?cafeId=${cafeId}`);
-        const prodData = await prodRes.json();
+        const prodData = await MenuService.getProducts(realCafeId);
         setProducts(prodData.filter((p: Product) => p.isAvailable));
 
         // Fetch Active Orders
-        await fetchActiveOrders();
+        await fetchActiveOrders(realCafeId);
 
       } catch (error) {
         console.error(error);

@@ -2,8 +2,11 @@
 
 import { motion, Variants } from 'framer-motion';
 import { Blocks, Database, Server, CreditCard, ShoppingCart } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function IntegrationsPage() {
+  const t = useTranslations('IntegrationsPage');
+
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
@@ -29,24 +32,24 @@ export default function IntegrationsPage() {
 
   const integrations = [
     {
-      category: 'POS Sistemleri',
+      category: t('categories.pos'),
       icon: <Server className="h-6 w-6" />,
-      items: ['Micros', 'Simpra', 'Omni', 'Vectron']
+      items: t.raw('items.pos') as string[]
     },
     {
-      category: 'Ödeme Sistemleri',
+      category: t('categories.payment'),
       icon: <CreditCard className="h-6 w-6" />,
-      items: ['Iyzico', 'Stripe', 'PayTR', 'Garanti Sanal POS']
+      items: t.raw('items.payment') as string[]
     },
     {
-      category: 'Yemek Sepeti & Getir',
+      category: t('categories.delivery'),
       icon: <ShoppingCart className="h-6 w-6" />,
-      items: ['Yemeksepeti', 'GetirYemek', 'Trendyol Yemek']
+      items: t.raw('items.delivery') as string[]
     },
     {
-      category: 'Muhasebe',
+      category: t('categories.accounting'),
       icon: <Database className="h-6 w-6" />,
-      items: ['Paraşüt', 'Logo', 'Mikro']
+      items: t.raw('items.accounting') as string[]
     }
   ];
 
@@ -64,13 +67,13 @@ export default function IntegrationsPage() {
               <Blocks className="h-8 w-8" />
             </motion.div>
             <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl font-bold tracking-tight">
-              Güçlü <br />
+              {t('title')} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">
-                Entegrasyonlar
+                {t('titleHighlight')}
               </span>
             </motion.h1>
             <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Mevcut sistemlerinizle sorunsuz çalışır. POS, ödeme ve muhasebe yazılımlarınızı tek tıkla bağlayın.
+              {t('subtitle')}
             </motion.p>
           </div>
 

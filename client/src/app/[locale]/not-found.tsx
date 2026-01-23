@@ -19,7 +19,7 @@ export default function NotFound() {
         className="w-full max-w-lg mb-8"
       >
         <LottieAnimation
-          url="https://lottie.host/92a8e483-4903-4c9c-8597-9c988c575003/E5677943r3.json"
+          url="/animations/404.json"
           width="100%"
           height={400}
         />

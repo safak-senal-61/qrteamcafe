@@ -145,3 +145,100 @@ Bu özellikler, kullanıcıların geliştirme sürecine dahil olmasını sağlar
 - [ ] **🗳️ Özellik Oylama (Feature Voting):** Kullanıcıların hangi özelliğin önce gelmesini istediklerini oylaması.
 - [ ] **🚧 Canlı İlerleme Çubukları:** Özelliklerin geliştirilme durumunun (örn: %60) gösterilmesi.
 - [ ] **🔔 "Gelince Haber Ver" Butonu:** Özellik canlıya alındığında ilgili kullanıcılara bildirim gönderilmesi.
+
+
+
+
+
+🥗 Diyet ve Alerjen Tercihleri (En Önemli):
+
+- Kullanıcılar "Vejetaryen" , "Glütensiz" , "Laktozsuz" veya "Acı Sevmem" gibi tercihlerini profilinden işaretleyebilir.
+- Bu tercihler menü sayfasında otomatik filtreleme yapmak veya ürün detaylarında uyarı göstermek için kullanılır.
+
+🔔 Bildirim Ayarları:
+
+- Sipariş durumu, kampanyalar veya özel teklifler için bildirim tercihlerini yönetme alanı.
+
+### 2. ❤️ Favorilerim (İstek Listesi)
+Müşteriler her zaman sipariş vermese bile menüyü incelerken beğendiklerini kaydetmek ister.
+
+- Özellik: Ürün kartlarına "Kalp" ikonu eklenmesi ve profilde "Favorilerim" sekmesi.
+- Fayda: Müşterinin bir sonraki ziyaretinde karar verme süresini kısaltır.
+
+
+### 3. 🎂 Özel Günler (Doğum Günü)
+Müşteri sadakati (CRM) için en değerli verilerden biridir.
+
+- Özellik: Profilde "Doğum Tarihi" alanı.
+- Kullanım: "Doğum gününüzü girin, o gün tatlınız bizden olsun" gibi bir teşvikle veri toplanır. Sistem o gün otomatik bildirim veya indirim tanımlar.
+
+
+### 4. 🎟️ Kuponlarım ve Kampanyalar
+- Özellik: Müşteriye özel tanımlanmış indirim kodlarının veya "Kahve Kartı" (10 kahve al 1 bedava) gibi dijital damga kartlarının görüntülendiği alan.
+
+
+### 5. 🔁 "Aynısını Getir" (Hızlı Sipariş)
+- Özellik: Sipariş geçmişinde, önceki bir siparişin yanında "Tekrarla" butonu. Sepeti o siparişin içeriğiyle otomatik doldurur.
+
+
+### 6. 🔔 İletişim Tercihleri
+- Özellik: SMS, E-posta veya Bildirim almak isteyip istemediğini seçebileceği ayarlar. KVKK uyumu için de önemlidir.
+
+###  Oyunlaştırma (Gamification) & Rozetler
+Sadece puan toplamak yerine, kullanıcı davranışlarını ödüllendiren görsel rozetler.
+
+- Örnekler:
+  - ☕ Kahve Gurmesi: 5 farklı kahve deneyen.
+  - 🌙 Gece Kuşu: Akşam 20:00'den sonra 3 kez sipariş veren.
+  - 🍰 Tatlı Canavarı: 5 tatlı siparişi veren.
+  - 🗓️ Müdavim: Aynı ay içinde 10 kez gelen.
+- Fayda: Kullanıcıları farklı ürünleri denemeye ve daha sık gelmeye teşvik eder. Profilde renkli ikonlar olarak durur.
+
+###  Arkadaşına Ismarla (Hediyeleşme)
+- Özellik: Kullanıcı, menüden bir ürünü seçip "Hediye Et" diyerek arkadaşının telefon numarasını girer. Arkadaşına SMS ile bir kod gider ve gelip o ürünü ücretsiz alabilir.
+- Fayda: Yeni müşteri kazanımı sağlar (Viral büyüme).
+
+
+### 👥 "Hesabı Bölüş" (Split Bill) Grubu
+- Özellik: Masadaki diğer kullanıcıları QR ile bir "Masa Grubu"na ekleme ve sipariş sonunda hesabı kişi başı veya ürün bazlı bölüştürüp ayrı ayrı ödeme (entegrasyon destekliyorsa) imkanı.
+### 📝 Kişisel Tadım Notları
+- Özellik: Kullanıcıların sipariş ettikleri ürünlerin altına sadece kendilerinin görebileceği notlar alması.
+- Örnek: "Bu kahveyi az şekerli daha çok sevdim" veya "Acısı çok fazlaydı, bir dahakine dikkat."
+### 📅 Rezervasyon Yönetimi
+- Özellik: "Rezervasyonlarım" sekmesi. Geçmiş ve gelecek masa rezervasyonlarını görüntüleme, iptal etme veya yeni rezervasyon oluşturma.
+### ♿ Erişilebilirlik Tercihleri
+- Özellik: Profil bazlı arayüz ayarları.
+  - Büyük Metin Modu
+  - Yüksek Kontrast
+  - Sadece Resimli Menü / Sadece Yazılı Menü tercihi.
+
+
+
+### 1. 🎵 Mekan DJ'i (Jukebox)
+Müşterilerin mekanda çalan müziğe müdahale edebilmesi.
+
+- Özellik: Profilde "Müzik" sekmesi. Şu an çalan şarkıyı görme ve listeden sıradaki şarkı için oy kullanma veya istek parça gönderme.
+- Kısıt: Sadece Gold/Platinum üyeler şarkı isteyebilir.
+### 2. 🚗 Vale / Taksi Çağır
+Premium hizmet veren mekanlar için.
+
+- Özellik: "Araç İşlemleri" butonu.
+- Vale: Arabasını valeye veren müşteri, kalkmadan 10dk önce "Arabamı Hazırla" butonuna basar.
+- Taksi: Tek tuşla mekanın kapısına taksi çağırma entegrasyonu.
+### 3. 📅 Etkinlik Takvimi & Rezervasyon
+Mekanda maç yayını, canlı müzik veya workshop varsa.
+
+- Özellik: Profilde "Yaklaşan Etkinliklerim" alanı. Etkinliklere "Katılacağım" diyerek yer ayırtma ve hatırlatıcı alma.
+### 4. 🌱 Sürdürülebilirlik / Karbon Ayak İzi
+Çevre bilinci yüksek kitleler için.
+
+- Özellik: "Kağıt fiş/fatura istemiyorum, dijital yeterli" seçeneği (Varsayılan yapılabilir).
+- Detay: Siparişlerin karbon ayak izini gösterme veya "Bugün 2 ağaç kurtardınız" gibi motive edici mesajlar.
+### 5. 👨‍👩‍👧‍👦 Aile Modu (Ebeveyn Kontrolü)
+- Özellik: Çocuğun tabletiyle sipariş vermesini kısıtlayan veya sadece "Çocuk Menüsü"nü görmesini sağlayan bir "Çocuk Kilidi" modu.
+### 6. 💼 İş Modu (Expense Report)
+- Özellik: İş yemekleri için, ay sonunda seçili siparişleri tek bir PDF raporu/ekstresi olarak e-posta atma özelliği. Muhasebe departmanına iletmek için hayat kurtarır.
+### 7. 🔮 Kahve Falı (Eğlence)
+Türk kahvesi kültürüne özel.
+
+- Özellik: Kahve içtikten sonra fincanın fotoğrafını yükleme ve yapay zeka (veya rastgele) ile üretilmiş eğlenceli bir yorum alma. Profilde "Fallarım" geçmişi.

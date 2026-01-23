@@ -3,12 +3,14 @@
 import { useLocale } from 'next-intl';
 import { useRouter, usePathname } from '@/navigation';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Globe, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function LanguageSwitcher() {
   const locale = useLocale();
@@ -16,19 +18,47 @@ export default function LanguageSwitcher() {
   const pathname = usePathname();
 
   const handleLocaleChange = (newLocale: string) => {
-    router.replace(pathname, {locale: newLocale});
+    router.replace(pathname, { locale: newLocale });
   };
 
+  const languages = [
+    { code: 'tr', label: 'Türkçe', flag: '🇹🇷' },
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+  ];
+
+  const currentLanguage = languages.find((lang) => lang.code === locale);
+
   return (
-    <Select value={locale} onValueChange={handleLocaleChange}>
-      <SelectTrigger className="w-[130px] bg-background/50 backdrop-blur-sm border-primary/20 focus:ring-primary/20">
-        <SelectValue placeholder="Language" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="tr">🇹🇷 Türkçe</SelectItem>
-        <SelectItem value="en">🇬🇧 English</SelectItem>
-        <SelectItem value="ar">🇸🇦 العربية</SelectItem>
-      </SelectContent>
-    </Select>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="rounded-full shadow-sm bg-background/60 backdrop-blur-md border-primary/20 hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-all duration-300 gap-2 min-w-[90px]"
+        >
+          <Globe className="h-4 w-4" />
+          <span className="uppercase font-medium tracking-wide">{locale}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[150px]">
+        {languages.map((lang) => (
+          <DropdownMenuItem
+            key={lang.code}
+            onClick={() => handleLocaleChange(lang.code)}
+            className={cn(
+              "flex items-center justify-between cursor-pointer",
+              locale === lang.code && "bg-primary/10 text-primary font-medium"
+            )}
+          >
+            <span className="flex items-center gap-2">
+              <span className="text-lg">{lang.flag}</span>
+              {lang.label}
+            </span>
+            {locale === lang.code && <Check className="h-3 w-3" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

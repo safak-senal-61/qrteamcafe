@@ -1,5 +1,6 @@
 import { TemplateProps } from './types';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { CategoryNav } from '@/components/menu/CategoryNav';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
@@ -57,7 +58,7 @@ export function ClassicTemplate({
         <div className="absolute top-4 right-4 z-50 flex gap-2">
           {customer ? (
             <div 
-              onClick={() => router.push(`/${locale}/menu/${cafe.id}/profile`)}
+              onClick={() => router.push(`/menu/${cafe.id}/profile`)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-white/50 cursor-pointer active:scale-95 transition-all hover:bg-white text-primary font-medium"
             >
               <User className="h-4 w-4" />

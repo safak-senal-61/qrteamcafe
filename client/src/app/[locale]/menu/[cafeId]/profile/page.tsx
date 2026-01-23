@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { useCustomerStore } from '@/store/customer-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -11,10 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, User, ShoppingBag, Clock, MapPin, ChevronRight, Loader2, Star, TrendingUp, Trophy, Heart, Award, Utensils, ArrowLeft, Mail, Phone, Lock, Trash2, Shield, Key, AlertTriangle, Settings, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { LogOut, User, ShoppingBag, Clock, MapPin, ChevronRight, Loader2, Star, TrendingUp, Trophy, Heart, Award, Utensils, ArrowLeft, Mail, Phone, Lock, Trash2, Shield, Key, AlertTriangle, Settings, CheckCircle2, ChevronDown, ChevronUp, Copy, Gift, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 import axios from 'axios';
+import { MenuService } from '@/services/menu.service';
 import { motion } from 'framer-motion';
 import { CreateReviewDialog } from '@/components/menu/CreateReviewDialog';
 
@@ -55,8 +57,26 @@ interface Order {
 interface CustomerStats {
   totalOrders: number;
   totalSpent: number;
+  loyaltyPoints: number;
   favoriteProduct: { count: number; name: string; image: string | null } | null;
   favoriteCategory: { count: number; name: string } | null;
+}
+
+interface LoyaltyTransaction {
+  id: string;
+  amount: number;
+  type: string;
+  description: string;
+  createdAt: string;
+}
+
+interface Reward {
+  id: string;
+  title: string;
+  description: string | null;
+  pointsCost: number;
+  imageUrl: string | null;
+  isActive: boolean;
 }
 
 interface Product {
@@ -276,10 +296,17 @@ export default function ProfilePage() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingStats, setLoadingStats] = useState(false);
   
+  // Loyalty
+  const [loyaltyHistory, setLoyaltyHistory] = useState<LoyaltyTransaction[]>([]);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [loadingLoyalty, setLoadingLoyalty] = useState(false);
+  const [redemptionResult, setRedemptionResult] = useState<{ code: string; reward: Reward } | null>(null);
+
   // Profile Form States
   const [name, setName] = useState(customer?.name || '');
   const [phone, setPhone] = useState(customer?.phone || '');
   const [email, setEmail] = useState(customer?.email || '');
+  const [realCafeId, setRealCafeId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loadingUpdate, setLoadingUpdate] = useState(false);
@@ -293,9 +320,50 @@ export default function ProfilePage() {
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedOrderForReview, setSelectedOrderForReview] = useState<Order | null>(null);
 
+  // Avatar Upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !customer || !token) return;
+
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setUploadingAvatar(true);
+    try {
+      // 1. Upload Image
+      const uploadRes = await axios.post(`${API_URL}/customers/upload-avatar`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const avatarUrl = uploadRes.data.url;
+
+      // 2. Update Customer Profile
+      const updateRes = await axios.patch(`${API_URL}/customers/${customer.id}`, {
+        avatarUrl
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // 3. Update Store
+      setCustomer({ ...customer, avatarUrl }, token);
+      toast.success('Profil fotoğrafı güncellendi');
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      toast.error('Profil fotoğrafı yüklenirken hata oluştu');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   useEffect(() => {
     if (!customer) {
-      router.push(`/${locale}/menu/${cafeId}`);
+      router.push(`/menu/${cafeId}`);
       return;
     }
 
@@ -305,7 +373,63 @@ export default function ProfilePage() {
     fetchOrders();
     fetchStats();
     fetchRecommendations();
+    fetchLoyaltyData();
+    
+    if (!customer.referralCode) {
+      fetchCustomerProfile();
+    }
   }, [customer, cafeId, locale, router]);
+
+  const fetchCustomerProfile = async () => {
+    if (!customer?.id || !token) return;
+    try {
+      const response = await axios.get(`${API_URL}/customers/${customer.id}`, {
+         headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.referralCode && response.data.referralCode !== customer.referralCode) {
+         setCustomer({ ...customer, ...response.data }, token);
+      }
+    } catch (error) {
+      console.error('Error fetching customer profile:', error);
+    }
+  };
+
+  const fetchLoyaltyData = async () => {
+    if (!customer?.id || !token) return;
+    setLoadingLoyalty(true);
+    try {
+      const [historyRes, rewardsRes] = await Promise.all([
+        axios.get(`${API_URL}/loyalty/history`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/loyalty/rewards/${cafeId}`)
+      ]);
+      setLoyaltyHistory(historyRes.data);
+      setRewards(rewardsRes.data);
+    } catch (error) {
+      console.error('Loyalty data fetch error:', error);
+    } finally {
+      setLoadingLoyalty(false);
+    }
+  };
+
+  const handleRedeem = async (reward: Reward) => {
+    if (!customer?.id || !token) return;
+    if ((stats?.loyaltyPoints || 0) < reward.pointsCost) {
+      toast.error('Yetersiz puan');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/loyalty/redeem`, { rewardId: reward.id }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRedemptionResult({ code: response.data.code, reward });
+      toast.success('Ödül başarıyla alındı!');
+      fetchStats(); // Update points
+      fetchLoyaltyData(); // Update history
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Ödül alınamadı');
+    }
+  };
 
   const handleOpenReview = (order: Order) => {
     setSelectedOrderForReview(order);
@@ -326,10 +450,10 @@ export default function ProfilePage() {
   };
 
   const fetchRecommendations = async () => {
-    if (!customer?.id) return;
+    if (!customer?.id || !realCafeId) return;
     try {
       const response = await axios.get(`${API_URL}/customers/${customer.id}/recommendations`, {
-        params: { cafeId }
+        params: { cafeId: realCafeId }
       });
       setRecommendations(response.data);
     } catch (error) {
@@ -345,9 +469,15 @@ export default function ProfilePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setOrders(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching orders:', error);
-      toast.error('Sipariş geçmişi yüklenemedi');
+      if (error.response?.status === 401) {
+        toast.error('Oturum süreniz doldu, lütfen tekrar giriş yapın.');
+        logout();
+        // Router push will be handled by the useEffect watching 'customer'
+      } else {
+        toast.error('Sipariş geçmişi yüklenemedi');
+      }
     } finally {
       setLoadingOrders(false);
     }
@@ -441,7 +571,7 @@ export default function ProfilePage() {
       });
       toast.success('Hesabınız silindi');
       logout();
-      router.push(`/${locale}/menu/${cafeId}`);
+      router.push(`/menu/${cafeId}`);
     } catch (error) {
       console.error('Error deleting account:', error);
       toast.error('Hesap silinemedi');
@@ -450,19 +580,84 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     logout();
-    router.push(`/${locale}/menu/${cafeId}`);
+    router.push(`/menu/${cafeId}`);
     toast.success('Çıkış yapıldı');
   };
 
   const getMembershipLevel = (spent: number) => {
-    if (spent >= 10000) return { name: 'Platinum', color: 'from-slate-300 via-purple-300 to-indigo-400', icon: '💎', textColor: 'text-indigo-900' };
-    if (spent >= 5000) return { name: 'Gold', color: 'from-amber-200 via-yellow-400 to-amber-500', icon: '👑', textColor: 'text-amber-900' };
-    if (spent >= 1000) return { name: 'Silver', color: 'from-slate-100 via-slate-300 to-slate-400', icon: '🥈', textColor: 'text-slate-900' };
-    return { name: 'Bronze', color: 'from-orange-200 via-orange-300 to-orange-400', icon: '🥉', textColor: 'text-orange-900' };
+    if (spent >= 10000) return { 
+      name: 'Platinum', 
+      gradient: 'from-slate-900 via-purple-900 to-slate-900',
+      accent: 'text-purple-400',
+      border: 'border-purple-500/50',
+      shadow: 'shadow-purple-500/20',
+      icon: '💎'
+    };
+    if (spent >= 5000) return { 
+      name: 'Gold', 
+      gradient: 'from-yellow-950 via-yellow-700 to-yellow-900',
+      accent: 'text-yellow-400',
+      border: 'border-yellow-500/50',
+      shadow: 'shadow-yellow-500/20',
+      icon: '👑'
+    };
+    if (spent >= 1000) return { 
+      name: 'Silver', 
+      gradient: 'from-slate-800 via-slate-600 to-slate-800',
+      accent: 'text-slate-300',
+      border: 'border-slate-400/50',
+      shadow: 'shadow-slate-500/20',
+      icon: '🥈'
+    };
+    return { 
+      name: 'Bronze', 
+      gradient: 'from-orange-950 via-orange-800 to-orange-900',
+      accent: 'text-orange-300',
+      border: 'border-orange-500/50',
+      shadow: 'shadow-orange-500/20',
+      icon: '🥉'
+    };
   };
 
   const handleBack = () => {
-    router.push(`/${locale}/menu/${cafeId}`);
+    router.push(`/menu/${cafeId}`);
+  };
+
+  const handleCopyReferralCode = () => {
+    if (!customer?.referralCode) return;
+    
+    const referralUrl = `${window.location.origin}/${locale}/menu/${cafeId}?referralCode=${customer.referralCode}`;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(referralUrl)
+        .then(() => toast.success('Davet linki kopyalandı'))
+        .catch(() => copyToClipboardFallback(referralUrl));
+    } else {
+      copyToClipboardFallback(referralUrl);
+    }
+  };
+
+  const copyToClipboardFallback = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        toast.success('Davet linki kopyalandı');
+      } else {
+        toast.error('Kopyalama başarısız');
+      }
+    } catch (err) {
+      toast.error('Kopyalama başarısız');
+    }
+    
+    document.body.removeChild(textArea);
   };
 
   if (!customer) return null;
@@ -471,70 +666,171 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <div className={cn("relative h-48 bg-gradient-to-r shrink-0 transition-colors duration-500", membership.color)}>
-        <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full translate-x-10 -translate-y-10 blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full -translate-x-5 translate-y-5 blur-xl" />
-        </div>
-        
-        {/* Back Button */}
-        <div className="absolute top-4 left-4 z-10">
-            <Button 
-                variant="ghost" 
-                size="icon" 
-                className="bg-white/20 hover:bg-white/30 text-white rounded-full backdrop-blur-sm"
-                onClick={handleBack}
-            >
-                <ArrowLeft className="w-5 h-5" />
-            </Button>
+      {/* Modern Profile Header */}
+      <div className="relative bg-slate-950 overflow-hidden pb-12">
+        {/* Background Gradients */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${membership.gradient} opacity-40`} />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 blur-3xl rounded-full" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-black/20 blur-3xl rounded-full" />
+
+        {/* Navigation */}
+        <div className="relative z-10 px-6 py-6 flex justify-between items-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white/80 hover:text-white hover:bg-white/10 rounded-full"
+            onClick={handleBack}
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white/80 hover:text-white hover:bg-white/10 rounded-full"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-5 h-5" />
+          </Button>
         </div>
 
-        <div className="relative h-full flex flex-col justify-end p-6">
-          <div className="flex items-end justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-20 w-20 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-3xl font-bold border-2 border-white/40 shadow-lg text-white">
-                {customer.name?.charAt(0) || customer.email.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <h2 className={cn("text-2xl font-bold drop-shadow-sm", membership.textColor)}>{customer.name || 'Misafir'}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="bg-white/30 hover:bg-white/40 border-none text-white backdrop-blur-sm shadow-sm">
-                    {membership.icon} {membership.name} Üye
-                  </Badge>
-                </div>
-              </div>
+        {/* Profile Content */}
+        <div className="relative z-10 px-6 pt-4 flex flex-col items-center text-center">
+          {/* Avatar Ring */}
+          <motion.div 
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className={`relative mb-6 group cursor-pointer`}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*"
+              onChange={handleAvatarUpload}
+            />
+            <div className={`absolute inset-0 rounded-full blur-xl bg-gradient-to-tr ${membership.gradient} opacity-60 group-hover:opacity-80 transition-opacity`} />
+            <div className={`relative w-28 h-28 rounded-full border-4 ${membership.border} bg-slate-900 flex items-center justify-center shadow-2xl overflow-hidden`}>
+              {uploadingAvatar ? (
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
+              ) : customer.avatarUrl ? (
+                <img src={`${API_URL}${customer.avatarUrl}`} alt="Profile" className="w-full h-full object-cover" />
+              ) : customer.name ? (
+                <span className="text-4xl font-bold text-white bg-clip-text bg-gradient-to-br from-white to-white/50">
+                  {customer.name.charAt(0).toUpperCase()}
+                </span>
+              ) : (
+                <User className="w-12 h-12 text-white/50" />
+              )}
             </div>
-          </div>
+
+            {/* Edit Overlay */}
+            <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+              <Camera className="w-8 h-8 text-white drop-shadow-lg" />
+            </div>
+
+            <div className="absolute -bottom-2 inset-x-0 flex justify-center z-30">
+              <Badge className="bg-slate-900 border border-white/10 text-xs px-3 py-1 shadow-lg text-white">
+                {membership.icon} {membership.name}
+              </Badge>
+            </div>
+          </motion.div>
+
+          {/* User Info */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
+              {customer.name || 'Misafir Kullanıcı'}
+            </h1>
+            <div className="flex items-center justify-center gap-2 text-white/60 text-sm mb-6">
+              <Mail className="w-4 h-4" />
+              <span>{customer.email || 'E-posta eklenmemiş'}</span>
+            </div>
+          </motion.div>
+
+          {/* Quick Stats */}
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="grid grid-cols-3 gap-4 w-full max-w-sm mb-6"
+          >
+            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-white/10">
+              <div className="text-2xl font-bold text-white mb-1">{stats?.totalOrders || 0}</div>
+              <div className="text-xs text-white/50 font-medium">Sipariş</div>
+            </div>
+            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-white/10">
+              <div className="text-2xl font-bold text-white mb-1">
+                {stats?.favoriteProduct ? '1' : '0'}
+              </div>
+              <div className="text-xs text-white/50 font-medium">Favori</div>
+            </div>
+            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-white/10">
+              <div className="text-2xl font-bold text-white mb-1">
+                {stats?.loyaltyPoints || 0}
+              </div>
+              <div className="text-xs text-white/50 font-medium">Puan</div>
+            </div>
+          </motion.div>
+
+          {/* Menu Button - Header */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="w-full max-w-sm px-1"
+          >
+            <Button
+              className="w-full bg-emerald-600/90 hover:bg-emerald-600 text-white font-bold py-6 rounded-2xl shadow-lg shadow-emerald-900/20 group relative overflow-hidden border border-emerald-500/30 backdrop-blur-sm"
+              onClick={() => router.push(`/menu/${cafeId}`)}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-emerald-400/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10" />
+              
+              <div className="flex items-center justify-center gap-3 w-full relative z-10">
+                <Utensils className="w-5 h-5 text-emerald-100" />
+                <span className="text-lg tracking-tight">Menüyü İncele</span>
+                <ChevronRight className="w-5 h-5 text-emerald-100 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Button>
+          </motion.div>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <div className="px-6 pt-4 shrink-0 bg-white border-b border-gray-100 shadow-sm z-10">
-          <div className="max-w-4xl mx-auto">
-            <TabsList className="w-full grid grid-cols-3 bg-emerald-50/50 p-1 mb-2">
-              <TabsTrigger value="panel" className="data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Panel</span>
-                <span className="md:hidden">Panel</span>
-              </TabsTrigger>
-              <TabsTrigger value="orders" className="data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">
-                <ShoppingBag className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Siparişler</span>
-                <span className="md:hidden">Sipariş</span>
-              </TabsTrigger>
-              <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">
-                <User className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Profil & Ayarlar</span>
-                <span className="md:hidden">Profil</span>
-              </TabsTrigger>
-            </TabsList>
+      <div className="-mt-6 relative z-20 px-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col min-h-[calc(100vh-400px)]">
+          <div className="bg-white rounded-t-3xl shadow-xl border-t border-gray-100">
+            <div className="px-2 pt-4 pb-2">
+              <TabsList className="w-full grid grid-cols-3 bg-gray-100/50 p-1">
+                <TabsTrigger value="panel" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm">
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  <span className="text-xs font-medium">Özet</span>
+                </TabsTrigger>
+                <TabsTrigger value="orders" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm">
+                  <ShoppingBag className="w-4 h-4 mr-2" />
+                  <span className="text-xs font-medium">Siparişler</span>
+                </TabsTrigger>
+                <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm">
+                  <User className="w-4 h-4 mr-2" />
+                  <span className="text-xs font-medium">Ayarlar</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </div>
-        </div>
 
-        <div className="flex-1 overflow-hidden relative bg-gray-50">
+          <div className="flex-1 overflow-hidden relative bg-gray-50">
           <TabsContent value="panel" className="absolute inset-0 m-0 p-4 md:p-8 overflow-y-auto">
-            <div className="max-w-5xl mx-auto space-y-6 pb-20">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-5xl mx-auto space-y-6 pb-20"
+            >
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm relative overflow-hidden group col-span-1 md:col-span-2">
@@ -586,12 +882,12 @@ export default function ProfilePage() {
                   <ScrollArea className="w-full whitespace-nowrap pb-4">
                     <div className="flex gap-4 px-1">
                       {recommendations.map((product) => (
-                        <div key={product.id} className="w-48 md:w-56 shrink-0 space-y-3 group cursor-pointer bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+                        <div key={product.id} className="w-56 md:w-64 shrink-0 space-y-3 group cursor-pointer bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
                           <div className="aspect-square rounded-xl bg-gray-100 relative overflow-hidden">
                             <img src={product.imageUrl || '/placeholder-food.jpg'} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                           </div>
                           <div className="px-1">
-                            <p className="text-sm font-bold text-gray-900 truncate">{product.name}</p>
+                            <p className="text-base font-bold text-gray-900 truncate">{product.name}</p>
                             <p className="text-sm text-emerald-600 font-black">₺{Number(product.price).toFixed(2)}</p>
                           </div>
                         </div>
@@ -600,12 +896,18 @@ export default function ProfilePage() {
                   </ScrollArea>
                 </div>
               )}
-            </div>
+            </motion.div>
           </TabsContent>
 
           <TabsContent value="orders" className="absolute inset-0 m-0 data-[state=active]:flex flex-col bg-gray-50">
             <ScrollArea className="flex-1 p-4 md:p-8">
-              <div className="max-w-3xl mx-auto">
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="max-w-3xl mx-auto"
+              >
                 {loadingOrders ? (
                   <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                     <Loader2 className="w-10 h-10 animate-spin mb-4 text-emerald-500" />
@@ -634,12 +936,18 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 )}
-              </div>
+              </motion.div>
             </ScrollArea>
           </TabsContent>
 
           <TabsContent value="profile" className="absolute inset-0 m-0 p-4 md:p-8 overflow-y-auto bg-gray-50">
-            <div className="max-w-5xl mx-auto pb-20">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-5xl mx-auto pb-20"
+            >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                 {/* Left Column: Personal Info */}
               <Section title="Kişisel Bilgiler" icon={User} defaultOpen={true}>
@@ -702,6 +1010,118 @@ export default function ProfilePage() {
 
                 {/* Right Column: Security & Actions */}
                 <div className="space-y-4">
+                  {/* Referral Section */}
+                  <Section title="Arkadaşını Davet Et" icon={Gift} defaultOpen={true}>
+                    <div className="space-y-4">
+                      <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
+                        <div className="flex items-start gap-3">
+                          <div className="bg-white p-2 rounded-full shadow-sm">
+                             <Trophy className="w-5 h-5 text-amber-500" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-gray-900 text-sm">Puan Kazan</h4>
+                            <p className="text-xs text-gray-600 mt-1">
+                              Arkadaşlarını davet et, her kayıt olan arkadaşın için puan kazan!
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Davet Kodun</Label>
+                        <div className="flex gap-2">
+                           <div className="relative flex-1">
+                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                               <Gift className="h-4 w-4 text-gray-400" />
+                             </div>
+                             <Input 
+                               readOnly 
+                               value={customer.referralCode || 'Kod Oluşturuluyor...'} 
+                               className="pl-10 font-mono tracking-wider bg-gray-50 border-gray-200"
+                             />
+                           </div>
+                           <Button 
+                             size="icon" 
+                             variant="outline" 
+                             className="shrink-0 border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                             onClick={handleCopyReferralCode}
+                           >
+                             <Copy className="h-4 w-4" />
+                           </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Section>
+
+                  {/* Rewards Catalog */}
+                  <Section title="Hediye Kataloğu" icon={Gift} defaultOpen={false}>
+                    {loadingLoyalty ? (
+                      <div className="flex justify-center p-4"><Loader2 className="w-6 h-6 animate-spin text-emerald-600" /></div>
+                    ) : rewards.length === 0 ? (
+                      <div className="text-center p-4 text-gray-500 text-sm">Henüz aktif hediye bulunmuyor.</div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {rewards.map(reward => (
+                          <div key={reward.id} className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm flex gap-3">
+                            {reward.imageUrl ? (
+                              <div className="w-16 h-16 bg-gray-100 rounded-lg bg-cover bg-center shrink-0" style={{ backgroundImage: `url(${reward.imageUrl})` }} />
+                            ) : (
+                              <div className="w-16 h-16 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
+                                <Gift className="w-8 h-8 text-emerald-500" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-sm truncate">{reward.title}</h4>
+                              <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{reward.description}</p>
+                              <div className="flex items-center justify-between mt-2">
+                                <Badge variant="secondary" className="bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200">
+                                  {reward.pointsCost} Puan
+                                </Badge>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="h-7 text-xs border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                  onClick={() => handleRedeem(reward)}
+                                  disabled={(stats?.loyaltyPoints || 0) < reward.pointsCost}
+                                >
+                                  Kullan
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Section>
+
+                  {/* Points History */}
+                  <Section title="Puan Geçmişi" icon={Clock} defaultOpen={false}>
+                    {loadingLoyalty ? (
+                      <div className="flex justify-center p-4"><Loader2 className="w-6 h-6 animate-spin text-emerald-600" /></div>
+                    ) : loyaltyHistory.length === 0 ? (
+                      <div className="text-center p-4 text-gray-500 text-sm">Henüz puan hareketiniz yok.</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {loyaltyHistory.map(tx => (
+                          <div key={tx.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="flex items-center gap-3">
+                              <div className={cn("p-2 rounded-full", tx.amount > 0 ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600")}>
+                                {tx.amount > 0 ? <TrendingUp className="w-4 h-4" /> : <Gift className="w-4 h-4" />}
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{tx.description || (tx.type === 'EARNED_ORDER' ? 'Sipariş Kazancı' : 'Harcama')}</p>
+                                <p className="text-xs text-gray-500">{new Date(tx.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
+                              </div>
+                            </div>
+                            <div className={cn("font-bold text-sm", tx.amount > 0 ? "text-emerald-600" : "text-amber-600")}>
+                              {tx.amount > 0 ? '+' : ''}{tx.amount} P
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Section>
+
                   {/* Security */}
                   <Section title="Güvenlik" icon={Shield} defaultOpen={false}>
                     
@@ -780,7 +1200,7 @@ export default function ProfilePage() {
                   </Section>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </TabsContent>
         </div>
       </Tabs>
@@ -789,12 +1209,12 @@ export default function ProfilePage() {
         <CreateReviewDialog
           open={reviewDialogOpen}
           onOpenChange={setReviewDialogOpen}
-          orderId={selectedOrderForReview.id}
-          items={selectedOrderForReview.items}
+          orderId={selectedOrderForReview!.id}
+          items={selectedOrderForReview!.items}
           onSuccess={() => {
             fetchOrders();
           }}
-          existingReviews={selectedOrderForReview.reviews}
+          existingReviews={selectedOrderForReview!.reviews}
         />
       )}
 
@@ -831,6 +1251,47 @@ export default function ProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Redemption Success Dialog */}
+      <Dialog open={!!redemptionResult} onOpenChange={(open) => !open && setRedemptionResult(null)}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold text-emerald-600">Tebrikler!</DialogTitle>
+            <DialogDescription className="text-center text-gray-600">
+              Ödülünüz başarıyla tanımlandı.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center py-6 space-y-6">
+            <div className="text-center space-y-2">
+              <h3 className="font-bold text-lg text-gray-900">{redemptionResult?.reward.title}</h3>
+              <p className="text-sm text-gray-500">{redemptionResult?.reward.description}</p>
+            </div>
+
+            <div className="w-full bg-emerald-50 rounded-xl p-6 border-2 border-dashed border-emerald-200 flex flex-col items-center justify-center space-y-2">
+              <p className="text-sm font-medium text-emerald-800 uppercase tracking-wide">Ödül Kodunuz</p>
+              <div className="text-4xl font-black text-emerald-600 tracking-widest font-mono">
+                {redemptionResult?.code}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg border border-amber-100">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <p>Bu kodu garsona göstererek ödülünüzü alabilirsiniz.</p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" 
+              onClick={() => setRedemptionResult(null)}
+            >
+              Tamam
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
     </div>
   );
 }

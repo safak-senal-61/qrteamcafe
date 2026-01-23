@@ -33,7 +33,11 @@ export class SuperAdminService {
       where: { email: dto.email },
     });
 
-    if (existingSuperAdmin || existingCafeAdmin) {
+    const existingCustomer = await this.prisma.customer.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (existingSuperAdmin || existingCafeAdmin || existingCustomer) {
       throw new BadRequestException('Bu e-posta adresi zaten kullanımda.');
     }
 

@@ -48,6 +48,16 @@ export const getCafeBySlug = async (slug: string): Promise<Cafe> => {
   }
 };
 
+export const getCafeById = async (id: string): Promise<Cafe> => {
+  try {
+    const response = await api.get(`/cafes/${id}`);
+    return response.data;
+  } catch (error) {
+    console.log('API Error (getCafeById):', error);
+    throw error;
+  }
+};
+
 export const getCafeCategories = async (cafeId: string): Promise<Category[]> => {
   try {
     // 1. Kategorileri çek

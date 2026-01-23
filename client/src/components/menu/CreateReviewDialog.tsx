@@ -110,9 +110,10 @@ export function CreateReviewDialog({ open, onOpenChange, orderId, items, existin
       }));
       toast.success('Değerlendirme gönderildi');
       onSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('Hata oluştu');
+      const message = error.response?.data?.message || 'Değerlendirme gönderilirken bir hata oluştu';
+      toast.error(Array.isArray(message) ? message[0] : message);
     } finally {
       setLoading(prev => ({ ...prev, [item.id]: false }));
     }
@@ -137,7 +138,7 @@ export function CreateReviewDialog({ open, onOpenChange, orderId, items, existin
               <div key={item.id} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="h-16 w-16 rounded-lg bg-gray-100 overflow-hidden shrink-0">
-                    <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                    <img src={item.product.imageUrl || undefined} alt={item.product.name} className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{item.product.name}</h3>

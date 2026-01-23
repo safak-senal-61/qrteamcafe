@@ -2,8 +2,11 @@
 
 import { motion, Variants } from 'framer-motion';
 import { Milestone, Rocket, Star, Code } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function RoadmapPage() {
+  const t = useTranslations('RoadmapPage');
+
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
@@ -29,34 +32,42 @@ export default function RoadmapPage() {
 
   const milestones = [
     {
-      quarter: '2024 Q1',
-      title: 'Başlangıç',
+      quarter: t('milestones.q1_2026.quarter'),
+      title: t('milestones.q1_2026.title'),
       icon: <Rocket className="h-6 w-6" />,
-      items: ['QR Menü Lansmanı', 'Temel Yönetim Paneli', 'Çoklu Dil Desteği'],
+      items: t.raw('milestones.q1_2026.items') as string[],
       status: 'completed'
     },
     {
-      quarter: '2024 Q2',
-      title: 'Büyüme',
+      quarter: t('milestones.q2_2026.quarter'),
+      title: t('milestones.q2_2026.title'),
       icon: <Code className="h-6 w-6" />,
-      items: ['POS Entegrasyonları', 'Stok Takibi Modülü', 'Garson Çağrı Sistemi'],
+      items: t.raw('milestones.q2_2026.items') as string[],
       status: 'in-progress'
     },
     {
-      quarter: '2024 Q3',
-      title: 'Gelişme',
+      quarter: t('milestones.q3_2026.quarter'),
+      title: t('milestones.q3_2026.title'),
       icon: <Star className="h-6 w-6" />,
-      items: ['Yapay Zeka Destekli Öneriler', 'Sadakat Programı', 'Mobil Uygulama'],
+      items: t.raw('milestones.q3_2026.items') as string[],
       status: 'planned'
     },
     {
-      quarter: '2024 Q4',
-      title: 'Global',
+      quarter: t('milestones.q4_2026.quarter'),
+      title: t('milestones.q4_2026.title'),
       icon: <Milestone className="h-6 w-6" />,
-      items: ['Yurt Dışı Açılımı', 'Pazaryeri Entegrasyonu', 'Gelişmiş API'],
+      items: t.raw('milestones.q4_2026.items') as string[],
       status: 'planned'
     }
   ];
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed': return t('status.completed');
+      case 'in-progress': return t('status.inProgress');
+      default: return t('status.planned');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background py-20 lg:py-32">
@@ -69,13 +80,13 @@ export default function RoadmapPage() {
         >
           <div className="text-center space-y-4">
             <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl font-bold tracking-tight">
-              Yol <br />
+              {t('title')} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">
-                Haritası
+                {t('titleHighlight')}
               </span>
             </motion.h1>
             <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Geleceği şimdiden inşa ediyoruz. İşte planlarımız ve hedeflerimiz.
+              {t('subtitle')}
             </motion.p>
           </div>
 
@@ -99,8 +110,7 @@ export default function RoadmapPage() {
                       milestone.status === 'completed' ? 'bg-green-500/10 text-green-600' :
                       milestone.status === 'in-progress' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                     }`}>
-                      {milestone.status === 'completed' ? 'Tamamlandı' :
-                       milestone.status === 'in-progress' ? 'Sürüyor' : 'Planlandı'}
+                      {getStatusLabel(milestone.status)}
                     </div>
                   </div>
 

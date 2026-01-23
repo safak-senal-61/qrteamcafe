@@ -4,9 +4,11 @@ import { motion, Variants } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/navigation';
 
 export default function PricingPage() {
   const t = useTranslations('PricingPage');
+  const router = useRouter();
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -43,7 +45,8 @@ export default function PricingPage() {
         t('plans.starter.features.3')
       ],
       cta: t('plans.starter.cta'),
-      popular: false
+      popular: false,
+      href: '/admin/register'
     },
     {
       name: t('plans.pro.name'),
@@ -57,7 +60,8 @@ export default function PricingPage() {
         t('plans.pro.features.4')
       ],
       cta: t('plans.pro.cta'),
-      popular: true
+      popular: true,
+      href: '/admin/register'
     },
     {
       name: t('plans.enterprise.name'),
@@ -71,7 +75,8 @@ export default function PricingPage() {
         t('plans.enterprise.features.4')
       ],
       cta: t('plans.enterprise.cta'),
-      popular: false
+      popular: false,
+      href: '/contact'
     }
   ];
 
@@ -136,6 +141,7 @@ export default function PricingPage() {
                     plan.popular ? 'bg-primary hover:bg-primary/90' : 'bg-secondary hover:bg-secondary/80'
                   }`}
                   variant={plan.popular ? 'default' : 'secondary'}
+                  onClick={() => router.push(plan.href)}
                 >
                   {plan.cta}
                 </Button>
