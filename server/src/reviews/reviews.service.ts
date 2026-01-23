@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -8,6 +8,30 @@ export class ReviewsService {
   constructor(private prisma: PrismaService) {}
 
   async create(createReviewDto: CreateReviewDto) {
+    // Check order delivery time if orderId is present
+    if (createReviewDto.orderId) {
+      const order = await this.prisma.order.findUnique({
+        where: { id: createReviewDto.orderId }
+      });
+
+      if (order) {
+        // If deliveredAt is set, check 5 minutes rule
+        if (order.deliveredAt) {
+          const diff = new Date().getTime() - new Date(order.deliveredAt).getTime();
+          const fiveMinutesInMs = 5 * 60 * 1000;
+          
+          if (diff < fiveMinutesInMs) {
+            const remainingMinutes = Math.ceil((fiveMinutesInMs - diff) / 60000);
+            throw new BadRequestException(`Yorum yapmak için sipariş tesliminden sonra 5 dakika geçmesi gerekmektedir. Lütfen ${remainingMinutes} dakika sonra tekrar deneyiniz.`);
+          }
+        } 
+        // If not delivered yet (and not one of the final states), block review
+        else if (!['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status)) {
+           throw new BadRequestException('Sipariş teslim edilmeden yorum yapılamaz.');
+        }
+      }
+    }
+
     // Get product to find cafeId and check autoApproveReviews setting
     const product = await this.prisma.product.findUnique({
       where: { id: createReviewDto.productId },

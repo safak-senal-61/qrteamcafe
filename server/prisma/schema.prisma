@@ -255,6 +255,7 @@ model Order {
   totalAmount Decimal  @db.Decimal(10, 2) @map("total_amount")
   note        String?
   
+  deliveredAt DateTime? @map("delivered_at")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

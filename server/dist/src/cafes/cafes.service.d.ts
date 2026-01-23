@@ -180,6 +180,7 @@ export declare class CafesService {
             paymentStatus: string;
             paymentMethod: string | null;
             note: string | null;
+            deliveredAt: Date | null;
         })[];
         popularProducts: {
             id: string;

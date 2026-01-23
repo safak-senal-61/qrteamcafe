@@ -44,6 +44,7 @@ interface Order {
   status: 'PENDING' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED' | 'COMPLETED' | 'PAID';
   totalAmount: number;
   createdAt: string;
+  deliveredAt?: string;
   table?: {
     name: string;
   };
@@ -108,6 +109,42 @@ const getReviewStatus = (order: Order) => {
 
 const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order) => void }) => {
   const [expanded, setExpanded] = useState(false);
+  const [, forceUpdate] = useState({});
+
+  useEffect(() => {
+    // If waiting for review time, update every minute
+    if (order.deliveredAt && ['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status)) {
+      const diff = new Date().getTime() - new Date(order.deliveredAt).getTime();
+      if (diff < 5 * 60 * 1000) {
+        const interval = setInterval(() => forceUpdate({}), 60000);
+        return () => clearInterval(interval);
+      }
+    }
+  }, [order.deliveredAt, order.status]);
+
+  const canReview = () => {
+    if (!['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status)) return false;
+    if (getReviewStatus(order) === 'ALL') return true;
+    if (!order.deliveredAt) return true; // Old orders
+    
+    const diff = new Date().getTime() - new Date(order.deliveredAt).getTime();
+    return diff >= 5 * 60 * 1000;
+  };
+
+  const getButtonText = () => {
+    if (getReviewStatus(order) === 'ALL') return 'Düzenle';
+    
+    if (!canReview() && order.deliveredAt) {
+      const diff = new Date().getTime() - new Date(order.deliveredAt).getTime();
+      const remaining = 5 * 60 * 1000 - diff;
+      if (remaining > 0) {
+        const mins = Math.ceil(remaining / 60000);
+        return `${mins} dk sonra`;
+      }
+    }
+    
+    return getReviewStatus(order) === 'PARTIAL' ? 'Değerlendirmeye Devam Et' : 'Değerlendir';
+  };
   
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-md">
@@ -171,19 +208,28 @@ const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order)
                 <Button 
                   size="sm" 
                   variant="outline" 
+                  disabled={!canReview() && getReviewStatus(order) !== 'ALL'}
                   className={cn(
                     "h-8 text-xs font-medium",
                     getReviewStatus(order) === 'ALL' 
                       ? "text-gray-500 border-gray-200 hover:bg-gray-100" 
-                      : "text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                      : !canReview() 
+                        ? "text-gray-400 border-gray-200 bg-gray-50 cursor-not-allowed"
+                        : "text-emerald-600 border-emerald-200 hover:bg-emerald-50"
                   )}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onReview(order);
+                    if (canReview() || getReviewStatus(order) === 'ALL') {
+                      onReview(order);
+                    }
                   }}
                 >
-                  <Star className={cn("w-3 h-3 mr-1.5", getReviewStatus(order) === 'ALL' ? "" : "fill-current")} />
-                  {getReviewStatus(order) === 'ALL' ? 'Düzenle' : getReviewStatus(order) === 'PARTIAL' ? 'Değerlendirmeye Devam Et' : 'Değerlendir'}
+                  {!canReview() && getReviewStatus(order) !== 'ALL' ? (
+                    <Clock className="w-3 h-3 mr-1.5" />
+                  ) : (
+                    <Star className={cn("w-3 h-3 mr-1.5", getReviewStatus(order) === 'ALL' ? "" : "fill-current")} />
+                  )}
+                  {getButtonText()}
                 </Button>
               </div>
             )}

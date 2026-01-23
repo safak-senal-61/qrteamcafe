@@ -157,9 +157,13 @@ let OrdersService = class OrdersService {
                     });
                 }
             }
+            const updateData = { status };
+            if (status === 'DELIVERED' && !order.deliveredAt) {
+                updateData.deliveredAt = new Date();
+            }
             const updatedOrder = await prisma.order.update({
                 where: { id },
-                data: { status },
+                data: updateData,
                 include: {
                     table: true,
                     items: {
