@@ -65,7 +65,6 @@ export default function MenuPage() {
   const tableNumber = searchParams.get('table');
   const { customer, setAuthDialogOpen, isGuest, isAuthDialogOpen } = useCustomerStore();
   
-  const [isProfileDialogOpen, setProfileDialogOpen] = useState(false);
   const [cafe, setCafe] = useState<Cafe | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -336,11 +335,9 @@ export default function MenuPage() {
     activeOrders,
     isCartOpen,
     welcomeOpen,
-    isProfileDialogOpen,
     isAuthDialogOpen,
     onCategorySelect: handleCategorySelect,
     setSearchQuery,
-    setProfileDialogOpen,
     setAuthDialogOpen,
     setWelcomeOpen,
     setIsCartOpen,

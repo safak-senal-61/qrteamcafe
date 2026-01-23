@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { EventsGateway } from '../events/events.gateway';
+import { getProductImage } from '../products/product-images.util';
 
 @Injectable()
 export class OrdersService {
@@ -9,6 +10,20 @@ export class OrdersService {
     private prisma: PrismaService,
     private eventsGateway: EventsGateway,
   ) {}
+
+  private mapOrderWithImages(order: any) {
+    if (!order) return order;
+    return {
+      ...order,
+      items: order.items.map((item: any) => ({
+        ...item,
+        product: item.product ? {
+          ...item.product,
+          imageUrl: getProductImage(item.product.name, item.product.category?.name, item.product.imageUrl)
+        } : null
+      }))
+    };
+  }
 
   async create(cafeId: string, createOrderDto: CreateOrderDto) {
     return this.prisma.$transaction(async (prisma) => {
@@ -76,7 +91,9 @@ export class OrdersService {
           table: true,
           items: {
             include: {
-              product: true,
+              product: {
+                include: { category: true }
+              },
             },
           },
         },
@@ -84,9 +101,10 @@ export class OrdersService {
 
       // 3. Adminlere socket bildirimi gönder
       // Note: eventsGateway is outside transaction, but that's fine.
-      this.eventsGateway.notifyNewOrder(cafeId, order);
+      const orderWithImages = this.mapOrderWithImages(order);
+      this.eventsGateway.notifyNewOrder(cafeId, orderWithImages);
 
-      return order;
+      return orderWithImages;
     });
   }
 
@@ -94,15 +112,17 @@ export class OrdersService {
   // Basitlik için sadece create'i implemente ettim, diğerlerini olduğu gibi bırakabiliriz
   // veya daha önce varsa koruyabiliriz. Şimdilik create önemli.
 
-  findAllByCustomer(customerId: string) {
-    return this.prisma.order.findMany({
+  async findAllByCustomer(customerId: string) {
+    const orders = await this.prisma.order.findMany({
       where: { customerId },
       include: {
         table: true,
         reviews: true,
         items: {
           include: {
-            product: true,
+            product: {
+              include: { category: true }
+            },
           },
         },
       },
@@ -110,22 +130,28 @@ export class OrdersService {
         createdAt: 'desc',
       },
     });
+
+    return orders.map(order => this.mapOrderWithImages(order));
   }
 
-  findAll(cafeId: string) {
-    return this.prisma.order.findMany({
+  async findAll(cafeId: string) {
+    const orders = await this.prisma.order.findMany({
       where: { cafeId },
       include: {
         table: true,
         reviews: true,
         items: {
           include: {
-            product: true,
+            product: {
+              include: { category: true }
+            },
           },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return orders.map(order => this.mapOrderWithImages(order));
   }
 
   async updateStatus(id: string, status: string) {
@@ -160,16 +186,19 @@ export class OrdersService {
           table: true,
           items: {
             include: {
-              product: true
+              product: {
+                include: { category: true }
+              }
             }
           }
         },
       });
 
       // Durum güncellemesini socket ile bildir
-      this.eventsGateway.notifyOrderStatusUpdate(updatedOrder.cafeId, updatedOrder);
+      const updatedOrderWithImages = this.mapOrderWithImages(updatedOrder);
+      this.eventsGateway.notifyOrderStatusUpdate(updatedOrderWithImages.cafeId, updatedOrderWithImages);
 
-      return updatedOrder;
+      return updatedOrderWithImages;
     });
   }
 

@@ -56,13 +56,11 @@ export interface TemplateProps {
   activeOrders: any[];
   isCartOpen: boolean;
   welcomeOpen: boolean;
-  isProfileDialogOpen: boolean;
   isAuthDialogOpen: boolean;
   
   // Actions
   onCategorySelect: (id: string) => void;
   setSearchQuery: (q: string) => void;
-  setProfileDialogOpen: (open: boolean) => void;
   setAuthDialogOpen: (open: boolean) => void;
   setWelcomeOpen: (open: boolean) => void;
   setIsCartOpen: (open: boolean) => void;

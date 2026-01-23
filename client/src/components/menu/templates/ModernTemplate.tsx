@@ -1,10 +1,10 @@
 import { TemplateProps } from './types';
+import { useRouter, useParams } from 'next/navigation';
 import { CategoryNav } from '@/components/menu/CategoryNav';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
 import { CustomerAuthDialog } from '@/components/menu/CustomerAuthDialog';
-import { CustomerProfileDialog } from '@/components/menu/CustomerProfileDialog';
 import { Badge } from '@/components/ui/badge';
 import { Search, Wifi, Instagram, Facebook, Twitter, Info, User, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -32,10 +32,8 @@ export function ModernTemplate({
   activeOrders,
   isCartOpen,
   welcomeOpen,
-  isProfileDialogOpen,
   onCategorySelect,
   setSearchQuery,
-  setProfileDialogOpen,
   setAuthDialogOpen,
   setWelcomeOpen,
   setIsCartOpen,
@@ -45,6 +43,10 @@ export function ModernTemplate({
   copyWifi,
   getSocialUrl
 }: TemplateProps) {
+  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 pb-24 relative font-sans selection:bg-primary selection:text-primary-foreground">
       {/* Modern Header */}
@@ -53,9 +55,9 @@ export function ModernTemplate({
         
         {/* Profile/Login Button */}
         <div className="absolute top-6 right-6 z-50 flex gap-3">
-           {customer ? (
+          {customer ? (
             <div 
-              onClick={() => setProfileDialogOpen(true)}
+              onClick={() => router.push(`/${locale}/menu/${cafe.id}/profile`)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 cursor-pointer active:scale-95 transition-all hover:bg-white/20 text-white font-medium shadow-2xl"
             >
               <User className="h-4 w-4" />
@@ -323,10 +325,6 @@ export function ModernTemplate({
         </DialogContent>
       </Dialog>
       <CustomerAuthDialog />
-      <CustomerProfileDialog 
-        open={isProfileDialogOpen}
-        onOpenChange={setProfileDialogOpen}
-      />
     </div>
   );
 }

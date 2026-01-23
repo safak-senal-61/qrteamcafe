@@ -1,10 +1,10 @@
 import { TemplateProps } from './types';
+import { useRouter, useParams } from 'next/navigation';
 import { CategoryNav } from '@/components/menu/CategoryNav';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
 import { CustomerAuthDialog } from '@/components/menu/CustomerAuthDialog';
-import { CustomerProfileDialog } from '@/components/menu/CustomerProfileDialog';
 import { Badge } from '@/components/ui/badge';
 import { Search, Wifi, Instagram, Facebook, Twitter, Info, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -33,10 +33,8 @@ export function MinimalTemplate({
   activeOrders,
   isCartOpen,
   welcomeOpen,
-  isProfileDialogOpen,
   onCategorySelect,
   setSearchQuery,
-  setProfileDialogOpen,
   setAuthDialogOpen,
   setWelcomeOpen,
   setIsCartOpen,
@@ -77,13 +75,13 @@ export function MinimalTemplate({
           <div className="flex gap-4">
              {customer ? (
               <button 
-                onClick={() => setProfileDialogOpen(true)}
+                onClick={() => router.push(`/${locale}/menu/${cafe.id}/profile`)}
                 className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors flex items-center gap-2"
               >
                 <User className="w-4 h-4" />
                 {customer.name}
               </button>
-             ) : (
+            ) : (
                <button 
                 onClick={() => setAuthDialogOpen(true)}
                 className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors flex items-center gap-2"
@@ -264,10 +262,6 @@ export function MinimalTemplate({
       />
 
       <CustomerAuthDialog />
-      <CustomerProfileDialog 
-        open={isProfileDialogOpen}
-        onOpenChange={setProfileDialogOpen}
-      />
       
       <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
         <DialogContent className="sm:max-w-md text-center border-none shadow-none bg-white">

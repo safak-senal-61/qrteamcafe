@@ -12,27 +12,39 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProductsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const product_images_util_1 = require("./product-images.util");
 let ProductsService = class ProductsService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
     async create(cafeId, createProductDto) {
-        return this.prisma.product.create({
+        const product = await this.prisma.product.create({
             data: {
                 ...createProductDto,
                 cafeId,
             },
+            include: {
+                category: true,
+            }
         });
+        return {
+            ...product,
+            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl)
+        };
     }
     async findAll(cafeId) {
-        return this.prisma.product.findMany({
+        const products = await this.prisma.product.findMany({
             where: { cafeId },
             include: {
                 category: true,
             },
             orderBy: { sortOrder: 'asc' },
         });
+        return products.map(product => ({
+            ...product,
+            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl)
+        }));
     }
     async reorder(items) {
         return this.prisma.$transaction(items.map((item) => this.prisma.product.update({
@@ -47,10 +59,16 @@ let ProductsService = class ProductsService {
         });
         if (!product)
             throw new common_1.NotFoundException('Ürün bulunamadı');
-        return product;
+        return {
+            ...product,
+            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl)
+        };
     }
     async update(id, updateProductDto) {
-        const product = await this.findOne(id);
+        await this.findOne(id);
+        const product = await this.prisma.product.findUnique({ where: { id } });
+        if (!product)
+            throw new common_1.NotFoundException('Ürün bulunamadı');
         const newPrice = updateProductDto.price !== undefined ? updateProductDto.price : product.price;
         const newOriginalPrice = updateProductDto.originalPrice !== undefined ? updateProductDto.originalPrice : product.originalPrice;
         if (newOriginalPrice !== null && newOriginalPrice !== undefined) {
@@ -58,10 +76,15 @@ let ProductsService = class ProductsService {
                 throw new common_1.BadRequestException('İndirimsiz fiyat, satış fiyatından küçük olamaz.');
             }
         }
-        return this.prisma.product.update({
+        const updatedProduct = await this.prisma.product.update({
             where: { id },
             data: updateProductDto,
+            include: { category: true }
         });
+        return {
+            ...updatedProduct,
+            imageUrl: (0, product_images_util_1.getProductImage)(updatedProduct.name, updatedProduct.category?.name, updatedProduct.imageUrl)
+        };
     }
     async updateStock(id, quantity) {
         await this.findOne(id);
@@ -107,9 +130,14 @@ let ProductsService = class ProductsService {
             take: limit
         });
         const recommendedProductIds = relatedItems.map(item => item.productId);
-        return this.prisma.product.findMany({
-            where: { id: { in: recommendedProductIds }, isAvailable: true }
+        const products = await this.prisma.product.findMany({
+            where: { id: { in: recommendedProductIds }, isAvailable: true },
+            include: { category: true }
         });
+        return products.map(product => ({
+            ...product,
+            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl)
+        }));
     }
     async toggleChefRecommendation(id, isChefRecommended) {
         await this.findOne(id);

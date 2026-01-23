@@ -18,7 +18,7 @@ import { useCustomerStore } from '@/store/customer-store';
 interface Product {
   id: string;
   name: string;
-  imageUrl: string;
+  imageUrl: string | null;
 }
 
 interface OrderItem {
@@ -39,9 +39,10 @@ interface CreateReviewDialogProps {
   orderId: string;
   items: OrderItem[];
   existingReviews?: Review[];
+  onSuccess?: () => void;
 }
 
-export function CreateReviewDialog({ open, onOpenChange, orderId, items, existingReviews }: CreateReviewDialogProps) {
+export function CreateReviewDialog({ open, onOpenChange, orderId, items, existingReviews, onSuccess }: CreateReviewDialogProps) {
   const { customer, token } = useCustomerStore();
   const [reviews, setReviews] = useState<Record<string, { rating: number; comment: string; submitted: boolean }>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
@@ -108,6 +109,7 @@ export function CreateReviewDialog({ open, onOpenChange, orderId, items, existin
         [item.id]: { ...prev[item.id], submitted: true }
       }));
       toast.success('Değerlendirme gönderildi');
+      onSuccess?.();
     } catch (error) {
       console.error(error);
       toast.error('Hata oluştu');

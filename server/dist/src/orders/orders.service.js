@@ -13,12 +13,27 @@ exports.OrdersService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const events_gateway_1 = require("../events/events.gateway");
+const product_images_util_1 = require("../products/product-images.util");
 let OrdersService = class OrdersService {
     prisma;
     eventsGateway;
     constructor(prisma, eventsGateway) {
         this.prisma = prisma;
         this.eventsGateway = eventsGateway;
+    }
+    mapOrderWithImages(order) {
+        if (!order)
+            return order;
+        return {
+            ...order,
+            items: order.items.map((item) => ({
+                ...item,
+                product: item.product ? {
+                    ...item.product,
+                    imageUrl: (0, product_images_util_1.getProductImage)(item.product.name, item.product.category?.name, item.product.imageUrl)
+                } : null
+            }))
+        };
     }
     async create(cafeId, createOrderDto) {
         return this.prisma.$transaction(async (prisma) => {
@@ -73,24 +88,29 @@ let OrdersService = class OrdersService {
                     table: true,
                     items: {
                         include: {
-                            product: true,
+                            product: {
+                                include: { category: true }
+                            },
                         },
                     },
                 },
             });
-            this.eventsGateway.notifyNewOrder(cafeId, order);
-            return order;
+            const orderWithImages = this.mapOrderWithImages(order);
+            this.eventsGateway.notifyNewOrder(cafeId, orderWithImages);
+            return orderWithImages;
         });
     }
-    findAllByCustomer(customerId) {
-        return this.prisma.order.findMany({
+    async findAllByCustomer(customerId) {
+        const orders = await this.prisma.order.findMany({
             where: { customerId },
             include: {
                 table: true,
                 reviews: true,
                 items: {
                     include: {
-                        product: true,
+                        product: {
+                            include: { category: true }
+                        },
                     },
                 },
             },
@@ -98,21 +118,25 @@ let OrdersService = class OrdersService {
                 createdAt: 'desc',
             },
         });
+        return orders.map(order => this.mapOrderWithImages(order));
     }
-    findAll(cafeId) {
-        return this.prisma.order.findMany({
+    async findAll(cafeId) {
+        const orders = await this.prisma.order.findMany({
             where: { cafeId },
             include: {
                 table: true,
                 reviews: true,
                 items: {
                     include: {
-                        product: true,
+                        product: {
+                            include: { category: true }
+                        },
                     },
                 },
             },
             orderBy: { createdAt: 'desc' },
         });
+        return orders.map(order => this.mapOrderWithImages(order));
     }
     async updateStatus(id, status) {
         return this.prisma.$transaction(async (prisma) => {
@@ -140,13 +164,16 @@ let OrdersService = class OrdersService {
                     table: true,
                     items: {
                         include: {
-                            product: true
+                            product: {
+                                include: { category: true }
+                            }
                         }
                     }
                 },
             });
-            this.eventsGateway.notifyOrderStatusUpdate(updatedOrder.cafeId, updatedOrder);
-            return updatedOrder;
+            const updatedOrderWithImages = this.mapOrderWithImages(updatedOrder);
+            this.eventsGateway.notifyOrderStatusUpdate(updatedOrderWithImages.cafeId, updatedOrderWithImages);
+            return updatedOrderWithImages;
         });
     }
     async closeTable(tableId) {

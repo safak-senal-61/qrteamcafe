@@ -2,28 +2,42 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { getProductImage } from './product-images.util';
 
 @Injectable()
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
   async create(cafeId: string, createProductDto: CreateProductDto) {
-    return this.prisma.product.create({
+    const product = await this.prisma.product.create({
       data: {
         ...createProductDto,
         cafeId,
       },
+      include: {
+        category: true,
+      }
     });
+
+    return {
+      ...product,
+      imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+    };
   }
 
   async findAll(cafeId: string) {
-    return this.prisma.product.findMany({
+    const products = await this.prisma.product.findMany({
       where: { cafeId },
       include: {
         category: true,
       },
       orderBy: { sortOrder: 'asc' },
     });
+
+    return products.map(product => ({
+      ...product,
+      imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+    }));
   }
 
   async reorder(items: { id: string; sortOrder: number }[]) {
@@ -44,13 +58,21 @@ export class ProductsService {
       include: { category: true },
     });
     if (!product) throw new NotFoundException('Ürün bulunamadı');
-    return product;
+    
+    return {
+      ...product,
+      imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+    };
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    const product = await this.findOne(id);
+    // First verify product exists
+    await this.findOne(id);
 
     // Validate prices if either price or originalPrice is being updated
+    const product = await this.prisma.product.findUnique({ where: { id } });
+    if (!product) throw new NotFoundException('Ürün bulunamadı');
+
     const newPrice = updateProductDto.price !== undefined ? updateProductDto.price : product.price;
     const newOriginalPrice = updateProductDto.originalPrice !== undefined ? updateProductDto.originalPrice : product.originalPrice;
 
@@ -60,10 +82,16 @@ export class ProductsService {
       }
     }
 
-    return this.prisma.product.update({
+    const updatedProduct = await this.prisma.product.update({
       where: { id },
       data: updateProductDto,
+      include: { category: true }
     });
+
+    return {
+      ...updatedProduct,
+      imageUrl: getProductImage(updatedProduct.name, updatedProduct.category?.name, updatedProduct.imageUrl)
+    };
   }
 
   async updateStock(id: string, quantity: number) {
@@ -117,9 +145,15 @@ export class ProductsService {
 
     // 3. Get product details
     const recommendedProductIds = relatedItems.map(item => item.productId);
-    return this.prisma.product.findMany({
-      where: { id: { in: recommendedProductIds }, isAvailable: true }
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: recommendedProductIds }, isAvailable: true },
+      include: { category: true }
     });
+
+    return products.map(product => ({
+      ...product,
+      imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+    }));
   }
 
   async toggleChefRecommendation(id: string, isChefRecommended: boolean) {

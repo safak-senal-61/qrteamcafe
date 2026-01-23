@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
@@ -15,6 +15,16 @@ export class CustomersController {
   @Get()
   findAll() {
     return this.customersService.findAll();
+  }
+
+  @Get(':id/stats')
+  getStats(@Param('id') id: string) {
+    return this.customersService.getStats(id);
+  }
+
+  @Get(':id/recommendations')
+  getRecommendations(@Param('id') id: string, @Query('cafeId') cafeId: string) {
+    return this.customersService.getRecommendations(id, cafeId);
   }
 
   @Get(':id')

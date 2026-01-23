@@ -1,10 +1,10 @@
 import { TemplateProps } from './types';
+import { useRouter, useParams } from 'next/navigation';
 import { CategoryNav } from '@/components/menu/CategoryNav';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
 import { CustomerAuthDialog } from '@/components/menu/CustomerAuthDialog';
-import { CustomerProfileDialog } from '@/components/menu/CustomerProfileDialog';
 import { Badge } from '@/components/ui/badge';
 import { Search, Wifi, Instagram, Facebook, Twitter, Info, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -32,10 +32,8 @@ export function ClassicTemplate({
   activeOrders,
   isCartOpen,
   welcomeOpen,
-  isProfileDialogOpen,
   onCategorySelect,
   setSearchQuery,
-  setProfileDialogOpen,
   setAuthDialogOpen,
   setWelcomeOpen,
   setIsCartOpen,
@@ -45,6 +43,10 @@ export function ClassicTemplate({
   copyWifi,
   getSocialUrl
 }: TemplateProps) {
+  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
+
   return (
     <div className="min-h-screen bg-background pb-24 relative font-sans">
       {/* Header Image */}
@@ -55,7 +57,7 @@ export function ClassicTemplate({
         <div className="absolute top-4 right-4 z-50 flex gap-2">
           {customer ? (
             <div 
-              onClick={() => setProfileDialogOpen(true)}
+              onClick={() => router.push(`/${locale}/menu/${cafe.id}/profile`)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-white/50 cursor-pointer active:scale-95 transition-all hover:bg-white text-primary font-medium"
             >
               <User className="h-4 w-4" />
@@ -344,10 +346,6 @@ export function ClassicTemplate({
         </DialogContent>
       </Dialog>
       <CustomerAuthDialog />
-      <CustomerProfileDialog 
-        open={isProfileDialogOpen}
-        onOpenChange={setProfileDialogOpen}
-      />
     </div>
   );
 }

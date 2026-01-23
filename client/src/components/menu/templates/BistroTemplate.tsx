@@ -1,10 +1,10 @@
 import { TemplateProps } from './types';
+import { useRouter, useParams } from 'next/navigation';
 import { CategoryNav } from '@/components/menu/CategoryNav';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
 import { CustomerAuthDialog } from '@/components/menu/CustomerAuthDialog';
-import { CustomerProfileDialog } from '@/components/menu/CustomerProfileDialog';
 import { Badge } from '@/components/ui/badge';
 import { Search, Wifi, Instagram, Facebook, Twitter, Info, User, UtensilsCrossed, ChefHat } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -33,10 +33,8 @@ export function BistroTemplate({
   activeOrders,
   isCartOpen,
   welcomeOpen,
-  isProfileDialogOpen,
   onCategorySelect,
   setSearchQuery,
-  setProfileDialogOpen,
   setAuthDialogOpen,
   setWelcomeOpen,
   setIsCartOpen,
@@ -46,6 +44,10 @@ export function BistroTemplate({
   copyWifi,
   getSocialUrl
 }: TemplateProps) {
+  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
+
   return (
     <div className="min-h-screen bg-[#f8f5e6] text-stone-800 pb-24 relative font-serif selection:bg-orange-200">
       {/* Texture Overlay */}
@@ -59,7 +61,7 @@ export function BistroTemplate({
         <div className="absolute top-4 right-4 z-50 flex gap-2">
           {customer ? (
             <div 
-              onClick={() => setProfileDialogOpen(true)}
+              onClick={() => router.push(`/${locale}/menu/${cafe.id}/profile`)}
               className="flex items-center gap-2 px-4 py-2 rounded-sm bg-[#f8f5e6] shadow-lg border-2 border-stone-800 cursor-pointer active:scale-95 transition-all hover:bg-orange-50 text-stone-800 font-bold tracking-wide"
             >
               <User className="h-4 w-4" />
@@ -296,10 +298,6 @@ export function BistroTemplate({
 
       {/* Dialogs */}
       <CustomerAuthDialog />
-      <CustomerProfileDialog 
-        open={!!customer && isProfileDialogOpen} 
-        onOpenChange={setProfileDialogOpen} 
-      />
       <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
         <DialogContent className="sm:max-w-md bg-[#f8f5e6] border-2 border-stone-800">
           <DialogHeader>

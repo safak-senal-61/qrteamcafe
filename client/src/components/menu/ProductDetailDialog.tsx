@@ -178,7 +178,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
         <div className="p-6 space-y-6 flex-1 overflow-y-auto">
           <div className="space-y-2">
             <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Ürün Detayı</h4>
-            <p className="text-sm text-foreground/80 leading-relaxed">
+            <p id="product-description" className="text-sm text-foreground/80 leading-relaxed">
               {product.description || 'Açıklama bulunmuyor.'}
             </p>
           </div>
