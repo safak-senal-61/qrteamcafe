@@ -3,7 +3,8 @@
 import { useEffect } from 'react';
 import { Link } from '@/navigation';
 import { Button } from '@/components/ui/button';
-import { QrCode, Utensils, Smartphone, ChevronRight, CheckCircle2, Zap, LayoutDashboard, Users, BarChart3, Clock, Globe, Wallet } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { QrCode, Utensils, Smartphone, ChevronRight, CheckCircle2, Zap, LayoutDashboard, Users, BarChart3, Clock, Globe, Wallet, Menu } from 'lucide-react';
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -158,21 +159,98 @@ export default function Home() {
             </span>
           </Link>
           <nav className="flex items-center gap-4">
-            <LanguageSwitcher />
-            <Link href="/admin/login">
-              <Button variant="ghost" className="font-medium hover:bg-secondary/80 text-base hidden md:flex relative overflow-hidden group">
-                <span className="relative z-10">{t('login')}</span>
-                <span className="absolute inset-0 bg-primary/10 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
-              </Button>
-            </Link>
-            <Link href="/menu/demo-cafe">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="rounded-full shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-green-600 border-0 relative overflow-hidden">
-                  <span className="relative z-10 flex items-center">{t('demo')} <ChevronRight className="ml-1 h-4 w-4 rtl:rotate-180" /></span>
-                  <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full hover:animate-shimmer"></div>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-4">
+              <LanguageSwitcher />
+              <Link href="/admin/login">
+                <Button variant="ghost" className="font-medium hover:bg-secondary/80 text-base relative overflow-hidden group">
+                  <span className="relative z-10">{t('login')}</span>
+                  <span className="absolute inset-0 bg-primary/10 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
                 </Button>
-              </motion.div>
-            </Link>
+              </Link>
+              <Link href="/menu/2ea6acce-7d77-4a0b-910f-56a05666d89d">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button className="rounded-full shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-green-600 border-0 relative overflow-hidden">
+                    <span className="relative z-10 flex items-center">{t('demo')} <ChevronRight className="ml-1 h-4 w-4 rtl:rotate-180" /></span>
+                    <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full hover:animate-shimmer"></div>
+                  </Button>
+                </motion.div>
+              </Link>
+            </div>
+
+            {/* Mobile Navigation */}
+            <div className="md:hidden flex items-center gap-2">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full sm:w-[400px] border-l-0 sm:border-l p-0">
+                  <div className="flex flex-col h-full bg-background/95 backdrop-blur-xl">
+                    <SheetHeader className="p-6 border-b bg-background/50">
+                      <SheetTitle className="text-left flex items-center gap-3">
+                        <div className="bg-gradient-to-br from-primary to-green-600 text-white p-2 rounded-xl shadow-lg shadow-primary/20">
+                          <QrCode className="h-6 w-6" />
+                        </div>
+                        <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-green-600">
+                          QR Team Cafe
+                        </span>
+                      </SheetTitle>
+                    </SheetHeader>
+                    
+                    <div className="flex flex-col flex-1 p-6 gap-6">
+                      {/* Language Selection Section */}
+                      <div className="bg-secondary/30 p-4 rounded-2xl border border-border/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                            <Globe className="h-4 w-4" />
+                            {t('language') || 'Dil Seçimi'}
+                          </span>
+                        </div>
+                        <div className="flex justify-end">
+                           <LanguageSwitcher />
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-col gap-3 mt-auto mb-6">
+                        <Link href="/admin/login" onClick={() => {}}>
+                          <Button variant="outline" className="w-full justify-between h-14 text-base font-medium rounded-xl border-2 hover:bg-secondary/50 hover:border-primary/20 transition-all group">
+                            <span className="flex items-center gap-3">
+                              <div className="p-2 bg-secondary rounded-lg group-hover:bg-white transition-colors">
+                                <Users className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                              </div>
+                              {t('login')}
+                            </span>
+                            <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                          </Button>
+                        </Link>
+                        
+                        <Link href="/menu/2ea6acce-7d77-4a0b-910f-56a05666d89d" onClick={() => {}}>
+                          <Button className="w-full justify-between h-14 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-green-600 hover:shadow-lg hover:shadow-primary/25 transition-all group border-0">
+                            <span className="flex items-center gap-3">
+                              <div className="p-2 bg-white/20 rounded-lg">
+                                <Utensils className="h-5 w-5 text-white" />
+                              </div>
+                              {t('demo')}
+                            </span>
+                            <ChevronRight className="h-5 w-5 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                          </Button>
+                        </Link>
+                      </div>
+
+                      {/* Footer Info */}
+                      <div className="mt-auto pt-6 border-t text-center">
+                        <p className="text-xs text-muted-foreground">
+                          &copy; {new Date().getFullYear()} QR Team Cafe
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </nav>
         </div>
       </motion.header>
@@ -259,7 +337,7 @@ export default function Home() {
               </motion.div>
               
               <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto px-4 sm:px-0">
-                <Link href="/menu/demo-cafe" className="w-full sm:w-auto">
+                <Link href="/menu/2ea6acce-7d77-4a0b-910f-56a05666d89d" className="w-full sm:w-auto">
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
                     <Button size="lg" className="w-full sm:w-auto h-14 md:h-16 px-6 md:px-10 rounded-full text-base md:text-lg font-bold shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all duration-300 bg-gradient-to-r from-primary to-green-600 border-0">
                       {t('demo')} <Utensils className="ml-2 h-5 w-5 rtl:mr-2 rtl:ml-0" />

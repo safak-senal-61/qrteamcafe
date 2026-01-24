@@ -1,5 +1,6 @@
 import { TemplateProps } from './types';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { CategoryNav } from '@/components/menu/CategoryNav';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
@@ -17,6 +18,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+
+import { useTranslations } from 'next-intl';
 
 export function ClassicTemplate({
   cafe,
@@ -41,24 +44,19 @@ export function ClassicTemplate({
   fetchActiveOrders,
   currentTableId,
   copyWifi,
-  getSocialUrl
+  getSocialUrl,
+  isDemoMode
 }: TemplateProps) {
+  const t = useTranslations('Menu');
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
 
   return (
-    <div className="min-h-screen bg-background pb-24 relative font-sans">
+    <div className="min-h-screen bg-background pb-24 relative font-sans overflow-x-hidden">
       {/* Dialogs */}
       <CustomerAuthDialog variant="classic" />
-      <CartSheet
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        activeOrders={activeOrders}
-        onCancelOrder={handleCancelOrder}
-      />
-      <ProductDetailDialog />
-      <CreateReviewDialog />
+
 
       {/* Header Image */}
       <div className="relative h-64 md:h-80 w-full overflow-hidden">
@@ -68,11 +66,11 @@ export function ClassicTemplate({
         <div className="absolute top-4 right-4 z-50 flex gap-2">
           {customer ? (
             <div 
-              onClick={() => router.push(`/${locale}/menu/${cafe.id}/profile`)}
+              onClick={() => router.push(`/menu/${cafe.id}/profile`)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-white/50 cursor-pointer active:scale-95 transition-all hover:bg-white text-primary font-medium"
             >
               <User className="h-4 w-4" />
-              <span className="text-sm">{customer.name || 'Hesabım'}</span>
+              <span className="text-sm">{customer.name || t('myAccount')}</span>
             </div>
           ) : (
             <div 
@@ -80,7 +78,7 @@ export function ClassicTemplate({
               className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-white/50 cursor-pointer active:scale-95 transition-all hover:bg-white text-primary font-medium"
             >
               <User className="h-4 w-4" />
-              <span className="text-sm">Giriş Yap</span>
+              <span className="text-sm">{t('login')}</span>
             </div>
           )}
         </div>
@@ -117,7 +115,7 @@ export function ClassicTemplate({
               <div className="flex flex-wrap gap-2">
                 {tableNumber && (
                   <Badge variant="secondary" className="text-lg px-4 py-1 font-bold bg-white/90 text-primary backdrop-blur-md shadow-lg border-2 border-primary/20">
-                    Masa {tableNumber}
+                    {t('table')} {tableNumber}
                   </Badge>
                 )}
                 {cafe.wifiSsid && (
@@ -127,8 +125,8 @@ export function ClassicTemplate({
                   >
                     <Wifi className="h-4 w-4 text-primary" />
                     <div className="flex flex-col leading-none">
-                      <span className="text-[10px] text-muted-foreground font-bold">Wi-Fi: {cafe.wifiSsid}</span>
-                      <span className="text-xs font-bold text-foreground">Bağlan</span>
+                      <span className="text-[10px] text-muted-foreground font-bold">{t('wifi')}: {cafe.wifiSsid}</span>
+                      <span className="text-xs font-bold text-foreground">{t('connect')}</span>
                     </div>
                   </div>
                 )}
@@ -143,7 +141,7 @@ export function ClassicTemplate({
         <div className="relative group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input
-            placeholder="Lezzetli bir şeyler ara..."
+            placeholder={t('searchPlaceholder')}
             className="pl-10 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-background rounded-2xl h-12 text-base transition-all shadow-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -159,9 +157,9 @@ export function ClassicTemplate({
         <div className="container mx-auto">
           <CategoryNav
             categories={[
-              { id: 'all', name: 'Tümü' },
-              ...(chefProducts.length > 0 ? [{ id: 'chef', name: 'Şefin Önerisi' }] : []),
-              ...(popularProducts.length > 0 ? [{ id: 'popular', name: 'Popüler' }] : []),
+              { id: 'all', name: t('all') },
+              ...(chefProducts.length > 0 ? [{ id: 'chef', name: t('chefChoice') }] : []),
+              ...(popularProducts.length > 0 ? [{ id: 'popular', name: t('popular') }] : []),
               ...categories
             ]}
             activeCategory={activeCategory}
@@ -184,7 +182,7 @@ export function ClassicTemplate({
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
                 <span className="w-1.5 h-8 bg-orange-500 rounded-full inline-block" />
-                Şefin Önerisi
+                {t('chefChoice')}
               </h2>
             </div>
             <div className="flex overflow-x-auto pb-6 -mx-4 px-4 gap-4 scrollbar-hide snap-x snap-mandatory">
@@ -194,7 +192,7 @@ export function ClassicTemplate({
                     ...product,
                     category: product.categoryId,
                     image: product.imageUrl
-                  }} index={index} showRating={cafe?.showProductRatings} variant="card" />
+                  }} index={index} showRating={cafe?.showProductRatings} variant="card" isReadOnly={isDemoMode} />
                 </div>
               ))}
             </div>
@@ -213,7 +211,7 @@ export function ClassicTemplate({
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
                 <span className="w-1.5 h-8 bg-yellow-400 rounded-full inline-block" />
-                Popüler Ürünler
+                {t('popular')}
               </h2>
             </div>
             <div className="flex overflow-x-auto pb-6 -mx-4 px-4 gap-4 scrollbar-hide snap-x snap-mandatory">
@@ -223,7 +221,7 @@ export function ClassicTemplate({
                     ...product,
                     category: product.categoryId,
                     image: product.imageUrl
-                  }} index={index} showRating={cafe?.showProductRatings} variant="card" />
+                  }} index={index} showRating={cafe?.showProductRatings} variant="card" isReadOnly={isDemoMode} />
                 </div>
               ))}
             </div>
@@ -253,7 +251,7 @@ export function ClassicTemplate({
                   {category.name}
                 </h2>
                 <Badge variant="outline" className="text-sm px-3 py-1 border-primary/20 text-muted-foreground bg-primary/5">
-                  {categoryProducts.length} ürün
+                  {categoryProducts.length} {t('products')}
                 </Badge>
               </div>
               <div className={cn(
@@ -267,7 +265,7 @@ export function ClassicTemplate({
                     ...product,
                     category: category.id,
                     image: product.imageUrl
-                  }} index={index} showRating={cafe?.showProductRatings} variant={cafe.menuViewMode || 'card'} />
+                  }} index={index} showRating={cafe?.showProductRatings} variant={cafe.menuViewMode || 'card'} isReadOnly={isDemoMode} />
                 ))}
               </div>
             </motion.div>
@@ -280,13 +278,13 @@ export function ClassicTemplate({
             <div className="bg-secondary/50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="h-10 w-10 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">Sonuç Bulunamadı</h3>
-            <p className="text-muted-foreground">"{searchQuery}" için eşleşen ürün yok.</p>
+            <h3 className="text-xl font-bold text-foreground mb-2">{t('noResultsTitle')}</h3>
+            <p className="text-muted-foreground">{t('noResultsDesc', { query: searchQuery })}</p>
           </div>
         )}
       </div>
 
-      <CallWaiterButton options={cafe.waiterCallOptions} />
+      {!isDemoMode && <CallWaiterButton options={cafe.waiterCallOptions} />}
 
       {/* Footer with Social Links */}
       <footer className="mt-20 py-10 bg-secondary/30 border-t">
@@ -315,23 +313,25 @@ export function ClassicTemplate({
           </div>
           <div className="text-center text-muted-foreground text-sm">
             <p>&copy; {new Date().getFullYear()} {cafe.name}</p>
-            <p className="mt-1">QR Team Cafe Altyapısı ile Hazırlanmıştır</p>
+            <p className="mt-1">{t('poweredBy')}</p>
           </div>
         </div>
       </footer>
 
-      <CartSheet 
-        cafeId={cafe.id}
-        tableId={currentTableId || undefined}
-        onOrderSuccess={() => {
-          setIsCartOpen(true);
-          fetchActiveOrders();
-        }}
-        activeOrders={activeOrders}
-        onCancelOrder={handleCancelOrder}
-        isOpen={isCartOpen}
-        onOpenChange={setIsCartOpen}
-      />
+      {!isDemoMode && (
+        <CartSheet 
+          cafeId={cafe.id}
+          tableId={currentTableId || undefined}
+          onOrderSuccess={() => {
+            setIsCartOpen(true);
+            fetchActiveOrders();
+          }}
+          activeOrders={activeOrders}
+          onCancelOrder={handleCancelOrder}
+          isOpen={isCartOpen}
+          onOpenChange={setIsCartOpen}
+        />
+      )}
 
       {/* Welcome Message Dialog */}
       <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
@@ -343,7 +343,7 @@ export function ClassicTemplate({
                    <img src={cafe.logo} alt={cafe.name} className="h-full w-full object-cover" />
                 </div>
               )}
-              <span>Hoş Geldiniz!</span>
+              <span>{t('welcome')}</span>
             </DialogTitle>
             <DialogDescription className="text-lg pt-2 text-foreground/80">
               {cafe.welcomeMessage}
@@ -351,7 +351,7 @@ export function ClassicTemplate({
           </DialogHeader>
           <div className="flex justify-center pt-4 pb-2">
             <Badge variant="outline" className="text-primary border-primary/50 py-1 px-4 cursor-pointer hover:bg-primary/5" onClick={() => setWelcomeOpen(false)}>
-              Menüyü İncele
+              {t('viewMenu')}
             </Badge>
           </div>
         </DialogContent>

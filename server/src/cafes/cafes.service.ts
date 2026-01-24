@@ -6,10 +6,21 @@ import { UpdateCafeDto } from './dto/update-cafe.dto';
 export class CafesService {
   constructor(private prisma: PrismaService) {}
 
-  async findOne(id: string) {
-    const cafe = await this.prisma.cafe.findUnique({
-      where: { id },
-    });
+  async findOne(idOrSlug: string) {
+    // Check if it's a valid UUID
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+
+    let cafe;
+    if (isUuid) {
+      cafe = await this.prisma.cafe.findUnique({
+        where: { id: idOrSlug },
+      });
+    } else {
+      cafe = await this.prisma.cafe.findUnique({
+        where: { slug: idOrSlug },
+      });
+    }
+
     if (!cafe) throw new NotFoundException('Cafe bulunamadı');
     return cafe;
   }
@@ -56,6 +67,7 @@ export class CafesService {
         waiterCallOptions: data.waiterCallOptions,
         isMaintenanceMode: data.isMaintenanceMode,
         autoApproveReviews: data.autoApproveReviews,
+        isSoundEnabled: data.isSoundEnabled,
         templateId: data.templateId,
         themeConfig: data.themeConfig,
       },
@@ -65,6 +77,11 @@ export class CafesService {
   async getDashboardStats(cafeId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    const cafeSettings = await this.prisma.cafe.findUnique({
+      where: { id: cafeId },
+      select: { isSoundEnabled: true }
+    });
 
     const [totalOrders, dailyRevenue, activeTables, totalProducts] =
       await Promise.all([
@@ -120,6 +137,7 @@ export class CafesService {
       totalProducts,
       recentOrders,
       popularProducts,
+      isSoundEnabled: cafeSettings?.isSoundEnabled ?? true,
     };
   }
 }

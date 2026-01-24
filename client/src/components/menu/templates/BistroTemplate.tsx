@@ -18,6 +18,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
+import { useTranslations } from 'next-intl';
+
 export function BistroTemplate({
   cafe,
   categories,
@@ -44,12 +46,13 @@ export function BistroTemplate({
   copyWifi,
   getSocialUrl
 }: TemplateProps) {
+  const t = useTranslations('Menu');
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
 
   return (
-    <div className="min-h-screen bg-[#f8f5e6] text-stone-800 pb-24 relative font-serif selection:bg-orange-200">
+    <div className="min-h-screen bg-[#f8f5e6] text-stone-800 pb-24 relative font-serif selection:bg-orange-200 overflow-x-hidden">
       {/* Texture Overlay */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] z-0"></div>
 
@@ -65,7 +68,7 @@ export function BistroTemplate({
               className="flex items-center gap-2 px-4 py-2 rounded-sm bg-[#f8f5e6] shadow-lg border-2 border-stone-800 cursor-pointer active:scale-95 transition-all hover:bg-orange-50 text-stone-800 font-bold tracking-wide"
             >
               <User className="h-4 w-4" />
-              <span className="text-sm uppercase">{customer.name || 'Hesabım'}</span>
+              <span className="text-sm uppercase">{customer.name || t('myAccount').toUpperCase()}</span>
             </div>
           ) : (
             <div 
@@ -73,7 +76,7 @@ export function BistroTemplate({
               className="flex items-center gap-2 px-4 py-2 rounded-sm bg-[#f8f5e6] shadow-lg border-2 border-stone-800 cursor-pointer active:scale-95 transition-all hover:bg-orange-50 text-stone-800 font-bold tracking-wide"
             >
               <User className="h-4 w-4" />
-              <span className="text-sm uppercase">Giriş</span>
+              <span className="text-sm uppercase">{t('login').toUpperCase()}</span>
             </div>
           )}
         </div>
@@ -127,13 +130,13 @@ export function BistroTemplate({
           {cafe.wifiPassword && (
             <button onClick={copyWifi} className="flex items-center gap-2 hover:text-orange-200 transition-colors">
               <Wifi className="h-4 w-4" />
-              <span>Wi-Fi: {cafe.wifiPassword}</span>
+              <span>{t('wifi')}: {cafe.wifiPassword}</span>
             </button>
           )}
           {tableNumber && (
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span>Masa {tableNumber}</span>
+              <span>{t('table')} {tableNumber}</span>
             </div>
           )}
           <div className="flex items-center gap-4">
@@ -156,7 +159,7 @@ export function BistroTemplate({
         <div className="mb-10 max-w-md mx-auto relative">
           <Input
             type="text"
-            placeholder="Lezzet ara..."
+            placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 h-12 bg-white border-2 border-stone-200 focus:border-stone-800 rounded-none shadow-sm text-lg font-serif placeholder:italic"
@@ -177,7 +180,7 @@ export function BistroTemplate({
                     : "bg-white text-stone-600 border-stone-200 hover:border-stone-400"
                 )}
               >
-                Tümü
+                {t('all')}
               </button>
               {categories.map((category) => (
                 <button
@@ -203,7 +206,7 @@ export function BistroTemplate({
             <div>
               <div className="flex items-center gap-4 mb-8">
                 <div className="h-px flex-1 bg-stone-300"></div>
-                <h2 className="text-3xl font-bold text-stone-800 italic">Arama Sonuçları</h2>
+                <h2 className="text-3xl font-bold text-stone-800 italic">{t('searchResults')}</h2>
                 <div className="h-px flex-1 bg-stone-300"></div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -305,7 +308,7 @@ export function BistroTemplate({
               <div className="w-16 h-16 rounded-full bg-stone-800 text-[#f8f5e6] flex items-center justify-center">
                 <ChefHat className="w-8 h-8" />
               </div>
-              Hoş Geldiniz!
+              {t('welcome')}
             </DialogTitle>
             <DialogDescription className="text-center text-stone-600 text-lg pt-4 italic">
               {cafe.welcomeMessage}

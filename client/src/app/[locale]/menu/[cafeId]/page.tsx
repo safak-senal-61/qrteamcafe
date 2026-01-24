@@ -345,7 +345,8 @@ export default function MenuPage() {
     fetchActiveOrders,
     currentTableId,
     copyWifi,
-    getSocialUrl
+    getSocialUrl,
+    
   };
 
   if (cafe.templateId === 'modern') {

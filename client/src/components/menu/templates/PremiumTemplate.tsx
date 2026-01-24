@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { useTranslations } from 'next-intl';
 
 export function PremiumTemplate({
   cafe,
@@ -44,12 +45,13 @@ export function PremiumTemplate({
   copyWifi,
   getSocialUrl
 }: TemplateProps) {
+  const t = useTranslations('Menu');
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] pb-24 relative font-serif selection:bg-[#c6a355] selection:text-black">
+    <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] pb-24 relative font-serif selection:bg-[#c6a355] selection:text-black overflow-x-hidden">
       {/* Decorative Background */}
       <div className="fixed inset-0 pointer-events-none opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] z-0"></div>
 
@@ -70,7 +72,7 @@ export function PremiumTemplate({
             <div className="flex flex-col">
               {tableNumber && (
                  <div className="px-4 py-1 border border-[#c6a355]/30 bg-black/40 backdrop-blur-md rounded text-[#c6a355] text-xs uppercase tracking-[0.2em]">
-                    Masa {tableNumber}
+                    {t('table')} {tableNumber}
                  </div>
               )}
             </div>
@@ -90,7 +92,7 @@ export function PremiumTemplate({
                    className="flex items-center gap-2 px-4 py-2 border border-[#c6a355]/50 bg-black/60 backdrop-blur-md text-[#c6a355] hover:bg-[#c6a355] hover:text-black transition-all duration-300 rounded-sm"
                  >
                    <User className="w-4 h-4" />
-                   <span className="text-xs uppercase tracking-wider">Giriş</span>
+                   <span className="text-xs uppercase tracking-wider">{t('login')}</span>
                  </button>
                )}
             </div>
@@ -127,7 +129,7 @@ export function PremiumTemplate({
                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#c6a355]/50" />
                <input
                  type="text"
-                 placeholder="Menüde arayın..."
+                 placeholder={t('searchPlaceholder')}
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
                  className="w-full bg-[#1a1a1a] border border-[#333] focus:border-[#c6a355]/50 rounded-sm py-2 pl-10 pr-4 text-sm text-[#e5e5e5] placeholder:text-zinc-600 focus:outline-none transition-colors font-sans"
@@ -143,7 +145,7 @@ export function PremiumTemplate({
                     activeCategory === 'all' ? "text-[#c6a355]" : "text-zinc-500 hover:text-[#c6a355]/70"
                   )}
                >
-                 Tümü
+                 {t('all')}
                  {activeCategory === 'all' && (
                    <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-px bg-[#c6a355]" />
                  )}
@@ -154,11 +156,11 @@ export function PremiumTemplate({
                      className={cn(
                        "whitespace-nowrap text-sm tracking-[0.15em] uppercase transition-all duration-300 relative py-2",
                        activeCategory === 'chef' ? "text-[#c6a355]" : "text-zinc-500 hover:text-[#c6a355]/70"
-                     )}
-                  >
-                    Şefin Önerisi
-                    {activeCategory === 'chef' && (
-                      <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-px bg-[#c6a355]" />
+                   )}
+                >
+                  {t('chefChoice')}
+                  {activeCategory === 'chef' && (
+                    <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-px bg-[#c6a355]" />
                     )}
                   </button>
                )}
@@ -168,11 +170,11 @@ export function PremiumTemplate({
                      className={cn(
                        "whitespace-nowrap text-sm tracking-[0.15em] uppercase transition-all duration-300 relative py-2",
                        activeCategory === 'popular' ? "text-[#c6a355]" : "text-zinc-500 hover:text-[#c6a355]/70"
-                     )}
-                  >
-                    Popüler
-                    {activeCategory === 'popular' && (
-                      <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-px bg-[#c6a355]" />
+                   )}
+                >
+                  {t('popular')}
+                  {activeCategory === 'popular' && (
+                    <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-px bg-[#c6a355]" />
                     )}
                   </button>
                )}
@@ -303,7 +305,7 @@ export function PremiumTemplate({
               onClick={() => setWelcomeOpen(false)}
               className="px-8 py-2 border border-[#c6a355] text-[#c6a355] hover:bg-[#c6a355] hover:text-black transition-all duration-300 uppercase tracking-widest text-xs"
             >
-              Menüye Geç
+              {t('viewMenu')}
             </button>
           </div>
         </DialogContent>

@@ -161,15 +161,16 @@ export default function AdminReviewsPage() {
   }
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Değerlendirmeler</h1>
-        <div className="text-muted-foreground">
+    <div className="p-4 md:p-8 space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold">Değerlendirmeler</h1>
+        <div className="text-muted-foreground text-sm md:text-base">
           Toplam {reviews.length} değerlendirme
         </div>
       </div>
 
-      <div className="border rounded-lg">
+      {/* Desktop Table View */}
+      <div className="hidden md:block border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -283,6 +284,124 @@ export default function AdminReviewsPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile List View */}
+      <div className="md:hidden space-y-4">
+        {reviews.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+            Henüz değerlendirme bulunmuyor.
+          </div>
+        ) : (
+          reviews.map((review) => (
+            <div key={review.id} className="bg-card border rounded-lg p-4 space-y-4 shadow-sm">
+              {/* Product & Date Header */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted shrink-0">
+                    {review.product.imageUrl ? (
+                      <Image 
+                        src={review.product.imageUrl} 
+                        alt={review.product.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">IMG</div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm line-clamp-1">{review.product.name}</h3>
+                    <div className="text-xs text-muted-foreground">{review.customerName || 'Misafir'}</div>
+                  </div>
+                </div>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {new Date(review.createdAt).toLocaleDateString('tr-TR')}
+                </span>
+              </div>
+
+              {/* Rating */}
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-4 h-4 ${star <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'}`}
+                  />
+                ))}
+              </div>
+
+              {/* Comment */}
+              {review.comment && (
+                <div className="text-sm bg-muted/30 p-3 rounded-md">
+                  "{review.comment}"
+                </div>
+              )}
+
+              {/* Admin Reply */}
+              {review.adminReply && (
+                <div className="text-sm bg-primary/5 p-3 rounded-md border border-primary/10">
+                  <div className="flex items-center gap-2 mb-1 text-primary text-xs font-medium">
+                    <MessageCircle className="w-3 h-3" />
+                    <span>İşletme Yanıtı</span>
+                  </div>
+                  {review.adminReply}
+                </div>
+              )}
+
+              {/* Actions Divider */}
+              <div className="h-px bg-border" />
+
+              {/* Action Controls */}
+              <div className="grid grid-cols-2 gap-4 items-center">
+                {/* Visibility */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">Görünürlük</span>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={review.isVisible}
+                      onCheckedChange={() => handleVisibilityToggle(review.id, review.isVisible)}
+                      disabled={updating === review.id}
+                    />
+                    <span className="text-xs">
+                      {review.isVisible ? 'Yayında' : 'Gizli'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Admin Score */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">İşletme Puanı (1-5)</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={5}
+                      className="w-full h-9"
+                      value={review.adminScore || ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val)) handleScoreUpdate(review.id, val);
+                      }}
+                      disabled={updating === review.id}
+                    />
+                    {updating === review.id && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reply Button */}
+              <Button
+                variant={review.adminReply ? "secondary" : "default"}
+                size="sm"
+                onClick={() => openReplyDialog(review)}
+                className="w-full"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                {review.adminReply ? 'Yanıtı Düzenle' : 'Yanıtla'}
+              </Button>
+            </div>
+          ))
+        )}
       </div>
 
       <Dialog open={isReplyDialogOpen} onOpenChange={setIsReplyDialogOpen}>

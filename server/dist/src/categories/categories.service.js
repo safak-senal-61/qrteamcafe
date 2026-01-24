@@ -18,6 +18,18 @@ let CategoriesService = class CategoriesService {
         this.prisma = prisma;
     }
     async create(cafeId, createCategoryDto) {
+        const existingCategory = await this.prisma.category.findFirst({
+            where: {
+                cafeId,
+                name: {
+                    equals: createCategoryDto.name,
+                    mode: 'insensitive',
+                },
+            },
+        });
+        if (existingCategory) {
+            throw new common_1.BadRequestException('Bu isimde bir kategori zaten mevcut.');
+        }
         return this.prisma.category.create({
             data: {
                 ...createCategoryDto,
@@ -51,14 +63,29 @@ let CategoriesService = class CategoriesService {
         return category;
     }
     async update(id, updateCategoryDto) {
-        await this.findOne(id);
+        const category = await this.findOne(id);
+        if (updateCategoryDto.name) {
+            const existingCategory = await this.prisma.category.findFirst({
+                where: {
+                    cafeId: category.cafeId,
+                    name: {
+                        equals: updateCategoryDto.name,
+                        mode: 'insensitive',
+                    },
+                    id: { not: id },
+                },
+            });
+            if (existingCategory) {
+                throw new common_1.BadRequestException('Bu isimde bir kategori zaten mevcut.');
+            }
+        }
         return this.prisma.category.update({
             where: { id },
             data: updateCategoryDto,
         });
     }
     async remove(id) {
-        await this.findOne(id);
+        const category = await this.findOne(id);
         return this.prisma.category.delete({
             where: { id },
         });

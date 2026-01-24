@@ -13,7 +13,10 @@ import {
   MoreVertical,
   Check,
   X,
-  Save
+  Save,
+  Star,
+  Package,
+  List
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
@@ -33,6 +36,14 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -339,6 +350,25 @@ export default function MenuPage() {
     }
   };
 
+  const handleToggleRecommended = async (product: any) => {
+    try {
+      const updatedProducts = products.map(p => 
+        p.id === product.id ? { ...p, isChefRecommended: !p.isChefRecommended } : p
+      );
+      setProducts(updatedProducts);
+
+      await fetch(`${API_URL}/products/${product.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isChefRecommended: !product.isChefRecommended })
+      });
+      toast.success(product.isChefRecommended ? 'Önerilenlerden çıkarıldı' : 'Önerilenlere eklendi');
+    } catch (error) {
+      toast.error('Güncelleme başarısız');
+      fetchData();
+    }
+  };
+
   const handleToggleAvailability = async (product: any) => {
     try {
       // Optimistic update
@@ -426,89 +456,133 @@ export default function MenuPage() {
     );
   }
 
+  const CategoryList = ({ isMobile = false }) => (
+    <div className="flex flex-col gap-4 h-full">
+      <div className="flex items-center justify-between shrink-0">
+        <h3 className="font-semibold text-lg">Kategoriler</h3>
+        <Button size="sm" variant="outline" onClick={() => {
+          setEditingCategory(null);
+          setCategoryForm({ name: '' });
+          setIsCategoryDialogOpen(true);
+        }}>
+          <Plus className="h-4 w-4 mr-1" /> Ekle
+        </Button>
+      </div>
+
+      <ScrollArea className="flex-1 -mx-2 px-2">
+        <Reorder.Group axis="y" values={categories} onReorder={handleCategoryReorder} className="space-y-2">
+          {categories.map((category) => (
+            <Reorder.Item key={category.id} value={category}>
+              <div 
+                className={cn(
+                  "flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground shadow-sm transition-all cursor-pointer hover:border-primary/50 group",
+                  selectedCategoryId === category.id && "border-primary bg-primary/5"
+                )}
+                onClick={() => setSelectedCategoryId(category.id)}
+              >
+                <div className="flex items-center gap-3">
+                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <span className="font-medium">{category.name}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {category._count?.products || 0}
+                  </Badge>
+                </div>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => {
+                      setEditingCategory(category);
+                      setCategoryForm({ name: category.name });
+                      setIsCategoryDialogOpen(true);
+                    }}>
+                      <Pencil className="mr-2 h-4 w-4" /> Düzenle
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteCategory(category.id)}>
+                      <Trash2 className="mr-2 h-4 w-4" /> Sil
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
+        
+        {categories.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
+            Henüz kategori yok.
+          </div>
+        )}
+      </ScrollArea>
+    </div>
+  );
+
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col gap-4">
-      <div className="flex items-center justify-between shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Menü Yönetimi</h2>
           <p className="text-muted-foreground text-sm">
-            Kategorileri ve ürünleri sürükleyip bırakarak düzenleyebilirsiniz.
+            Kategorileri ve ürünleri düzenleyin.
           </p>
         </div>
-        <div className="flex gap-2">
-          {/* Mobile view might need adjustment, keeping simple for now */}
+        
+        {/* Mobile Actions */}
+        <div className="flex items-center gap-2 lg:hidden self-end sm:self-auto">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm">
+                <List className="mr-2 h-4 w-4" /> Kategorileri Yönet
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[85vw] sm:w-[350px] p-4">
+              <SheetHeader className="mb-4 text-left">
+                <SheetTitle>Kategori Yönetimi</SheetTitle>
+                <SheetDescription>
+                  Sürükleyip bırakarak sıralamayı değiştirebilirsiniz.
+                </SheetDescription>
+              </SheetHeader>
+              <CategoryList isMobile={true} />
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
-      <div className="flex-1 flex gap-6 min-h-0">
-        {/* Categories Sidebar */}
-        <div className="w-1/3 md:w-1/4 flex flex-col gap-4 min-w-[250px]">
-          <div className="flex items-center justify-between shrink-0">
-            <h3 className="font-semibold">Kategoriler</h3>
-            <Button size="sm" variant="outline" onClick={() => {
-              setEditingCategory(null);
-              setCategoryForm({ name: '' });
-              setIsCategoryDialogOpen(true);
-            }}>
-              <Plus className="h-4 w-4 mr-1" /> Ekle
-            </Button>
-          </div>
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block w-1/4 min-w-[250px] h-full">
+          <CategoryList />
+        </div>
 
-          <ScrollArea className="flex-1 -mx-2 px-2">
-            <Reorder.Group axis="y" values={categories} onReorder={handleCategoryReorder} className="space-y-2">
-              {categories.map((category) => (
-                <Reorder.Item key={category.id} value={category}>
-                  <div 
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground shadow-sm transition-all cursor-pointer hover:border-primary/50 group",
-                      selectedCategoryId === category.id && "border-primary bg-primary/5"
-                    )}
-                    onClick={() => setSelectedCategoryId(category.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <span className="font-medium">{category.name}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {category._count?.products || 0}
-                      </Badge>
-                    </div>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => {
-                          setEditingCategory(category);
-                          setCategoryForm({ name: category.name });
-                          setIsCategoryDialogOpen(true);
-                        }}>
-                          <Pencil className="mr-2 h-4 w-4" /> Düzenle
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteCategory(category.id)}>
-                          <Trash2 className="mr-2 h-4 w-4" /> Sil
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </Reorder.Item>
+        {/* Mobile Category Selection (Horizontal Scroll) */}
+        <div className="lg:hidden shrink-0 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <ScrollArea className="w-full whitespace-nowrap pb-2">
+            <div className="flex gap-2">
+              {categories.map((cat) => (
+                <Badge
+                  key={cat.id}
+                  variant={selectedCategoryId === cat.id ? "default" : "outline"}
+                  className={cn(
+                    "cursor-pointer text-sm py-1.5 px-4 transition-all hover:bg-primary/90 hover:text-primary-foreground",
+                    selectedCategoryId === cat.id ? "shadow-md" : "bg-background"
+                  )}
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                >
+                  {cat.name} ({cat._count?.products || 0})
+                </Badge>
               ))}
-            </Reorder.Group>
-            
-            {categories.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
-                Henüz kategori yok.
-              </div>
-            )}
+            </div>
           </ScrollArea>
         </div>
 
         {/* Products Main Area */}
         <div className="flex-1 flex flex-col gap-4 bg-muted/10 rounded-xl border p-4">
-          <div className="flex items-center justify-between gap-4 shrink-0">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 shrink-0">
+            <div className="relative flex-1 max-w-full sm:max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Ürünlerde ara..."
@@ -517,14 +591,14 @@ export default function MenuPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button onClick={() => openProductDialog()} disabled={!selectedCategoryId}>
+            <Button onClick={() => openProductDialog()} disabled={!selectedCategoryId} className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" /> Ürün Ekle
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 pr-4">
+          <ScrollArea className="flex-1 -mr-3 pr-3">
             {selectedCategoryId ? (
-              <Reorder.Group axis="y" values={viewProducts} onReorder={handleProductReorder} className="space-y-2">
+              <Reorder.Group axis="y" values={viewProducts} onReorder={handleProductReorder} className="space-y-2 pb-4">
                 <AnimatePresence initial={false}>
                   {viewProducts.map((product) => (
                     <Reorder.Item key={product.id} value={product} dragListener={!searchTerm}>
@@ -532,60 +606,99 @@ export default function MenuPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:shadow-md transition-all group"
+                        className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 rounded-lg border bg-card hover:shadow-md transition-all group relative"
                       >
                         {!searchTerm && (
-                          <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          <div className="absolute top-2 right-2 sm:static sm:block">
+                             <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0" />
+                          </div>
                         )}
                         
-                        <div className="h-12 w-12 rounded-md bg-secondary shrink-0 overflow-hidden relative">
-                          {product.imageUrl ? (
-                            <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
-                          ) : (
-                            <ImageIcon className="h-5 w-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-muted-foreground" />
-                          )}
+                        <div className="flex items-center gap-4 w-full sm:w-auto">
+                          <div className="h-16 w-16 sm:h-12 sm:w-12 rounded-md bg-secondary shrink-0 overflow-hidden relative">
+                            {product.imageUrl ? (
+                              <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <ImageIcon className="h-6 w-6 sm:h-5 sm:w-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-muted-foreground" />
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0 sm:hidden">
+                            <div className="flex items-center gap-2">
+                                <h4 className="font-medium truncate">{product.name}</h4>
+                                {!product.isAvailable && (
+                                  <Badge variant="destructive" className="h-5 text-[10px] px-1.5">Pasif</Badge>
+                                )}
+                            </div>
+                            <div className="text-sm font-semibold text-primary">
+                                {product.price} ₺
+                                {product.originalPrice && (
+                                  <span className="ml-2 text-xs text-muted-foreground line-through decoration-destructive/50">
+                                    {product.originalPrice} ₺
+                                  </span>
+                                )}
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 hidden sm:block">
                           <div className="flex items-center gap-2">
                             <h4 className="font-medium truncate">{product.name}</h4>
                             {!product.isAvailable && (
                               <Badge variant="destructive" className="h-5 text-[10px] px-1.5">Pasif</Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground truncate">{product.description}</p>
+                          <p className="text-sm text-muted-foreground truncate max-w-[300px]">{product.description}</p>
                         </div>
 
-                        <div className="flex items-center gap-4 shrink-0">
-                          <div className="flex flex-col items-end">
-                            {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
-                              <div className="text-xs text-muted-foreground line-through tabular-nums">
-                                ₺{Number(product.originalPrice).toFixed(2)}
-                              </div>
-                            )}
-                            <div className={cn("font-semibold tabular-nums", product.originalPrice && Number(product.originalPrice) > Number(product.price) && "text-green-600")}>
-                              ₺{Number(product.price).toFixed(2)}
-                            </div>
-                            <div className={cn("text-xs font-medium px-1.5 py-0.5 rounded", product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
-                              {product.stock} adet
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-1 border rounded-md p-1 bg-background">
-                             <Switch 
-                                checked={product.isAvailable} 
-                                onCheckedChange={() => handleToggleAvailability(product)}
-                                className="scale-75"
-                             />
+                        <div className="flex items-center justify-between w-full sm:w-auto mt-2 sm:mt-0 gap-4 shrink-0">
+                          <div className="flex items-center gap-2 sm:hidden">
+                             {/* Mobile description or extra info if needed, keeping it simple */}
                           </div>
 
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openProductDialog(product)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600" onClick={() => handleDeleteProduct(product.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                          <div className="flex items-center gap-4 ml-auto sm:ml-0">
+                            <div className="text-right hidden sm:block">
+                              <div className="font-semibold text-primary">{product.price} ₺</div>
+                              {product.originalPrice && (
+                                <div className="text-xs text-muted-foreground line-through decoration-destructive/50">
+                                  {product.originalPrice} ₺
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn("h-8 w-8", product.isChefRecommended ? "text-yellow-500" : "text-muted-foreground")}
+                                onClick={() => handleToggleRecommended(product)}
+                                title="Şefin Tavsiyesi"
+                              >
+                                <Star className={cn("h-4 w-4", product.isChefRecommended && "fill-current")} />
+                              </Button>
+                              
+                              <Switch 
+                                checked={product.isAvailable}
+                                onCheckedChange={() => handleToggleAvailability(product)}
+                                className="scale-75"
+                              />
+
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => openProductDialog(product)}>
+                                    <Pencil className="mr-2 h-4 w-4" /> Düzenle
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteProduct(product.id)}>
+                                    <Trash2 className="mr-2 h-4 w-4" /> Sil
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </div>
                         </div>
                       </motion.div>
@@ -594,19 +707,16 @@ export default function MenuPage() {
                 </AnimatePresence>
               </Reorder.Group>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                <p>Ürünleri görmek için bir kategori seçin.</p>
-              </div>
-            )}
-            
-            {selectedCategoryId && viewProducts.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                Bu kategoride ürün bulunamadı.
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
+                <Package className="h-12 w-12 opacity-20" />
+                <p>Lütfen ürünleri görüntülemek için bir kategori seçin.</p>
               </div>
             )}
           </ScrollArea>
         </div>
       </div>
+
+
 
       {/* Category Dialog */}
       <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
@@ -650,14 +760,15 @@ export default function MenuPage() {
 
       {/* Product Dialog */}
       <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingProduct ? 'Ürün Düzenle' : 'Yeni Ürün'}</DialogTitle>
-            <DialogDescription className="hidden">
-              Ürün detaylarını giriniz.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSaveProduct} className="space-y-6">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-6 py-4 border-b shrink-0">
+          <DialogTitle>{editingProduct ? 'Ürün Düzenle' : 'Yeni Ürün'}</DialogTitle>
+          <DialogDescription className="hidden">
+            Ürün detaylarını giriniz.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSaveProduct} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -808,11 +919,12 @@ export default function MenuPage() {
                 </div>
               </div>
             </div>
+          </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsProductDialogOpen(false)}>İptal</Button>
-              <Button type="submit">Kaydet</Button>
-            </DialogFooter>
+          <DialogFooter className="px-6 py-4 border-t bg-background shrink-0">
+            <Button type="button" variant="outline" onClick={() => setIsProductDialogOpen(false)}>İptal</Button>
+            <Button type="submit">Kaydet</Button>
+          </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

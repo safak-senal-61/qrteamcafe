@@ -25,6 +25,7 @@ interface ProductDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   showRating?: boolean;
+  isReadOnly?: boolean;
 }
 
 interface Review {
@@ -36,7 +37,7 @@ interface Review {
   createdAt: string;
 }
 
-export function ProductDetailDialog({ product, open, onOpenChange, showRating = true }: ProductDetailDialogProps) {
+export function ProductDetailDialog({ product, open, onOpenChange, showRating = true, isReadOnly = false }: ProductDetailDialogProps) {
   const { addItem } = useCartStore();
   const { customer, setAuthDialogOpen } = useCustomerStore();
   const [quantity, setQuantity] = useState(1);
@@ -133,7 +134,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
               fill
               className="object-contain"
               priority
-              unoptimized={!!product.image?.includes('localhost') || !!product.image?.includes('127.0.0.1') || !!product.image?.startsWith('/uploads/')}
+              unoptimized={true}
             />
           </div>
           
@@ -199,13 +200,14 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                           alt={rec.name}
                           fill
                           className="object-cover"
-                          unoptimized={!!rec.image?.includes('localhost') || !!rec.image?.includes('127.0.0.1') || !!rec.image?.startsWith('/uploads/')}
+                          unoptimized={true}
                         />
                       </div>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-xs font-medium truncate" title={rec.name}>{rec.name}</span>
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-primary">{rec.price} ₺</span>
+                          {!isReadOnly && (
                           <Button 
                             size="icon" 
                             variant="ghost" 
@@ -227,6 +229,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -236,6 +239,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
             </div>
           )}
 
+          {!isReadOnly && (
           <div className="space-y-3">
             <Label htmlFor="note" className="text-base font-semibold">Sipariş Notu</Label>
             <Textarea
@@ -246,6 +250,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
               onChange={(e) => setNote(e.target.value)}
             />
           </div>
+          )}
 
           {showRating && (
             <div className="pt-2">
@@ -312,6 +317,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
             </div>
           )}
 
+          {!isReadOnly && (
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center space-x-3 bg-secondary/50 rounded-lg p-1">
               <Button
@@ -344,6 +350,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
               {(product.price * quantity).toFixed(2)} ₺ • Ekle
             </Button>
           </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

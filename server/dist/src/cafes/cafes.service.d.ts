@@ -3,7 +3,7 @@ import { UpdateCafeDto } from './dto/update-cafe.dto';
 export declare class CafesService {
     private prisma;
     constructor(prisma: PrismaService);
-    findOne(id: string): Promise<{
+    findOne(idOrSlug: string): Promise<{
         id: string;
         name: string;
         description: string | null;
@@ -39,6 +39,7 @@ export declare class CafesService {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     }>;
@@ -78,6 +79,7 @@ export declare class CafesService {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     }>;
@@ -117,6 +119,7 @@ export declare class CafesService {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     }>;
@@ -202,5 +205,6 @@ export declare class CafesService {
             createdAt: Date;
             updatedAt: Date;
         }[];
+        isSoundEnabled: boolean;
     }>;
 }

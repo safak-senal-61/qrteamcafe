@@ -51,6 +51,7 @@ model Cafe {
   status    String      @default("PENDING") // PENDING, APPROVED, REJECTED
   showProductRatings Boolean @default(true) @map("show_product_ratings")
   autoApproveReviews Boolean @default(false) @map("auto_approve_reviews")
+  isSoundEnabled     Boolean @default(true) @map("is_sound_enabled")
   
   // Theme & Template
   templateId      String?   @default("classic") @map("template_id")

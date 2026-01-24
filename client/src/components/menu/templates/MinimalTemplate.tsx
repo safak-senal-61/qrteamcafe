@@ -18,6 +18,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
+import { useTranslations } from 'next-intl';
+
 export function MinimalTemplate({
   cafe,
   categories,
@@ -42,14 +44,16 @@ export function MinimalTemplate({
   fetchActiveOrders,
   currentTableId,
   copyWifi,
-  getSocialUrl
+  getSocialUrl,
+  isDemoMode
 }: TemplateProps) {
+  const t = useTranslations('Menu');
   const router = useRouter();
   const params = useParams();
   const locale = params.locale;
 
   return (
-    <div className="min-h-screen bg-white pb-24 relative font-sans text-zinc-900 selection:bg-zinc-100">
+    <div className="min-h-screen bg-white pb-24 relative font-sans text-zinc-900 selection:bg-zinc-100 overflow-x-hidden">
       <CustomerAuthDialog variant="minimal" />
       
       {/* Minimal Header */}
@@ -72,7 +76,7 @@ export function MinimalTemplate({
             <h1 className="text-3xl font-light tracking-wide uppercase text-zinc-900">{cafe.name}</h1>
             {tableNumber && (
               <span className="inline-block text-xs font-medium tracking-widest text-zinc-400 border border-zinc-200 px-3 py-1 rounded-full uppercase">
-                Masa {tableNumber}
+                {t('table')} {tableNumber}
               </span>
             )}
           </div>
@@ -85,7 +89,7 @@ export function MinimalTemplate({
                 className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors flex items-center gap-2"
               >
                 <User className="w-4 h-4" />
-                {customer.name}
+                {customer.name || t('myAccount')}
               </button>
             ) : (
                <button 
@@ -93,7 +97,7 @@ export function MinimalTemplate({
                 className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors flex items-center gap-2"
               >
                 <User className="w-4 h-4" />
-                Giriş Yap
+                {t('login')}
               </button>
              )}
           </div>
@@ -107,7 +111,7 @@ export function MinimalTemplate({
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
              <input
                type="text"
-               placeholder="Menüde ara..."
+               placeholder={t('searchPlaceholder')}
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
                className="w-full pl-10 pr-4 py-2 bg-zinc-50 border-none rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-zinc-200 transition-all placeholder:text-zinc-400"
@@ -129,7 +133,7 @@ export function MinimalTemplate({
                    : "border-transparent text-zinc-500 hover:text-zinc-900"
                )}
             >
-              TÜMÜ
+              {t('all').toUpperCase()}
             </button>
             {chefProducts.length > 0 && (
                <button
@@ -141,7 +145,7 @@ export function MinimalTemplate({
                      : "border-transparent text-zinc-500 hover:text-zinc-900"
                  )}
                >
-                 ŞEFİN SEÇİMİ
+                 {t('chefChoice').toUpperCase()}
                </button>
             )}
             {popularProducts.length > 0 && (
@@ -154,7 +158,7 @@ export function MinimalTemplate({
                      : "border-transparent text-zinc-500 hover:text-zinc-900"
                  )}
                >
-                 POPÜLER
+                 {t('popular').toUpperCase()}
                </button>
             )}
             {categories.map((cat) => (
@@ -180,7 +184,7 @@ export function MinimalTemplate({
         {/* Chef's */}
         {chefProducts.length > 0 && (
           <section id="chef" className="scroll-mt-48">
-             <h2 className="text-xl font-light text-center mb-8 tracking-widest uppercase text-zinc-400">Şefin Seçimi</h2>
+             <h2 className="text-xl font-light text-center mb-8 tracking-widest uppercase text-zinc-400">{t('chefChoice')}</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                {chefProducts.map((product, index) => (
                  <div key={product.id} className="group">
@@ -190,6 +194,7 @@ export function MinimalTemplate({
                       showRating={cafe?.showProductRatings} 
                       variant="list" 
                       className="border-b border-zinc-100 pb-4 rounded-none bg-transparent hover:bg-transparent shadow-none hover:shadow-none p-0"
+                      isReadOnly={isDemoMode}
                     />
                  </div>
                ))}
@@ -200,7 +205,7 @@ export function MinimalTemplate({
         {/* Popular */}
         {popularProducts.length > 0 && (
           <section id="popular" className="scroll-mt-48">
-             <h2 className="text-xl font-light text-center mb-8 tracking-widest uppercase text-zinc-400">Popüler Lezzetler</h2>
+             <h2 className="text-xl font-light text-center mb-8 tracking-widest uppercase text-zinc-400">{t('popular')}</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                {popularProducts.map((product, index) => (
                  <div key={product.id}>
@@ -247,32 +252,34 @@ export function MinimalTemplate({
 
         {filteredProducts.length === 0 && (
           <div className="text-center py-20">
-             <p className="text-zinc-400">Ürün bulunamadı.</p>
+             <p className="text-zinc-400">{t('noResultsTitle')}</p>
           </div>
         )}
       </div>
 
-      <CallWaiterButton options={cafe.waiterCallOptions} />
+      {!isDemoMode && <CallWaiterButton options={cafe.waiterCallOptions} />}
       
-      <CartSheet 
-        cafeId={cafe.id}
-        tableId={currentTableId || undefined}
-        onOrderSuccess={() => {
-          setIsCartOpen(true);
-          fetchActiveOrders();
-        }}
-        activeOrders={activeOrders}
-        onCancelOrder={handleCancelOrder}
-        isOpen={isCartOpen}
-        onOpenChange={setIsCartOpen}
-      />
+      {!isDemoMode && (
+        <CartSheet 
+          cafeId={cafe.id}
+          tableId={currentTableId || undefined}
+          onOrderSuccess={() => {
+            setIsCartOpen(true);
+            fetchActiveOrders();
+          }}
+          activeOrders={activeOrders}
+          onCancelOrder={handleCancelOrder}
+          isOpen={isCartOpen}
+          onOpenChange={setIsCartOpen}
+        />
+      )}
 
       <CustomerAuthDialog variant="minimal" />
       
       <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
         <DialogContent className="sm:max-w-md text-center border-none shadow-none bg-white">
           <DialogHeader>
-            <DialogTitle className="text-xl font-light tracking-wide uppercase pt-4">Hoş Geldiniz</DialogTitle>
+            <DialogTitle className="text-xl font-light tracking-wide uppercase pt-4">{t('welcome')}</DialogTitle>
             <DialogDescription className="pt-2 text-zinc-500 font-light">
               {cafe.welcomeMessage}
             </DialogDescription>
@@ -282,7 +289,7 @@ export function MinimalTemplate({
               onClick={() => setWelcomeOpen(false)}
               className="text-xs tracking-widest uppercase border-b border-zinc-900 pb-1 hover:text-zinc-600 hover:border-zinc-600 transition-colors"
             >
-              Menüyü İncele
+              {t('viewMenu')}
             </button>
           </div>
         </DialogContent>

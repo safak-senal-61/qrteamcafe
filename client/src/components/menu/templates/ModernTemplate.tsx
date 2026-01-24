@@ -18,6 +18,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
+import { useTranslations } from 'next-intl';
+
 export function ModernTemplate({
   cafe,
   categories,
@@ -41,14 +43,16 @@ export function ModernTemplate({
   fetchActiveOrders,
   currentTableId,
   copyWifi,
-  getSocialUrl
+  getSocialUrl,
+  isDemoMode
 }: TemplateProps) {
+  const t = useTranslations('Menu');
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 pb-24 relative font-sans selection:bg-primary selection:text-primary-foreground">
+    <div className="min-h-screen bg-slate-950 text-slate-50 pb-24 relative font-sans selection:bg-primary selection:text-primary-foreground overflow-x-hidden">
       {/* Modern Header */}
       <div className="relative h-[40vh] min-h-[300px] w-full overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent z-10" />
@@ -57,11 +61,11 @@ export function ModernTemplate({
         <div className="absolute top-6 right-6 z-50 flex gap-3">
           {customer ? (
             <div 
-              onClick={() => router.push(`/${locale}/menu/${cafe.id}/profile`)}
+              onClick={() => router.push(`/menu/${cafe.id}/profile`)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 cursor-pointer active:scale-95 transition-all hover:bg-white/20 text-white font-medium shadow-2xl"
             >
               <User className="h-4 w-4" />
-              <span className="text-sm">{customer.name || 'Hesabım'}</span>
+              <span className="text-sm">{customer.name || t('myAccount')}</span>
             </div>
           ) : (
             <div 
@@ -69,7 +73,7 @@ export function ModernTemplate({
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/80 backdrop-blur-md border border-primary/50 cursor-pointer active:scale-95 transition-all hover:bg-primary text-white font-medium shadow-2xl"
             >
               <User className="h-4 w-4" />
-              <span className="text-sm">Giriş Yap</span>
+              <span className="text-sm">{t('login')}</span>
             </div>
           )}
         </div>
@@ -101,7 +105,7 @@ export function ModernTemplate({
               <div className="flex flex-wrap justify-center gap-3">
                 {tableNumber && (
                   <Badge className="text-lg px-6 py-1.5 font-bold bg-white text-black hover:bg-white/90 shadow-lg border-0 rounded-full">
-                    Masa {tableNumber}
+                    {t('table')} {tableNumber}
                   </Badge>
                 )}
                  {cafe.wifiSsid && (
@@ -125,7 +129,7 @@ export function ModernTemplate({
             <div className="relative max-w-2xl mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <Input
-                placeholder="Menüde ara..."
+                placeholder={t('searchPlaceholder')}
                 className="pl-12 bg-slate-900/50 border-white/10 focus:border-primary/50 focus:bg-slate-900 rounded-full h-12 text-lg text-white placeholder:text-slate-500 transition-all shadow-inner"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -138,9 +142,9 @@ export function ModernTemplate({
             <div className="flex gap-2 px-4 justify-start md:justify-center min-w-max">
                 {/* Custom Category Nav for Modern Theme */}
                 {[
-                    { id: 'all', name: 'Tümü' },
-                    ...(chefProducts.length > 0 ? [{ id: 'chef', name: 'Şefin Önerisi' }] : []),
-                    ...(popularProducts.length > 0 ? [{ id: 'popular', name: 'Popüler' }] : []),
+                    { id: 'all', name: t('all') },
+                    ...(chefProducts.length > 0 ? [{ id: 'chef', name: t('chefChoice') }] : []),
+                    ...(popularProducts.length > 0 ? [{ id: 'popular', name: t('popular') }] : []),
                     ...categories
                 ].map((cat) => (
                     <button
@@ -173,7 +177,7 @@ export function ModernTemplate({
           >
             <h2 className="text-3xl font-black text-white mb-8 flex items-center gap-3">
               <Star className="h-8 w-8 text-orange-500 fill-orange-500" />
-              Şefin Önerisi
+              {t('chefChoice')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {chefProducts.map((product, index) => (
@@ -189,7 +193,15 @@ export function ModernTemplate({
                                 <p className="text-slate-300 line-clamp-2 text-sm mb-4">{product.description}</p>
                                 <span className="text-xl font-bold text-primary">{product.price} ₺</span>
                             </div>
-                            <ProductCard product={{...product, category: product.categoryId, image: product.imageUrl}} index={index} showRating={cafe?.showProductRatings} variant="compact" hideImage={true} className="bg-transparent border-0 shadow-none !p-0" />
+                            <ProductCard 
+                              product={{...product, category: product.categoryId, image: product.imageUrl}} 
+                              index={index} 
+                              showRating={cafe?.showProductRatings} 
+                              variant="compact" 
+                              hideImage={true} 
+                              className="bg-transparent border-0 shadow-none !p-0"
+                              isReadOnly={isDemoMode}
+                            />
                         </div>
                     </div>
                 </div>
@@ -243,7 +255,15 @@ export function ModernTemplate({
                                   To save time, I will render ProductCard but customize it via CSS or just use it as is if it supports 'list' mode well.
                                   Or better, I'll just use the standard ProductCard but wrapped in a dark theme provider style.
                                */}
-                              <ProductCard product={{...product, category: category.id, image: product.imageUrl}} index={index} showRating={cafe?.showProductRatings} variant="compact" hideImage={true} className="!bg-transparent !border-0 !shadow-none !p-0" />
+                              <ProductCard 
+                                product={{...product, category: category.id, image: product.imageUrl}} 
+                                index={index} 
+                                showRating={cafe?.showProductRatings} 
+                                variant="compact" 
+                                hideImage={true} 
+                                className="!bg-transparent !border-0 !shadow-none !p-0"
+                                isReadOnly={isDemoMode}
+                              />
                           </div>
                       </div>
                   </div>
@@ -253,8 +273,8 @@ export function ModernTemplate({
           );
         })}
       </div>
-
-      <CallWaiterButton options={cafe.waiterCallOptions} />
+      
+      {!isDemoMode && <CallWaiterButton options={cafe.waiterCallOptions} />}
 
       {/* Footer */}
       <footer className="mt-32 py-12 bg-slate-900 border-t border-white/5">
@@ -283,23 +303,25 @@ export function ModernTemplate({
           </div>
           <div className="text-center text-slate-500 text-sm">
             <p>&copy; {new Date().getFullYear()} {cafe.name}</p>
-            <p className="mt-2 text-xs uppercase tracking-widest opacity-50">Powered by QR Team Cafe</p>
+            <p className="mt-2 text-xs uppercase tracking-widest opacity-50">{t('poweredBy')}</p>
           </div>
         </div>
       </footer>
 
-      <CartSheet 
-        cafeId={cafe.id}
-        tableId={currentTableId || undefined}
-        onOrderSuccess={() => {
-          setIsCartOpen(true);
-          fetchActiveOrders();
-        }}
-        activeOrders={activeOrders}
-        onCancelOrder={handleCancelOrder}
-        isOpen={isCartOpen}
-        onOpenChange={setIsCartOpen}
-      />
+      {!isDemoMode && (
+        <CartSheet 
+          cafeId={cafe.id}
+          tableId={currentTableId || undefined}
+          onOrderSuccess={() => {
+            setIsCartOpen(true);
+            fetchActiveOrders();
+          }}
+          activeOrders={activeOrders}
+          onCancelOrder={handleCancelOrder}
+          isOpen={isCartOpen}
+          onOpenChange={setIsCartOpen}
+        />
+      )}
 
       {/* Welcome Message Dialog - Styled for Dark Mode */}
       <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
@@ -311,7 +333,7 @@ export function ModernTemplate({
                    <img src={cafe.logo} alt={cafe.name} className="h-full w-full object-cover" />
                 </div>
               )}
-              <span>Hoş Geldiniz!</span>
+              <span>{t('welcome')}</span>
             </DialogTitle>
             <DialogDescription className="text-lg pt-2 text-slate-300">
               {cafe.welcomeMessage}
@@ -319,7 +341,7 @@ export function ModernTemplate({
           </DialogHeader>
           <div className="flex justify-center pt-6 pb-2">
             <Badge variant="outline" className="text-white border-white/20 py-2 px-8 cursor-pointer hover:bg-white/10 transition-all text-base" onClick={() => setWelcomeOpen(false)}>
-              Menüyü İncele
+              {t('viewMenu')}
             </Badge>
           </div>
         </DialogContent>

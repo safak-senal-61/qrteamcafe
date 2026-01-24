@@ -11,11 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, User, ShoppingBag, Clock, MapPin, ChevronRight, Loader2, Star, TrendingUp, Trophy, Heart, Award, Utensils, ArrowLeft, Mail, Phone, Lock, Trash2, Shield, Key, AlertTriangle, Settings, CheckCircle2, ChevronDown, ChevronUp, Calendar, Filter } from 'lucide-react';
+import { LogOut, User, ShoppingBag, Clock, MapPin, ChevronRight, Loader2, Star, TrendingUp, Trophy, Heart, Award, Utensils, ArrowLeft, Mail, Phone, Lock, Trash2, Shield, Key, AlertTriangle, Settings, CheckCircle2, ChevronDown, ChevronUp, Calendar, Filter, Sparkles, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 import axios from 'axios';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CreateReviewDialog } from '@/components/menu/CreateReviewDialog';
 import { ProductDetailDialog } from '@/components/menu/ProductDetailDialog';
 
@@ -73,13 +73,13 @@ interface Product {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'PENDING': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'PREPARING': return 'bg-blue-100 text-blue-800 border-blue-200';
-    case 'READY': return 'bg-green-100 text-green-800 border-green-200';
-    case 'DELIVERED': return 'bg-gray-100 text-gray-800 border-gray-200';
-    case 'CANCELLED': return 'bg-red-100 text-red-800 border-red-200';
-    case 'PAID': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-    default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'PENDING': return 'bg-amber-100 text-amber-700 border-amber-200';
+    case 'PREPARING': return 'bg-blue-100 text-blue-700 border-blue-200';
+    case 'READY': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+    case 'DELIVERED': return 'bg-slate-100 text-slate-700 border-slate-200';
+    case 'CANCELLED': return 'bg-red-100 text-red-700 border-red-200';
+    case 'PAID': return 'bg-purple-100 text-purple-700 border-purple-200';
+    default: return 'bg-gray-100 text-gray-700 border-gray-200';
   }
 };
 
@@ -113,7 +113,6 @@ const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order)
   const [, forceUpdate] = useState({});
 
   useEffect(() => {
-    // If waiting for review time, update every minute
     if (order.deliveredAt && ['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status)) {
       const diff = new Date().getTime() - new Date(order.deliveredAt).getTime();
       if (diff < 5 * 60 * 1000) {
@@ -126,7 +125,7 @@ const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order)
   const canReview = () => {
     if (!['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status)) return false;
     if (getReviewStatus(order) === 'ALL') return true;
-    if (!order.deliveredAt) return true; // Old orders
+    if (!order.deliveredAt) return true;
     
     const diff = new Date().getTime() - new Date(order.deliveredAt).getTime();
     return diff >= 5 * 60 * 1000;
@@ -148,119 +147,149 @@ const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order)
   };
   
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-md">
+    <motion.div 
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+    >
        <button 
          type="button"
-         className="w-full p-4 flex items-center justify-between cursor-pointer bg-white hover:bg-gray-50/50 transition-colors text-left"
+         className="w-full p-3 md:p-4 flex items-center justify-between cursor-pointer bg-white hover:bg-gray-50/50 transition-colors text-left group"
          onClick={() => setExpanded(!expanded)}
        >
-         <div className="flex items-center gap-3">
-            <div className={cn("w-1 h-10 rounded-full shrink-0", getStatusColor(order.status).split(' ')[0])} />
-            <div className="min-w-0">
-               <div className="flex items-center gap-2 flex-wrap">
-                 <span className="font-bold text-gray-900 truncate">
+         <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+            <div className={cn("w-1.5 h-10 md:h-12 rounded-full shrink-0 transition-all group-hover:h-12 md:group-hover:h-14", getStatusColor(order.status).split(' ')[0])} />
+            <div className="min-w-0 flex-1">
+               <div className="flex items-center gap-2 flex-wrap mb-0.5 md:mb-1">
+                 <span className="font-bold text-gray-900 truncate text-base md:text-lg">
                    {order.table?.name ? `Masa ${order.table.name}` : 'Paket Servis'}
                  </span>
-                 <span className="text-xs text-gray-400">•</span>
-                 <span className="text-xs text-gray-500 whitespace-nowrap">
-                   {new Date(order.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} {new Date(order.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                 </span>
-               </div>
-               <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-5 border font-medium", getStatusColor(order.status))}>
+                 <Badge variant="outline" className={cn("text-[10px] px-1.5 md:px-2 py-0.5 h-5 border font-semibold shrink-0", getStatusColor(order.status))}>
                     {getStatusText(order)}
                   </Badge>
-                  <span className="text-xs text-gray-400">
-                    {order.items.length} ürün
-                  </span>
+               </div>
+               <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-gray-500 truncate">
+                 <span className="flex items-center gap-1 shrink-0">
+                   <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                   {new Date(order.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} {new Date(order.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                 </span>
+                 <span className="w-1 h-1 bg-gray-300 rounded-full shrink-0" />
+                 <span className="truncate">{order.items.length} ürün</span>
                </div>
             </div>
          </div>
          
-         <div className="flex items-center gap-3 pl-2">
-            <span className="font-black text-emerald-600 whitespace-nowrap">
-              ₺{Number(order.totalAmount).toFixed(2)}
-            </span>
-            {expanded ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
+         <div className="flex items-center gap-2 md:gap-3 pl-2 shrink-0">
+            <div className="text-right">
+              <span className="block font-black text-emerald-600 text-base md:text-lg">
+                ₺{Number(order.totalAmount).toFixed(2)}
+              </span>
+            </div>
+            <div className={cn("p-1 md:p-1.5 rounded-full bg-gray-50 transition-transform duration-300", expanded && "rotate-180")}>
+              <ChevronDown className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-500" />
+            </div>
          </div>
        </button>
 
-       {expanded && (
-         <div className="bg-gray-50/50 border-t border-gray-100 p-3 space-y-3 animate-in slide-in-from-top-1 duration-200">
-            <div className="space-y-2">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between text-sm py-1 border-b border-gray-100 last:border-0 border-dashed">
-                   <div className="flex items-center gap-2 overflow-hidden pr-2">
-                      <div className="h-8 w-8 rounded-md bg-gray-100 bg-cover bg-center shrink-0" style={{ backgroundImage: `url(${item.product.imageUrl || '/placeholder-food.jpg'})` }} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1">
-                            <span className="text-emerald-600 font-bold text-xs shrink-0">{item.quantity}x</span>
-                            <span className="text-gray-700 truncate font-medium">{item.product.name}</span>
-                        </div>
-                        {item.note && <p className="text-xs text-gray-400 italic truncate">Not: {item.note}</p>}
-                      </div>
-                   </div>
-                   <span className="text-gray-600 text-xs font-medium whitespace-nowrap">₺{Number(item.totalPrice).toFixed(2)}</span>
+       <AnimatePresence>
+         {expanded && (
+           <motion.div 
+             initial={{ height: 0, opacity: 0 }}
+             animate={{ height: "auto", opacity: 1 }}
+             exit={{ height: 0, opacity: 0 }}
+             className="border-t border-gray-100 bg-gray-50/30"
+           >
+              <div className="p-4 space-y-3">
+                <div className="space-y-2">
+                  {order.items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between text-sm py-2 px-3 bg-white rounded-xl border border-gray-100/50">
+                       <div className="flex items-center gap-3 overflow-hidden pr-2">
+                          <div className="h-10 w-10 rounded-lg bg-gray-100 bg-cover bg-center shrink-0 shadow-sm" style={{ backgroundImage: `url(${item.product.imageUrl || '/placeholder-food.jpg'})` }} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="h-5 px-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100">{item.quantity}x</Badge>
+                                <span className="text-gray-900 truncate font-medium">{item.product.name}</span>
+                            </div>
+                            {item.note && <p className="text-xs text-gray-500 italic truncate mt-0.5 ml-1">Not: {item.note}</p>}
+                          </div>
+                       </div>
+                       <span className="text-gray-700 text-sm font-semibold whitespace-nowrap">₺{Number(item.totalPrice).toFixed(2)}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            
-            {['READY', 'DELIVERED', 'COMPLETED', 'PAID'].includes(order.status) && (
-              <div className="pt-2 flex justify-end">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  disabled={!canReview() && getReviewStatus(order) !== 'ALL'}
-                  className={cn(
-                    "h-8 text-xs font-medium",
-                    getReviewStatus(order) === 'ALL' 
-                      ? "text-gray-500 border-gray-200 hover:bg-gray-100" 
-                      : !canReview() 
-                        ? "text-gray-400 border-gray-200 bg-gray-50 cursor-not-allowed"
-                        : "text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (canReview() || getReviewStatus(order) === 'ALL') {
-                      onReview(order);
-                    }
-                  }}
-                >
-                  {!canReview() && getReviewStatus(order) !== 'ALL' ? (
-                    <Clock className="w-3 h-3 mr-1.5" />
-                  ) : (
-                    <Star className={cn("w-3 h-3 mr-1.5", getReviewStatus(order) === 'ALL' ? "" : "fill-current")} />
-                  )}
-                  {getButtonText()}
-                </Button>
+                
+                {['READY', 'DELIVERED', 'COMPLETED', 'PAID'].includes(order.status) && (
+                  <div className="pt-2 flex justify-end">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      disabled={!canReview() && getReviewStatus(order) !== 'ALL'}
+                      className={cn(
+                        "h-9 px-4 text-xs font-bold tracking-wide transition-all",
+                        getReviewStatus(order) === 'ALL' 
+                          ? "text-gray-500 border-gray-200 hover:bg-gray-100" 
+                          : !canReview() 
+                            ? "text-gray-400 border-gray-200 bg-gray-50 cursor-not-allowed"
+                            : "text-white bg-emerald-600 border-emerald-600 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (canReview() || getReviewStatus(order) === 'ALL') {
+                          onReview(order);
+                        }
+                      }}
+                    >
+                      {!canReview() && getReviewStatus(order) !== 'ALL' ? (
+                        <Clock className="w-3.5 h-3.5 mr-2" />
+                      ) : (
+                        <Star className={cn("w-3.5 h-3.5 mr-2", getReviewStatus(order) === 'ALL' ? "" : "fill-current")} />
+                      )}
+                      {getButtonText()}
+                    </Button>
+                  </div>
+                )}
               </div>
-            )}
-         </div>
-       )}
-    </div>
+           </motion.div>
+         )}
+       </AnimatePresence>
+    </motion.div>
   );
 };
 
 const Section = ({ title, icon: Icon, children, defaultOpen = true, className }: any) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div className={cn("bg-white rounded-2xl p-5 shadow-sm border border-gray-100 h-fit transition-all duration-200", className)}>
+    <div className={cn("bg-white rounded-3xl p-6 shadow-sm border border-gray-100 h-fit transition-all duration-200 hover:shadow-md", className)}>
       <button 
         type="button"
-        className={cn("w-full flex justify-between items-center cursor-pointer text-left", isOpen ? "mb-5 pb-3 border-b border-gray-50" : "")}
+        className={cn("w-full flex justify-between items-center cursor-pointer text-left group", isOpen ? "mb-6" : "")}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <h3 className="text-lg font-bold text-gray-900 flex items-center">
-          <Icon className="w-5 h-5 mr-2 text-emerald-600" />
-          {title}
-        </h3>
-        {isOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-      </button>
-      {isOpen && (
-        <div className="animate-in slide-in-from-top-2 duration-200">
-          {children}
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+            <Icon className="w-5 h-5" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">
+            {title}
+          </h3>
         </div>
-      )}
+        <div className={cn("p-1.5 rounded-full bg-gray-50 transition-all duration-300", isOpen ? "rotate-180 bg-gray-100" : "")}>
+          <ChevronDown className="w-4 h-4 text-gray-500" />
+        </div>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -295,6 +324,7 @@ export default function ProfilePage() {
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedOrderForReview, setSelectedOrderForReview] = useState<Order | null>(null);
@@ -323,12 +353,11 @@ export default function ProfilePage() {
   };
 
   const handleProductClick = (product: Product) => {
-    // Map to cart store product type format
     const mappedProduct = {
       ...product,
       image: product.imageUrl || '',
       category: product.categoryId,
-      stock: 100, // Default assumption since we don't have stock in this view
+      stock: 100, 
       originalPrice: undefined
     };
     setSelectedProduct(mappedProduct);
@@ -406,9 +435,6 @@ export default function ProfilePage() {
       if (response.data.emailVerificationRequired) {
         toast.success('Doğrulama kodu e-posta adresinize gönderildi');
         setIsVerifyingEmail(true);
-        // Update other fields but not email yet in UI? 
-        // Actually, we can update everything except email, or just wait for verification.
-        // Let's update name and phone.
         setCustomer({ ...customer, name, phone }, token);
       } else {
         toast.success('Profil güncellendi');
@@ -451,7 +477,6 @@ export default function ProfilePage() {
   const handleDeleteAccount = async () => {
     if (!deleteConfirm) {
       setDeleteConfirm(true);
-      // Reset confirmation after 3 seconds
       setTimeout(() => setDeleteConfirm(false), 3000);
       return;
     }
@@ -478,14 +503,57 @@ export default function ProfilePage() {
   };
 
   const getMembershipLevel = (spent: number) => {
-    if (spent >= 10000) return { name: 'Platinum', color: 'from-slate-300 via-purple-300 to-indigo-400', icon: '💎', textColor: 'text-indigo-900' };
-    if (spent >= 5000) return { name: 'Gold', color: 'from-amber-200 via-yellow-400 to-amber-500', icon: '👑', textColor: 'text-amber-900' };
-    if (spent >= 1000) return { name: 'Silver', color: 'from-slate-100 via-slate-300 to-slate-400', icon: '🥈', textColor: 'text-slate-900' };
-    return { name: 'Bronze', color: 'from-orange-200 via-orange-300 to-orange-400', icon: '🥉', textColor: 'text-orange-900' };
+    if (spent >= 10000) return { name: 'Platinum', color: 'from-slate-900 via-purple-900 to-indigo-900', icon: '💎', textColor: 'text-indigo-100', badgeColor: 'bg-indigo-500/20 text-indigo-200 border-indigo-500/30' };
+    if (spent >= 5000) return { name: 'Gold', color: 'from-amber-900 via-yellow-900 to-amber-950', icon: '👑', textColor: 'text-amber-100', badgeColor: 'bg-amber-500/20 text-amber-200 border-amber-500/30' };
+    if (spent >= 1000) return { name: 'Silver', color: 'from-slate-700 via-slate-800 to-slate-900', icon: '🥈', textColor: 'text-slate-100', badgeColor: 'bg-slate-500/20 text-slate-200 border-slate-500/30' };
+    return { name: 'Bronze', color: 'from-orange-900 via-orange-950 to-orange-900', icon: '🥉', textColor: 'text-orange-100', badgeColor: 'bg-orange-500/20 text-orange-200 border-orange-500/30' };
   };
 
   const handleBack = () => {
     router.push(`/${locale}/menu/${cafeId}`);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !customer || !token) return;
+
+    // Validate file size (e.g. 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Dosya boyutu 5MB\'dan küçük olmalıdır');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      // 1. Upload file
+      const uploadResponse = await axios.post(`${API_URL}/customers/upload-avatar`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const avatarUrl = uploadResponse.data.url;
+
+      // 2. Update customer profile
+      await axios.patch(
+        `${API_URL}/customers/${customer.id}`,
+        { avatarUrl },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // 3. Update local state
+      setCustomer({ ...customer, avatarUrl }, token);
+      toast.success('Profil fotoğrafı güncellendi');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error('Profil fotoğrafı yüklenemedi');
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const getFilteredOrders = () => {
@@ -522,139 +590,228 @@ export default function ProfilePage() {
   const membership = stats ? getMembershipLevel(stats.totalSpent) : getMembershipLevel(0);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <div className={cn("relative h-48 bg-gradient-to-r shrink-0 transition-colors duration-500", membership.color)}>
-        <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full translate-x-10 -translate-y-10 blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full -translate-x-5 translate-y-5 blur-xl" />
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      {/* Modern Header */}
+      <div className={cn("relative h-auto min-h-[18rem] md:h-72 shrink-0 overflow-hidden transition-all duration-700 ease-out", "bg-gradient-to-br", membership.color)}>
+        {/* Background Effects */}
+        <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-0 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-white/10 rounded-full translate-x-1/3 -translate-y-1/3 blur-3xl animate-pulse" />
+            <div className="absolute bottom-0 left-0 w-[200px] md:w-[300px] h-[200px] md:h-[300px] bg-white/10 rounded-full -translate-x-1/3 translate-y-1/3 blur-3xl" />
         </div>
         
-        {/* Back Button */}
-        <div className="absolute top-4 left-4 z-10">
-            <Button 
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
+
+        {/* Header Content */}
+        <div className="relative h-full flex flex-col p-4 md:p-6 max-w-5xl mx-auto">
+          {/* Top Bar */}
+          <div className="flex justify-between items-start mb-6 md:mb-0">
+             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="bg-white/20 hover:bg-white/30 text-white rounded-full backdrop-blur-sm"
+                className="bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md border border-white/10 transition-all hover:scale-105"
                 onClick={handleBack}
             >
                 <ArrowLeft className="w-5 h-5" />
             </Button>
-        </div>
-
-        <div className="relative h-full flex flex-col justify-end p-6">
-          <div className="flex items-end justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-20 w-20 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-3xl font-bold border-2 border-white/40 shadow-lg text-white">
-                {customer.name?.charAt(0) || customer.email.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <h2 className={cn("text-2xl font-bold drop-shadow-sm", membership.textColor)}>{customer.name || 'Misafir'}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="bg-white/30 hover:bg-white/40 border-none text-white backdrop-blur-sm shadow-sm">
-                    {membership.icon} {membership.name} Üye
-                  </Badge>
-                </div>
-              </div>
+            
+            <div className="flex gap-2">
+               <Button 
+                 variant="ghost" 
+                 size="icon" 
+                 className="bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md border border-white/10"
+                 onClick={handleLogout}
+               >
+                 <LogOut className="w-5 h-5" />
+               </Button>
             </div>
+          </div>
+
+          {/* User Profile Info */}
+          <div className="mt-auto mb-8 md:mb-8 flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 animate-in slide-in-from-bottom-4 duration-700 pb-6 md:pb-0">
+             <div className="relative group shrink-0">
+                <div className="h-24 w-24 md:h-28 md:w-28 rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl flex items-center justify-center text-3xl md:text-4xl font-bold border-4 border-white/20 shadow-2xl text-white overflow-hidden relative z-10">
+                   {customer.avatarUrl ? (
+                      <img 
+                        src={`${API_URL}${customer.avatarUrl}`} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover" 
+                      />
+                   ) : (
+                      customer.name?.charAt(0) || customer.email.charAt(0).toUpperCase()
+                   )}
+                </div>
+                
+                {/* Upload Button Overlay */}
+                <label 
+                  htmlFor="avatar-upload" 
+                  className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer"
+                >
+                  <Camera className="w-6 h-6 md:w-8 md:h-8" />
+                  <input 
+                    type="file" 
+                    id="avatar-upload" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    disabled={uploadingAvatar}
+                  />
+                </label>
+                
+                {/* Loading State */}
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 rounded-full">
+                    <Loader2 className="w-6 h-6 md:w-8 md:h-8 text-white animate-spin" />
+                  </div>
+                )}
+
+                {/* Glow effect */}
+                <div className="absolute inset-0 rounded-full bg-white/20 blur-xl -z-10 group-hover:bg-white/30 transition-all duration-500" />
+             </div>
+             
+             <div className="pb-2 space-y-2 text-center md:text-left">
+               <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-md">
+                 {customer.name || 'Misafir'}
+               </h2>
+               <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap">
+                 <Badge variant="outline" className={cn("backdrop-blur-md shadow-lg border px-3 py-1 text-sm font-semibold tracking-wide", membership.badgeColor)}>
+                   {membership.icon} {membership.name} Üye
+                 </Badge>
+                 <div className="hidden md:block h-1.5 w-1.5 rounded-full bg-white/40" />
+                 <span className="text-white/80 font-medium text-sm">{customer.phone || customer.email}</span>
+               </div>
+             </div>
           </div>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <div className="px-6 pt-4 shrink-0 bg-white border-b border-gray-100 shadow-sm z-10">
-          <div className="max-w-4xl mx-auto">
-            <TabsList className="w-full grid grid-cols-3 bg-emerald-50/50 p-1 mb-2">
-              <TabsTrigger value="panel" className="data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Panel</span>
-                <span className="md:hidden">Panel</span>
-              </TabsTrigger>
-              <TabsTrigger value="orders" className="data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">
-                <ShoppingBag className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Siparişler</span>
-                <span className="md:hidden">Sipariş</span>
-              </TabsTrigger>
-              <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm">
-                <User className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Profil & Ayarlar</span>
-                <span className="md:hidden">Profil</span>
-              </TabsTrigger>
-            </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col -mt-8 relative z-10">
+        <div className="px-4 sm:px-6 shrink-0">
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-2xl shadow-lg border border-white/50 mx-auto max-w-lg">
+              <TabsList className="w-full grid grid-cols-3 h-11 bg-transparent gap-1">
+                <TabsTrigger 
+                  value="panel" 
+                  className="rounded-xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md font-bold transition-all duration-300 text-xs md:text-sm"
+                >
+                  <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
+                  Panel
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="orders" 
+                  className="rounded-xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md font-bold transition-all duration-300 text-xs md:text-sm"
+                >
+                  <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
+                  Siparişler
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="profile" 
+                  className="rounded-xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md font-bold transition-all duration-300 text-xs md:text-sm"
+                >
+                  <User className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
+                  Profil
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
-          {/* Order Filters - Moved outside TabsContent to ensure visibility */}
+        <div className="flex-1 flex flex-col mt-6">
+          {/* Order Filters */}
           {activeTab === 'orders' && (
-            <div className="bg-white border-b border-gray-100 p-4 shrink-0 shadow-sm z-20 relative">
-              <div className="max-w-3xl mx-auto flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
-                <div className="flex items-center text-xs font-bold text-emerald-700 mr-2 shrink-0 bg-emerald-50 px-3 py-1.5 rounded-md border border-emerald-100">
-                  <Filter className="w-3.5 h-3.5 mr-1.5" />
-                  Filtrele:
-                </div>
+            <div className="px-4 pb-4 shrink-0 z-20 sticky top-0 bg-gray-50/95 backdrop-blur-sm pt-2">
+              <div className="max-w-3xl mx-auto flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
                 {[
                   { id: 'all', label: 'Tümü' },
                   { id: 'today', label: 'Bugün' },
-                  { id: 'yesterday', label: 'Dün' },
-                  { id: 'week', label: 'Son 7 Gün' },
-                  { id: 'month', label: 'Son 30 Gün' },
+                  { id: 'week', label: 'Bu Hafta' },
+                  { id: 'month', label: 'Bu Ay' },
                 ].map((filter) => (
-                  <Badge
+                  <button
                     key={filter.id}
-                    variant={dateFilter === filter.id ? 'default' : 'outline'}
+                    onClick={() => setDateFilter(filter.id)}
                     className={cn(
-                      "cursor-pointer whitespace-nowrap px-3 py-1.5 transition-all hover:scale-105 active:scale-95",
+                      "px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap",
                       dateFilter === filter.id 
-                        ? "bg-emerald-600 hover:bg-emerald-700 border-emerald-600 shadow-sm" 
-                        : "hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 border-gray-200 text-gray-600 bg-white"
+                        ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" 
+                        : "bg-white text-gray-500 hover:bg-gray-100 border border-gray-100"
                     )}
-                    asChild
                   >
-                    <button type="button" onClick={() => setDateFilter(filter.id)}>
-                      {filter.label}
-                    </button>
-                  </Badge>
+                    {filter.label}
+                  </button>
                 ))}
               </div>
             </div>
           )}
 
-          <TabsContent value="panel" className="flex-1 flex flex-col m-0 p-4 md:p-8 overflow-y-auto">
-            <div className="max-w-5xl mx-auto space-y-6 pb-20 w-full">
+          <TabsContent value="panel" className="flex-1 m-0 p-4 md:p-8 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="max-w-5xl mx-auto space-y-8 pb-20">
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button 
-                  type="button"
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <motion.div 
+                  whileHover={{ y: -5 }}
                   onClick={() => setActiveTab('orders')}
-                  className="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm relative overflow-hidden group col-span-1 md:col-span-2 cursor-pointer hover:shadow-md transition-all text-left w-full"
+                  className="bg-white p-4 md:p-6 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden group cursor-pointer"
                 >
-                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <ShoppingBag className="w-16 h-16 text-emerald-600" />
+                  <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform duration-500" />
+                  <ShoppingBag className="w-6 h-6 md:w-8 md:h-8 text-emerald-600 mb-2 md:mb-3 relative z-10" />
+                  <div className="relative z-10">
+                    <p className="text-xs md:text-sm text-gray-500 font-semibold mb-1">Toplam Sipariş</p>
+                    <div className="text-2xl md:text-3xl font-black text-gray-900">{stats?.totalOrders || 0}</div>
                   </div>
-                  <p className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-2">Toplam Sipariş</p>
-                  <div className="text-3xl font-black text-gray-900">{stats?.totalOrders || 0}</div>
-                </button>
-                <div className="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm relative overflow-hidden group col-span-1 md:col-span-2">
-                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Trophy className="w-16 h-16 text-amber-500" />
+                </motion.div>
+
+                <motion.div 
+                  whileHover={{ y: -5 }}
+                  className="bg-white p-4 md:p-6 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden group"
+                >
+                  <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full group-hover:scale-150 transition-transform duration-500" />
+                  <Trophy className="w-6 h-6 md:w-8 md:h-8 text-amber-500 mb-2 md:mb-3 relative z-10" />
+                  <div className="relative z-10">
+                    <p className="text-xs md:text-sm text-gray-500 font-semibold mb-1">Toplam Harcama</p>
+                    <div className="text-2xl md:text-3xl font-black text-gray-900">₺{stats?.totalSpent?.toFixed(2) || '0.00'}</div>
                   </div>
-                  <p className="text-xs text-amber-600 font-bold uppercase tracking-wider mb-2">Toplam Harcama</p>
-                  <div className="text-3xl font-black text-gray-900">₺{stats?.totalSpent?.toFixed(2) || '0.00'}</div>
-                </div>
+                </motion.div>
               </div>
+
+              {/* Favorites Section */}
+              {stats?.favoriteProduct && (
+                <div className="bg-gradient-to-br from-rose-500 to-pink-600 rounded-3xl p-1 shadow-lg text-white">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-[20px] p-4 md:p-6 h-full flex flex-col md:flex-row items-center gap-4 md:gap-6 relative overflow-hidden text-center md:text-left">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                    
+                    <div className="relative z-10 shrink-0">
+                      <div className="h-20 w-20 md:h-24 md:w-24 rounded-2xl bg-white p-1 shadow-xl rotate-3 mx-auto md:mx-0">
+                         <div className="h-full w-full rounded-xl bg-cover bg-center" style={{ backgroundImage: `url(${stats.favoriteProduct.image || '/placeholder-food.jpg'})` }} />
+                      </div>
+                      <div className="absolute -bottom-3 -right-3 bg-white text-rose-500 p-2 rounded-full shadow-lg hidden md:block">
+                        <Heart className="w-5 h-5 fill-current" />
+                      </div>
+                    </div>
+
+                    <div className="relative z-10 flex-1 min-w-0">
+                      <div className="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-bold mb-2 border border-white/20">
+                        Favori Lezzetiniz
+                      </div>
+                      <h3 className="text-xl md:text-2xl font-black mb-1 truncate w-full">{stats.favoriteProduct.name}</h3>
+                      <p className="text-white/80 font-medium text-sm md:text-base">
+                        Bu lezzeti tam <strong>{stats.favoriteProduct.count}</strong> kez sipariş ettiniz!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Recent Orders Preview */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="text-sm font-bold text-gray-900 flex items-center">
-                    <Clock className="w-4 h-4 mr-2 text-emerald-600" />
+                <div className="flex items-center justify-between px-2">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                    <Clock className="w-5 h-5 mr-2 text-emerald-600" />
                     Son Siparişleriniz
                   </h3>
                   <button 
                     type="button"
                     onClick={() => setActiveTab('orders')}
-                    className="text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+                    className="text-sm font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors"
                   >
                     Tümünü Gör
                   </button>
@@ -667,17 +824,15 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center">
-                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <ShoppingBag className="w-6 h-6 text-gray-300" />
+                  <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-center">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <ShoppingBag className="w-8 h-8 text-gray-300" />
                     </div>
-                    <p className="text-sm font-medium text-gray-900 mb-1">Henüz siparişiniz yok</p>
-                    <p className="text-xs text-gray-500 mb-4">Verdiğiniz siparişler burada listelenecektir.</p>
+                    <p className="text-lg font-bold text-gray-900 mb-1">Henüz siparişiniz yok</p>
+                    <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">Lezzetli menümüzden dilediğiniz ürünleri seçip sipariş verebilirsiniz.</p>
                     <Button 
-                      variant="outline" 
-                      size="sm" 
                       onClick={handleBack}
-                      className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8"
                     >
                       Menüye Git
                     </Button>
@@ -685,94 +840,63 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Favorites Section */}
-              {stats?.favoriteProduct && (
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                  <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center">
-                    <Heart className="w-4 h-4 mr-2 text-rose-500 fill-rose-500" />
-                    Favori Lezzetiniz
-                  </h3>
-                  <div className="flex items-center gap-6">
-                    <div className="h-20 w-20 md:h-24 md:w-24 rounded-xl bg-gray-100 bg-cover bg-center shrink-0 shadow-inner" 
-                         style={{ backgroundImage: `url(${stats.favoriteProduct.image || '/placeholder-food.jpg'})` }} />
-                    <div>
-                      <p className="text-xs text-emerald-600 font-medium mb-1">En Çok Sipariş Edilen</p>
-                      <p className="font-bold text-gray-900 text-xl md:text-2xl mb-1">{stats.favoriteProduct.name}</p>
-                      <p className="text-sm text-gray-500 flex items-center">
-                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100">
-                          {stats.favoriteProduct.count} kez sipariş verildi
-                        </Badge>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Recommendations Section */}
               {recommendations.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center px-1">
-                    <Award className="w-4 h-4 mr-2 text-purple-500" />
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center px-2">
+                    <Sparkles className="w-5 h-5 mr-2 text-purple-500" />
                     Sizin İçin Öneriler
                   </h3>
-                  <ScrollArea className="w-full whitespace-nowrap pb-4">
-                    <div className="flex gap-4 px-1">
+                  <div className="w-full overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-none">
+                    <div className="flex gap-4 pb-2 min-w-max">
                       {recommendations.map((product) => (
-                        <div key={product.id} className="w-48 md:w-56 shrink-0 space-y-3 group cursor-pointer bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
-                          <div className="aspect-square rounded-xl bg-gray-100 relative overflow-hidden">
-                            <img src={product.imageUrl || '/placeholder-food.jpg'} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div 
+                           key={product.id} 
+                           onClick={() => handleProductClick(product)}
+                           className="w-48 shrink-0 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+                        >
+                          <div className="aspect-square rounded-xl bg-gray-100 relative overflow-hidden mb-3">
+                            <img src={product.imageUrl || '/placeholder-food.jpg'} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                            <div className="absolute bottom-2 right-2 bg-white rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                               <ChevronRight className="w-4 h-4 text-emerald-600" />
+                            </div>
                           </div>
-                          <div className="px-1">
-                            <p className="text-sm font-bold text-gray-900 truncate">{product.name}</p>
-                            <p className="text-sm text-emerald-600 font-black">₺{Number(product.price).toFixed(2)}</p>
+                          <div className="px-1 space-y-1">
+                            <p className="font-bold text-gray-900 truncate">{product.name}</p>
+                            <p className="text-emerald-600 font-black text-lg">₺{Number(product.price).toFixed(2)}</p>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </ScrollArea>
+                  </div>
                 </div>
               )}
             </div>
           </TabsContent>
 
-          <TabsContent value="orders" className="flex-1 flex flex-col m-0 bg-gray-50 h-full">
-            <ScrollArea className="flex-1 p-4 md:p-8">
-              <div className="max-w-3xl mx-auto">
+          <TabsContent value="orders" className="flex-1 m-0 bg-gray-50 h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <ScrollArea className="flex-1 px-4 md:px-8 h-full">
+              <div className="max-w-3xl mx-auto pb-20">
                 {loadingOrders ? (
                   <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                     <Loader2 className="w-10 h-10 animate-spin mb-4 text-emerald-500" />
                     <p>Siparişler yükleniyor...</p>
                   </div>
-                ) : orders.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-gray-400 text-center">
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-                      <ShoppingBag className="w-10 h-10 text-gray-300" />
-                    </div>
-                    <p className="text-lg font-medium text-gray-600">Henüz siparişiniz bulunmuyor.</p>
-                    <Button variant="outline" className="mt-6" onClick={handleBack}>
-                      Menüye Göz At
-                    </Button>
-                  </div>
                 ) : filteredOrders.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-gray-400 text-center">
-                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                      <Calendar className="w-8 h-8 text-gray-300" />
+                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm">
+                      <Filter className="w-10 h-10 text-gray-300" />
                     </div>
-                    <p className="text-medium font-medium text-gray-600">Bu tarihte sipariş bulunamadı.</p>
-                    <Button variant="ghost" className="mt-2 text-emerald-600" onClick={() => setDateFilter('all')}>
+                    <p className="text-lg font-bold text-gray-900">Bu kriterde sipariş bulunamadı.</p>
+                    <Button variant="link" className="text-emerald-600 font-bold" onClick={() => setDateFilter('all')}>
                       Tüm Siparişleri Göster
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-4 pb-20">
+                  <div className="space-y-4">
                     {filteredOrders.map((order) => (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        key={order.id}
-                      >
-                        <OrderCard order={order} onReview={handleOpenReview} />
-                      </motion.div>
+                      <OrderCard key={order.id} order={order} onReview={handleOpenReview} />
                     ))}
                   </div>
                 )}
@@ -780,148 +904,133 @@ export default function ProfilePage() {
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="profile" className="flex-1 flex flex-col m-0 p-4 md:p-8 overflow-y-auto">
-            <div className="max-w-5xl mx-auto pb-20 w-full">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                {/* Left Column: Personal Info */}
+          <TabsContent value="profile" className="flex-1 m-0 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="max-w-3xl mx-auto pb-20 w-full space-y-6">
+              
               <Section title="Kişisel Bilgiler" icon={User} defaultOpen={true}>
-                <div className="pt-2">
-                  <form onSubmit={handleUpdateProfile} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                <form onSubmit={handleUpdateProfile} className="space-y-5 pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Ad Soyad</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
+                        <Label htmlFor="name" className="text-gray-500 font-medium ml-1">Ad Soyad</Label>
+                        <div className="relative group">
+                          <User className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
                           <Input
                             id="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="Adınız Soyadınız"
-                            className="bg-gray-50 border-gray-200 h-11 pl-10 focus:bg-white transition-colors"
+                            className="bg-gray-50 border-gray-100 h-12 pl-12 rounded-xl focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/10 transition-all"
                           />
                         </div>
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Telefon Numarası</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
+                        <Label htmlFor="phone" className="text-gray-500 font-medium ml-1">Telefon</Label>
+                        <div className="relative group">
+                          <Phone className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
                           <Input
                             id="phone"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
-                            placeholder="5XX XXX XX XX"
-                            className="bg-gray-50 border-gray-200 h-11 pl-10 focus:bg-white transition-colors"
+                            className="bg-gray-50 border-gray-100 h-12 pl-12 rounded-xl focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/10 transition-all"
                           />
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="email">E-posta Adresi</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
+                      <Label htmlFor="email" className="text-gray-500 font-medium ml-1">E-posta Adresi</Label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
                         <Input
                           id="email"
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="ornek@email.com"
-                          className="bg-gray-50 border-gray-200 h-11 pl-10 focus:bg-white transition-colors"
+                          className="bg-gray-50 border-gray-100 h-12 pl-12 rounded-xl focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/10 transition-all"
                         />
                       </div>
                     </div>
 
                     <div className="pt-2">
-                      <Button type="submit" className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm hover:shadow-md transition-all" disabled={loadingUpdate}>
-                        {loadingUpdate ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                      <Button type="submit" className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all" disabled={loadingUpdate}>
+                        {loadingUpdate ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
                         Bilgileri Güncelle
                       </Button>
                     </div>
-                  </form>
-                </div>
+                </form>
               </Section>
 
-                {/* Right Column: Security & Actions */}
-                <div className="space-y-4">
-                  {/* Security */}
-                  <Section title="Güvenlik" icon={Shield} defaultOpen={false}>
-                    
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="newPassword">Yeni Şifre</Label>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
-                            <Input
-                              id="newPassword"
-                              type="password"
-                              value={newPassword}
-                              onChange={(e) => setNewPassword(e.target.value)}
-                              placeholder="Yeni şifreniz"
-                              className="bg-gray-50 border-gray-200 h-11 pl-10 focus:bg-white transition-colors"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="confirmPassword">Tekrar</Label>
-                          <div className="relative">
-                            <Key className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
-                            <Input
-                              id="confirmPassword"
-                              type="password"
-                              value={confirmPassword}
-                              onChange={(e) => setConfirmPassword(e.target.value)}
-                              placeholder="Yeni şifreniz (tekrar)"
-                              className="bg-gray-50 border-gray-200 h-11 pl-10 focus:bg-white transition-colors"
-                            />
-                          </div>
+              <Section title="Güvenlik" icon={Shield} defaultOpen={false}>
+                 <div className="space-y-5 pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">Yeni Şifre</Label>
+                        <div className="relative group">
+                          <Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
+                          <Input
+                            id="newPassword"
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="bg-gray-50 border-gray-100 h-12 pl-12 rounded-xl focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/10 transition-all"
+                          />
                         </div>
                       </div>
 
-                      <Button onClick={handleUpdateProfile} variant="outline" className="w-full h-11 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 transition-colors" disabled={!newPassword || loadingUpdate}>
-                        {loadingUpdate ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
-                        Şifreyi Değiştir
-                      </Button>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Tekrar</Label>
+                        <div className="relative group">
+                          <Key className="absolute left-4 top-3.5 w-5 h-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="bg-gray-50 border-gray-100 h-12 pl-12 rounded-xl focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/10 transition-all"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </Section>
-                  
-                  {/* Account Operations */}
-                  <Section title="Hesap İşlemleri" icon={Settings} defaultOpen={false}>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                        variant="outline" 
-                        className="h-11 text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-200" 
-                        onClick={handleLogout}
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Çıkış Yap
-                      </Button>
 
-                      <Button 
-                        variant="ghost" 
-                        className={cn(
-                          "h-11 transition-all border",
-                          deleteConfirm 
-                            ? "bg-red-50 text-red-600 hover:bg-red-100 border-red-200" 
-                            : "bg-white text-red-500 border-red-100 hover:text-red-600 hover:bg-red-50 hover:border-red-200"
-                        )}
-                        onClick={handleDeleteAccount}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        {deleteConfirm ? 'Emin misin?' : 'Hesabı Sil'}
-                      </Button>
-                    </div>
-                    {deleteConfirm && (
-                      <p className="text-xs text-red-500 mt-2 text-center animate-in fade-in slide-in-from-top-1">
-                        Hesabınız kalıcı olarak silinecektir.
-                      </p>
+                    <Button onClick={handleUpdateProfile} variant="outline" className="w-full h-12 rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-bold transition-all" disabled={!newPassword || loadingUpdate}>
+                      {loadingUpdate ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Lock className="w-5 h-5 mr-2" />}
+                      Şifreyi Değiştir
+                    </Button>
+                  </div>
+              </Section>
+              
+              <Section title="Hesap İşlemleri" icon={Settings} defaultOpen={false}>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-12 rounded-xl border-gray-200 hover:bg-gray-50 hover:border-gray-300 font-bold transition-all" 
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-5 h-5 mr-2" />
+                    Çıkış Yap
+                  </Button>
+
+                  <Button 
+                    variant="ghost" 
+                    className={cn(
+                      "h-12 rounded-xl transition-all border font-bold",
+                      deleteConfirm 
+                        ? "bg-red-50 text-red-600 hover:bg-red-100 border-red-200" 
+                        : "bg-white text-red-500 border-red-100 hover:text-red-600 hover:bg-red-50 hover:border-red-200"
                     )}
-                  </Section>
+                    onClick={handleDeleteAccount}
+                  >
+                    <Trash2 className="w-5 h-5 mr-2" />
+                    {deleteConfirm ? 'Emin misin?' : 'Hesabı Sil'}
+                  </Button>
                 </div>
-              </div>
+                {deleteConfirm && (
+                  <p className="text-xs text-red-500 mt-3 text-center animate-in fade-in slide-in-from-top-1 bg-red-50 p-2 rounded-lg">
+                    <AlertTriangle className="w-3 h-3 inline mr-1" />
+                    Hesabınız kalıcı olarak silinecektir. Bu işlem geri alınamaz.
+                  </p>
+                )}
+              </Section>
             </div>
           </TabsContent>
         </div>
@@ -940,7 +1049,6 @@ export default function ProfilePage() {
         />
       )}
 
-      {/* Email Verification Dialog */}
       <Dialog open={isVerifyingEmail} onOpenChange={setIsVerifyingEmail}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -957,7 +1065,7 @@ export default function ProfilePage() {
                 placeholder="123456"
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value)}
-                className="text-center text-lg tracking-widest"
+                className="text-center text-2xl font-bold tracking-[1em] h-14"
                 maxLength={6}
               />
             </div>
@@ -974,7 +1082,6 @@ export default function ProfilePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Product Detail Dialog */}
       {selectedProduct && (
         <ProductDetailDialog
           product={selectedProduct}

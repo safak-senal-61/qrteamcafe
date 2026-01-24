@@ -17,10 +17,19 @@ let CafesService = class CafesService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async findOne(id) {
-        const cafe = await this.prisma.cafe.findUnique({
-            where: { id },
-        });
+    async findOne(idOrSlug) {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+        let cafe;
+        if (isUuid) {
+            cafe = await this.prisma.cafe.findUnique({
+                where: { id: idOrSlug },
+            });
+        }
+        else {
+            cafe = await this.prisma.cafe.findUnique({
+                where: { slug: idOrSlug },
+            });
+        }
         if (!cafe)
             throw new common_1.NotFoundException('Cafe bulunamadı');
         return cafe;
@@ -66,6 +75,7 @@ let CafesService = class CafesService {
                 waiterCallOptions: data.waiterCallOptions,
                 isMaintenanceMode: data.isMaintenanceMode,
                 autoApproveReviews: data.autoApproveReviews,
+                isSoundEnabled: data.isSoundEnabled,
                 templateId: data.templateId,
                 themeConfig: data.themeConfig,
             },
@@ -74,6 +84,10 @@ let CafesService = class CafesService {
     async getDashboardStats(cafeId) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const cafeSettings = await this.prisma.cafe.findUnique({
+            where: { id: cafeId },
+            select: { isSoundEnabled: true }
+        });
         const [totalOrders, dailyRevenue, activeTables, totalProducts] = await Promise.all([
             this.prisma.order.count({ where: { cafeId } }),
             this.prisma.order.aggregate({
@@ -114,6 +128,7 @@ let CafesService = class CafesService {
             totalProducts,
             recentOrders,
             popularProducts,
+            isSoundEnabled: cafeSettings?.isSoundEnabled ?? true,
         };
     }
 };

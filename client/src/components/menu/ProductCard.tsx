@@ -18,9 +18,10 @@ interface ProductCardProps {
   variant?: 'card' | 'list' | 'compact';
   hideImage?: boolean;
   className?: string;
+  isReadOnly?: boolean;
 }
 
-export function ProductCard({ product, index, showRating = true, variant = 'card', hideImage = false, className }: ProductCardProps) {
+export function ProductCard({ product, index, showRating = true, variant = 'card', hideImage = false, className, isReadOnly = false }: ProductCardProps) {
   const { items } = useCartStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
@@ -40,6 +41,7 @@ export function ProductCard({ product, index, showRating = true, variant = 'card
           open={isDialogOpen} 
           onOpenChange={setIsDialogOpen} 
           showRating={showRating}
+          isReadOnly={isReadOnly}
         />
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -63,7 +65,7 @@ export function ProductCard({ product, index, showRating = true, variant = 'card
                   fill
                   sizes="80px"
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  unoptimized={!!product.image?.includes('localhost') || !!product.image?.includes('127.0.0.1') || !!product.image?.startsWith('/uploads/')}
+                  unoptimized={true}
                 />
               </div>
             )}
@@ -73,9 +75,11 @@ export function ProductCard({ product, index, showRating = true, variant = 'card
               <div className="flex justify-between items-start">
                 {variant !== 'compact' && <h3 className="font-bold text-base truncate pr-2 text-foreground/90">{product.name}</h3>}
                 {variant === 'compact' ? (
+                     !isReadOnly && (
                      <Button size="sm" className="h-8 rounded-full px-4 font-bold">
                         Ekle
                      </Button>
+                     )
                 ) : (
                     <span className="font-extrabold text-primary whitespace-nowrap bg-primary/10 px-2 py-0.5 rounded text-sm">
                     {Number(product.price).toFixed(2)} ₺
@@ -126,6 +130,7 @@ export function ProductCard({ product, index, showRating = true, variant = 'card
         open={isDialogOpen} 
         onOpenChange={setIsDialogOpen} 
         showRating={showRating}
+        isReadOnly={isReadOnly}
       />
       
       <motion.div
@@ -146,7 +151,7 @@ export function ProductCard({ product, index, showRating = true, variant = 'card
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-contain p-2 transition-transform duration-500 group-hover:scale-110"
-              unoptimized={!!product.image?.includes('localhost') || !!product.image?.includes('127.0.0.1') || !!product.image?.startsWith('/uploads/')}
+              unoptimized={true}
             />
             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
             
@@ -202,6 +207,7 @@ export function ProductCard({ product, index, showRating = true, variant = 'card
             </p>
           </CardContent>
           
+          {!isReadOnly && (
           <CardFooter className="p-5 pt-0">
             {product.stock <= 0 ? (
               <div className="w-full text-center p-3 bg-muted text-muted-foreground rounded-xl font-bold border border-muted-foreground/20">
@@ -222,6 +228,7 @@ export function ProductCard({ product, index, showRating = true, variant = 'card
               </Button>
             )}
           </CardFooter>
+          )}
         </Card>
       </motion.div>
     </>

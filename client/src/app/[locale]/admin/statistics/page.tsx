@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface DashboardStats {
   totalOrders: number;
@@ -175,15 +176,15 @@ export default function StatisticsPage() {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 p-2 md:p-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Panel</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Panel</h2>
+          <p className="text-sm md:text-base text-muted-foreground">
             İstatistikler ve Stok Yönetimi
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-secondary/50 p-2 rounded-lg text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 bg-secondary/50 p-2 rounded-lg text-sm text-muted-foreground self-start md:self-auto">
           <Calendar className="h-4 w-4" />
           <span>{new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
         </div>
@@ -197,7 +198,7 @@ export default function StatisticsPage() {
 
         <TabsContent value="stats" className="space-y-4">
           {/* Key Metrics */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <Card className="border-none shadow-sm hover:shadow-md transition-all bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-background">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Toplam Ürün Çeşidi</CardTitle>
@@ -254,7 +255,7 @@ export default function StatisticsPage() {
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             {/* Popular Products Chart */}
-            <Card className="col-span-4 border-none shadow-sm">
+            <Card className="col-span-full lg:col-span-4 border-none shadow-sm">
               <CardHeader>
                 <CardTitle>En Çok Satan Ürünler</CardTitle>
                 <CardDescription>
@@ -293,7 +294,7 @@ export default function StatisticsPage() {
             </Card>
 
             {/* Category Distribution */}
-            <Card className="col-span-3 border-none shadow-sm">
+            <Card className="col-span-full lg:col-span-3 border-none shadow-sm">
               <CardHeader>
                 <CardTitle>Kategori Dağılımı</CardTitle>
                 <CardDescription>
@@ -335,12 +336,12 @@ export default function StatisticsPage() {
         <TabsContent value="stocks">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <CardTitle>Stok Yönetimi</CardTitle>
                   <CardDescription>Ürünlerin stok durumunu görüntüleyin ve güncelleyin.</CardDescription>
                 </div>
-                <div className="relative w-64">
+                <div className="relative w-full md:w-64">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input 
                     placeholder="Ürün veya kategori ara..." 
@@ -352,7 +353,8 @@ export default function StatisticsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
+              {/* Desktop Table View */}
+              <div className="hidden md:block rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -385,11 +387,12 @@ export default function StatisticsPage() {
                           <TableCell>{product.category?.name}</TableCell>
                           <TableCell>{Number(product.price).toFixed(2)} ₺</TableCell>
                           <TableCell className="text-center">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            <span className={cn(
+                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
                               (product.stock || 0) <= 5 
                                 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' 
                                 : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            }`}>
+                            )}>
                               {product.stock || 0} Adet
                             </span>
                           </TableCell>
@@ -404,6 +407,53 @@ export default function StatisticsPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4">
+                {filteredProducts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Ürün bulunamadı.
+                  </div>
+                ) : (
+                  filteredProducts.map(product => (
+                    <div 
+                      key={product.id} 
+                      className="bg-card border rounded-xl p-4 shadow-sm space-y-3 active:scale-[0.99] transition-transform"
+                      onClick={() => {
+                        setSelectedProduct(product);
+                        setStockAmount('');
+                        setIsStockDialogOpen(true);
+                      }}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <h3 className="font-semibold text-sm line-clamp-1">{product.name}</h3>
+                          <p className="text-xs text-muted-foreground">{product.category?.name}</p>
+                        </div>
+                        <span className="font-medium text-sm whitespace-nowrap">{Number(product.price).toFixed(2)} ₺</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-2 border-t mt-2">
+                        <span className={cn(
+                          "px-2.5 py-1 rounded-full text-xs font-medium",
+                          (product.stock || 0) <= 5 
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' 
+                            : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        )}>
+                          {product.stock || 0} Adet
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 px-2 text-primary hover:text-primary hover:bg-primary/10"
+                        >
+                          Stok Güncelle
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -411,7 +461,7 @@ export default function StatisticsPage() {
 
       {/* Stock Update Dialog */}
       <Dialog open={isStockDialogOpen} onOpenChange={setIsStockDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="w-[95vw] sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Stok Güncelleme</DialogTitle>
             <DialogDescription>

@@ -73,6 +73,10 @@ export class UpdateCafeDto {
   @IsBoolean()
   autoApproveReviews?: boolean;
 
+  @IsOptional()
+  @IsBoolean()
+  isSoundEnabled?: boolean;
+
   // New Settings
   @IsOptional()
   @IsString()

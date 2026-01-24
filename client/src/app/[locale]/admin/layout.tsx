@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from '@/navigation';
 import { Sidebar } from '@/components/admin/Sidebar';
 import { Loader2, Menu } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { PendingOrdersWidget } from '@/components/admin/PendingOrdersWidget';
+import { WaiterCallWidget } from '@/components/admin/WaiterCallWidget';
 
 export default function AdminLayout({
   children,
@@ -72,6 +73,7 @@ export default function AdminLayout({
   return (
     <div className="flex h-screen bg-secondary/20">
       <PendingOrdersWidget />
+      <WaiterCallWidget />
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
         <Sidebar />
@@ -87,6 +89,7 @@ export default function AdminLayout({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-64">
+              <SheetTitle className="sr-only">Admin Navigation</SheetTitle>
               <Sidebar />
             </SheetContent>
           </Sheet>

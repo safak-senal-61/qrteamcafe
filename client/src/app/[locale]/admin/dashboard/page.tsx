@@ -20,12 +20,16 @@ import {
   Package,
   ExternalLink,
   BellRing,
-  ChevronRight
+  ChevronRight,
+  Star
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Link, useRouter } from '@/navigation';
 import { API_URL } from '@/lib/api';
+
+// Sayfanın dinamik olmasını zorla (Cache sorunlarını önlemek için)
+export const dynamic = 'force-dynamic';
 
 interface DashboardStats {
   totalOrders: number;
@@ -34,11 +38,11 @@ interface DashboardStats {
   totalProducts: number;
   recentOrders: any[];
   popularProducts: any[];
+  isSoundEnabled: boolean;
 }
 
 import { io } from 'socket.io-client';
-
-// ... existing imports
+import { useRef } from 'react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -47,7 +51,11 @@ export default function DashboardPage() {
   const [cafeId, setCafeId] = useState<string | null>(null);
   const [newOrderCount, setNewOrderCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
-  const [audioAllowed, setAudioAllowed] = useState(false);
+  
+  // DB'den gelen ses ayarı - Default olarak TRUE (Açık) başlatıyoruz
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  // Socket eventleri içinde güncel değeri okuyabilmek için ref kullanıyoruz
+  const soundEnabledRef = useRef(true);
 
   // Ses dosyasını önceden yükle
   const [audio] = useState(() => {
@@ -59,15 +67,84 @@ export default function DashboardPage() {
     return null;
   });
 
-  // Kullanıcı etkileşimi ile sesi aktifleştir
-  const enableAudio = () => {
-    if (audio) {
+  // Ref'i state ile senkronize et
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+    // LocalStorage'ı da güncelle
+    localStorage.setItem('soundEnabled', String(soundEnabled));
+  }, [soundEnabled]);
+
+  // Sayfa yüklendiğinde veya yenilendiğinde tarayıcı autoplay politikasını aşmak için
+  // kullanıcının ilk etkileşimini yakala ve sesi "kilitli" durumdan kurtar.
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (audio && (audio.paused || audio.currentTime === 0)) {
+        // Sesi çok kısa çalıp durdurarak tarayıcıya "kullanıcı etkileşimi var" sinyali veriyoruz
+        audio.play().then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          console.log("Audio system unlocked via interaction");
+        }).catch((error) => {
+          console.log("Audio autoplay interaction needed:", error);
+        });
+      }
+      // Listener'ı temizle, sadece ilk tıklama yeterli
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    };
+
+    // Eğer ses açıksa veya kapalı olsa bile kilidi açmak için dinle (her ihtimale karşı)
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
+
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    };
+  }, [audio]);
+
+  const toggleSound = async () => {
+    const newState = !soundEnabled;
+    
+    // Optimistik güncelleme
+    setSoundEnabled(newState);
+    soundEnabledRef.current = newState; // Ref'i anında güncelle
+    localStorage.setItem('soundEnabled', String(newState)); // LocalStorage'ı anında güncelle
+    
+    if (newState && audio) {
+      // Tarayıcı kısıtlamasını aşmak için kullanıcı etkileşimi sırasında ses çal
       audio.play().then(() => {
         audio.pause();
         audio.currentTime = 0;
-        setAudioAllowed(true);
-        toast.success('Bildirim sesleri aktif edildi.');
       }).catch(console.error);
+    }
+
+    try {
+      if (!cafeId) return;
+      
+      const response = await fetch(`${API_URL}/cafes/${cafeId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isSoundEnabled: newState }),
+      });
+
+      if (response.ok) {
+        toast.success(newState ? 'Bildirim sesi açıldı' : 'Bildirim sesi kapatıldı');
+      } else {
+        throw new Error('Update failed');
+      }
+    } catch (error) {
+      console.error('Failed to update sound setting:', error);
+      // Hata durumunda geri al
+      setSoundEnabled(!newState);
+      soundEnabledRef.current = !newState;
+      localStorage.setItem('soundEnabled', String(!newState));
+      toast.error('Ses ayarı güncellenemedi');
     }
   };
 
@@ -113,12 +190,16 @@ export default function DashboardPage() {
       socket.on('newOrder', (order: any) => {
         console.log('New order received:', order);
         
-        // Ses çalma işlemi
-        if (audio) {
+        // Ses çalma işlemi - DB ayarını ve LocalStorage'ı kontrol et
+        const isEnabledLocal = localStorage.getItem('soundEnabled') !== 'false';
+        const shouldPlay = soundEnabledRef.current && isEnabledLocal;
+        
+        console.log('Sound check -> Ref:', soundEnabledRef.current, 'Local:', isEnabledLocal, 'Decision:', shouldPlay);
+
+        if (shouldPlay && audio) {
           audio.play().catch(e => {
             console.log('Audio play failed:', e);
-            toast.warning('Bildirim sesi çalınamadı. Lütfen sayfada bir yere tıklayın.');
-            setAudioAllowed(false);
+            // Sadece gerçekten bir hata varsa uyar, kullanıcı henüz etkileşime girmemiş olabilir
           });
         }
 
@@ -149,12 +230,39 @@ export default function DashboardPage() {
           };
         });
       });
+
+      // Garson Çağırma Bildirimi
+      socket.on('waiterCall', (call: any) => {
+        console.log('Waiter call received:', call);
+        
+        // Ses çalma işlemi - DB ayarını ve LocalStorage'ı kontrol et
+        const isEnabledLocal = localStorage.getItem('soundEnabled') !== 'false';
+        const shouldPlay = soundEnabledRef.current && isEnabledLocal;
+        
+        console.log('Waiter call sound check -> Ref:', soundEnabledRef.current, 'Local:', isEnabledLocal, 'Decision:', shouldPlay);
+        
+        if (shouldPlay && audio) {
+          audio.play().catch(console.error);
+        }
+
+        toast.info(`Masa ${call.table?.tableNumber || '?'} garson çağırıyor!`, {
+          duration: 5000,
+          icon: <BellRing className="h-4 w-4" />,
+          action: {
+            label: 'Görüntüle',
+            onClick: () => router.push('/admin/orders'), // veya garson çağrıları sayfasına
+          },
+        });
+      });
     }
 
     return () => {
-      if (socket) socket.disconnect();
+      if (socket) {
+        console.log('Disconnecting socket...');
+        socket.disconnect();
+      }
     };
-  }, [cafeId, audio]);
+  }, [cafeId, audio]); // soundEnabled bağımlılığı kaldırıldı, ref kullanılıyor
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -170,6 +278,12 @@ export default function DashboardPage() {
         if (response.ok) {
           const data = await response.json();
           setStats(data);
+          // DB'den gelen değeri state'e ata
+          const isEnabled = data.isSoundEnabled !== false;
+          setSoundEnabled(isEnabled);
+          // Ref ve LocalStorage'ı da senkronize et
+          soundEnabledRef.current = isEnabled;
+          localStorage.setItem('soundEnabled', String(isEnabled));
         } else {
           toast.error('Veriler yüklenemedi.');
         }
@@ -274,17 +388,27 @@ export default function DashboardPage() {
               Bağlantı Yok
             </Badge>
           )}
-          {!audioAllowed && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleSound}
+            className={`gap-2 transition-all duration-300 ${
+              soundEnabled 
+                ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 shadow-sm'
+                : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 shadow-sm'
+            }`}
+          >
+            <BellRing className={`h-4 w-4 ${soundEnabled ? 'fill-current animate-pulse' : 'opacity-50'}`} />
+            Bildirim Sesi Ayarları: {soundEnabled ? 'Açık' : 'Kapalı'}
+          </Button>
+          <Link href="/admin/products">
             <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={enableAudio}
-              className="gap-2 border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800"
+              className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 gap-2"
             >
-              <BellRing className="h-4 w-4" />
-              Bildirim Sesini Aç
+              <Star className="h-4 w-4 fill-current" />
+              Öneri Sun
             </Button>
-          )}
+          </Link>
           {cafeId && (
             <Link href={`/menu/${cafeId}`} target="_blank">
               <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20">

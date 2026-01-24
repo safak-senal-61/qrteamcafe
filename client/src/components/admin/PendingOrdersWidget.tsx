@@ -141,15 +141,26 @@ export function PendingOrdersWidget() {
                       setIsOpen(false);
                     }}
                   >
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="font-bold">Masa {order.table?.tableNumber}</span>
-                      <span className="text-sm font-mono">{Number(order.totalAmount).toFixed(2)} ₺</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(order.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                    <div className="mt-2 text-xs text-blue-600 font-medium flex items-center gap-1">
-                      Detaylar için tıkla →
+                    <div className="flex items-start gap-3">
+                      <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                         <img 
+                           src="https://cdn-icons-png.flaticon.com/512/3081/3081840.png" 
+                           alt="Order" 
+                           className="h-8 w-8 object-contain"
+                         />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="font-bold">Masa {order.table?.tableNumber}</span>
+                          <span className="text-sm font-mono">{Number(order.totalAmount).toFixed(2)} ₺</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(order.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div className="mt-2 text-xs text-blue-600 font-medium flex items-center gap-1">
+                          Detaylar için tıkla →
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

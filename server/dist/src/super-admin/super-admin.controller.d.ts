@@ -58,6 +58,7 @@ export declare class SuperAdminController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     })[]>;
@@ -120,6 +121,7 @@ export declare class SuperAdminController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     })[]>;
@@ -171,6 +173,7 @@ export declare class SuperAdminController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     }>;
@@ -210,6 +213,7 @@ export declare class SuperAdminController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
+        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     }>;

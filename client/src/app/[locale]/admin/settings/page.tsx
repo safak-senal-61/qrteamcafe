@@ -352,36 +352,44 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-10">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">İşletme Ayarları</h2>
-        <p className="text-muted-foreground">
+    <div className="space-y-6 max-w-5xl mx-auto pb-20 md:pb-10 px-4 md:px-0 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">İşletme Ayarları</h2>
+        <p className="text-sm md:text-base text-muted-foreground">
           Marka kimliği, operasyonel detaylar ve müşteri deneyimi ayarlarını buradan yönetebilirsiniz.
         </p>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <Tabs defaultValue="identity" className="w-full space-y-4">
-          <TabsList className="grid w-full grid-cols-6 h-auto">
-            <TabsTrigger value="identity" className="flex flex-col gap-1 py-2">
-              <Store className="h-4 w-4" /> Temel
-            </TabsTrigger>
-            <TabsTrigger value="visual" className="flex flex-col gap-1 py-2">
-              <Palette className="h-4 w-4" /> Görünüm
-            </TabsTrigger>
-            <TabsTrigger value="digital" className="flex flex-col gap-1 py-2">
-              <Share2 className="h-4 w-4" /> Dijital
-            </TabsTrigger>
-            <TabsTrigger value="operation" className="flex flex-col gap-1 py-2">
-              <Settings2 className="h-4 w-4" /> Operasyon
-            </TabsTrigger>
-            <TabsTrigger value="authorized" className="flex flex-col gap-1 py-2">
-              <User className="h-4 w-4" /> Yetkili
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex flex-col gap-1 py-2">
-              <Shield className="h-4 w-4" /> Güvenlik
-            </TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="identity" className="w-full space-y-6">
+          <div className="w-full overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 scrollbar-hide">
+            <TabsList className="inline-flex h-auto w-auto md:w-full md:grid md:grid-cols-6 p-1 gap-2 bg-muted/50">
+              <TabsTrigger value="identity" className="flex flex-col gap-2 py-3 px-4 md:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                <Store className="h-4 w-4" /> 
+                <span className="text-xs font-medium">Temel</span>
+              </TabsTrigger>
+              <TabsTrigger value="visual" className="flex flex-col gap-2 py-3 px-4 md:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                <Palette className="h-4 w-4" /> 
+                <span className="text-xs font-medium">Görünüm</span>
+              </TabsTrigger>
+              <TabsTrigger value="digital" className="flex flex-col gap-2 py-3 px-4 md:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                <Share2 className="h-4 w-4" /> 
+                <span className="text-xs font-medium">Dijital</span>
+              </TabsTrigger>
+              <TabsTrigger value="operation" className="flex flex-col gap-2 py-3 px-4 md:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                <Settings2 className="h-4 w-4" /> 
+                <span className="text-xs font-medium">Operasyon</span>
+              </TabsTrigger>
+              <TabsTrigger value="authorized" className="flex flex-col gap-2 py-3 px-4 md:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                <User className="h-4 w-4" /> 
+                <span className="text-xs font-medium">Yetkili</span>
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex flex-col gap-2 py-3 px-4 md:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                <Shield className="h-4 w-4" /> 
+                <span className="text-xs font-medium">Güvenlik</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* 1. Temel Kimlik */}
           <TabsContent value="identity">
@@ -733,7 +741,7 @@ export default function SettingsPage() {
 
       {/* Cropper Dialog */}
       <Dialog open={isCropperOpen} onOpenChange={setIsCropperOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="w-[95vw] sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>{cropTarget === 'logo' ? 'Logoyu Düzenle' : 'Kapak Fotoğrafını Düzenle'}</DialogTitle>
             <DialogDescription>

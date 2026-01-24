@@ -13,8 +13,10 @@ import { API_URL } from '@/lib/api';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '@/lib/imageUtils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useTranslations } from 'next-intl';
 
 export default function RegisterPage() {
+  const t = useTranslations('Auth');
   const [formData, setFormData] = useState({
     cafeName: '',
     fullName: '',
@@ -43,7 +45,7 @@ export default function RegisterPage() {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       if (!file.type.startsWith('image/')) {
-        toast.error('Lütfen geçerli bir resim dosyası seçin.');
+        toast.error(t('register.invalidImage'));
         return;
       }
       // Keep the original file for later use if needed, but we mostly care about the cropped one
@@ -68,7 +70,7 @@ export default function RegisterPage() {
       const mimeType = 'image/png';
       const croppedBlob = await getCroppedImg(selectedImage, croppedAreaPixels, 0, { horizontal: false, vertical: false }, mimeType);
       if (!croppedBlob) {
-        toast.error('Resim kırpılamadı.');
+        toast.error(t('register.cropError'));
         return;
       }
 
@@ -84,7 +86,7 @@ export default function RegisterPage() {
       setCrop({ x: 0, y: 0 });
     } catch (e) {
       console.error(e);
-      toast.error('Kırpma işlemi başarısız.');
+      toast.error(t('register.cropFailed'));
     }
   };
 
@@ -121,22 +123,22 @@ export default function RegisterPage() {
         }
 
         setIsSuccess(true);
-        toast.success('Başvurunuz başarıyla alındı!');
+        toast.success(t('register.successTitle'));
       } else {
         const error = await response.json();
-        let errorMessage = 'Başvuru başarısız.';
+        let errorMessage = t('register.failMessage');
         if (error.message === 'Bu e-posta adresi zaten kullanımda.') {
-          errorMessage = 'Bu e-posta adresi zaten kullanımda.';
+          errorMessage = t('register.emailInUse');
         } else if (Array.isArray(error.message)) {
           errorMessage = error.message.join(', ');
         } else {
-          errorMessage = error.message || 'Başvuru başarısız.';
+          errorMessage = error.message || t('register.failMessage');
         }
         toast.error(errorMessage);
       }
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error('Bir hata oluştu. Lütfen tekrar deneyin.');
+      toast.error(t('register.errorGeneric'));
     } finally {
       setIsLoading(false);
     }
@@ -156,13 +158,13 @@ export default function RegisterPage() {
                 <CheckCircle2 className="h-10 w-10" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold mb-2">Başvurunuz Alındı!</h2>
+            <h2 className="text-2xl font-bold mb-2">{t('register.successHeading')}</h2>
             <p className="text-muted-foreground mb-8">
-              Cafe başvurunuz başarıyla bize ulaştı. Ekibimiz başvurunuzu inceledikten sonra e-posta adresiniz üzerinden size dönüş yapacaktır.
+              {t('register.successDesc')}
             </p>
             <Link href="/admin/login">
               <Button className="w-full h-12 rounded-xl text-lg">
-                Giriş Ekranına Dön
+                {t('register.backToLogin')}
               </Button>
             </Link>
           </Card>
@@ -192,23 +194,23 @@ export default function RegisterPage() {
               <Coffee className="h-8 w-8" />
             </motion.div>
             <div className="space-y-2">
-              <CardTitle className="text-2xl font-bold tracking-tight">İşletme Başvurusu</CardTitle>
+              <CardTitle className="text-2xl font-bold tracking-tight">{t('register.title')}</CardTitle>
               <CardDescription>
-                Hemen başvurunuzu yapın, dijital menü dünyasına katılın.
+                {t('register.desc')}
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="cafeName">İşletme Adı</Label>
+                <Label htmlFor="cafeName">{t('register.cafeName')}</Label>
                 <div className="relative">
                   <Store className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="cafeName"
                     value={formData.cafeName}
                     onChange={handleChange}
-                    placeholder="Cafe Adı"
+                    placeholder={t('register.cafeNamePlaceholder')}
                     className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
                     required
                   />
@@ -216,7 +218,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>İşletme Logosu</Label>
+                <Label>{t('register.cafeLogo')}</Label>
                 <div className="flex items-center gap-4">
                   <div 
                     className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-secondary/50 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
@@ -235,7 +237,7 @@ export default function RegisterPage() {
                       className="w-full"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      Logo Seç
+                      {t('register.selectLogo')}
                     </Button>
                     <input
                       ref={fileInputRef}
@@ -245,7 +247,7 @@ export default function RegisterPage() {
                       onChange={onFileChange}
                     />
                     <p className="text-xs text-muted-foreground mt-1 text-center">
-                        Zorunlu değildir. (Önerilen: 512x512px)
+                        {t('register.logoHint')}
                     </p>
                   </div>
                 </div>
@@ -253,28 +255,28 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Ad Soyad</Label>
+                  <Label htmlFor="fullName">{t('register.fullName')}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
-                      placeholder="Adınız"
+                      placeholder={t('register.fullNamePlaceholder')}
                       className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
                       required
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Telefon</Label>
+                  <Label htmlFor="phone">{t('register.phone')}</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      placeholder="555..."
+                      placeholder={t('register.phonePlaceholder')}
                       type="tel"
                       className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
                       required
@@ -284,14 +286,14 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">E-posta Adresi</Label>
+                <Label htmlFor="email">{t('common.email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="ornek@cafe.com"
+                    placeholder={t('register.emailPlaceholder')}
                     type="email"
                     className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
                     required
@@ -300,7 +302,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Şifre Belirleyin</Label>
+                <Label htmlFor="password">{t('register.setPassword')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -323,11 +325,11 @@ export default function RegisterPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Gönderiliyor...
+                    {t('register.sending')}
                   </>
                 ) : (
                   <>
-                    Başvuruyu Tamamla <ArrowRight className="ml-2 h-5 w-5" />
+                    {t('register.submit')} <ArrowRight className="ml-2 h-5 w-5" />
                   </>
                 )}
               </Button>
@@ -336,9 +338,9 @@ export default function RegisterPage() {
 
           <CardFooter className="text-center text-sm text-muted-foreground pb-8">
             <div className="w-full">
-              Zaten hesabınız var mı?{' '}
+              {t('register.hasAccount')}{' '}
               <Link href="/admin/login" className="font-bold text-primary hover:underline">
-                Giriş Yapın
+                {t('register.loginLink')}
               </Link>
             </div>
           </CardFooter>
@@ -349,9 +351,9 @@ export default function RegisterPage() {
       <Dialog open={isCropperOpen} onOpenChange={setIsCropperOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Logoyu Düzenle</DialogTitle>
+            <DialogTitle>{t('register.editLogo')}</DialogTitle>
             <DialogDescription>
-              Logonuzu kare formatında kırpın ve ayarlayın.
+              {t('register.cropDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="relative w-full h-80 bg-black/5 rounded-md overflow-hidden">
@@ -369,7 +371,7 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-2 py-4">
             <div className="flex justify-between text-xs">
-              <span>Yakınlaştır</span>
+              <span>{t('register.zoom')}</span>
               <span>{Math.round(zoom * 100)}%</span>
             </div>
             <input
@@ -385,10 +387,10 @@ export default function RegisterPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCropperOpen(false)}>
-              İptal
+              {t('common.cancel')}
             </Button>
             <Button onClick={onCropSave}>
-              Kırp ve Kaydet
+              {t('common.cropAndSave')}
             </Button>
           </DialogFooter>
         </DialogContent>

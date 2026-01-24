@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useRouter } from '@/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +22,7 @@ import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 
 export default function AdminLoginPage() {
+  const t = useTranslations('Auth');
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   
@@ -197,17 +199,17 @@ export default function AdminLoginPage() {
       <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Şifre Sıfırlama</DialogTitle>
+            <DialogTitle>{t('forgotPassword.title')}</DialogTitle>
             <DialogDescription>
-              {forgotPasswordStep === 1 && 'Şifrenizi sıfırlamak için e-posta adresinizi girin.'}
-              {forgotPasswordStep === 2 && 'E-posta adresinize gönderilen 6 haneli kodu girin.'}
-              {forgotPasswordStep === 3 && 'Yeni şifrenizi belirleyin.'}
+              {forgotPasswordStep === 1 && t('forgotPassword.step1Desc')}
+              {forgotPasswordStep === 2 && t('forgotPassword.step2Desc')}
+              {forgotPasswordStep === 3 && t('forgotPassword.step3Desc')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForgotPassword} className="space-y-4">
             {forgotPasswordStep === 1 && (
               <div className="space-y-2">
-                <Label htmlFor="resetEmail">E-posta Adresi</Label>
+                <Label htmlFor="resetEmail">{t('common.email')}</Label>
                 <Input
                   id="resetEmail"
                   type="email"
@@ -220,7 +222,7 @@ export default function AdminLoginPage() {
             )}
             {forgotPasswordStep === 2 && (
               <div className="space-y-2">
-                <Label htmlFor="resetCode">Doğrulama Kodu</Label>
+                <Label htmlFor="resetCode">{t('common.verificationCode')}</Label>
                 <div className="relative">
                   <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -237,7 +239,7 @@ export default function AdminLoginPage() {
             )}
             {forgotPasswordStep === 3 && (
               <div className="space-y-2">
-                <Label htmlFor="newPassword">Yeni Şifre</Label>
+                <Label htmlFor="newPassword">{t('forgotPassword.newPassword')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -258,13 +260,13 @@ export default function AdminLoginPage() {
                 {isResetLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    İşleniyor...
+                    {t('common.verifying')}
                   </>
                 ) : (
                   <>
-                    {forgotPasswordStep === 1 && 'Kod Gönder'}
-                    {forgotPasswordStep === 2 && 'Doğrula'}
-                    {forgotPasswordStep === 3 && 'Şifreyi Güncelle'}
+                    {forgotPasswordStep === 1 && t('forgotPassword.sendCode')}
+                    {forgotPasswordStep === 2 && t('common.verify')}
+                    {forgotPasswordStep === 3 && t('forgotPassword.updatePassword')}
                   </>
                 )}
               </Button>
@@ -274,12 +276,12 @@ export default function AdminLoginPage() {
       </Dialog>
             <div className="space-y-2">
               <CardTitle className="text-2xl font-bold tracking-tight">
-                {is2FARequired ? '2FA Doğrulama' : 'Yönetici Girişi'}
+                {is2FARequired ? t('2fa.title') : t('login.title')}
               </CardTitle>
               <CardDescription>
                 {is2FARequired 
-                    ? 'Lütfen authenticator uygulamanızdaki 6 haneli kodu girin'
-                    : 'Cafe yönetim paneline erişmek için giriş yapın'
+                    ? t('2fa.desc')
+                    : t('login.desc')
                 }
               </CardDescription>
             </div>
@@ -288,7 +290,7 @@ export default function AdminLoginPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {is2FARequired ? (
                 <div className="space-y-2">
-                    <Label htmlFor="twoFactorCode">Doğrulama Kodu</Label>
+                    <Label htmlFor="twoFactorCode">{t('common.verificationCode')}</Label>
                     <div className="relative">
                         <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -311,13 +313,13 @@ export default function AdminLoginPage() {
                             setTwoFactorCode('');
                         }}
                     >
-                        Geri Dön
+                        {t('common.back')}
                     </Button>
                 </div>
               ) : (
                 <>
                 <div className="space-y-2">
-                    <Label htmlFor="email">E-posta Adresi</Label>
+                    <Label htmlFor="email">{t('common.email')}</Label>
                     <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -332,20 +334,7 @@ export default function AdminLoginPage() {
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Şifre</Label>
-                    <Button
-                        type="button"
-                        variant="link"
-                        className="text-xs font-medium text-primary hover:underline p-0 h-auto"
-                        onClick={() => {
-                        setForgotPasswordStep(1);
-                        setIsForgotPasswordOpen(true);
-                        }}
-                    >
-                        Şifremi Unuttum
-                    </Button>
-                    </div>
+                    <Label htmlFor="password">{t('common.password')}</Label>
                     <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -357,6 +346,19 @@ export default function AdminLoginPage() {
                         className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
                         required
                     />
+                    </div>
+                    <div className="flex justify-end">
+                    <Button
+                        type="button"
+                        variant="link"
+                        className="text-xs font-medium text-primary hover:underline p-0 h-auto"
+                        onClick={() => {
+                        setForgotPasswordStep(1);
+                        setIsForgotPasswordOpen(true);
+                        }}
+                    >
+                        {t('forgotPassword.link')}
+                    </Button>
                     </div>
                 </div>
                 </>
@@ -370,11 +372,11 @@ export default function AdminLoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {is2FARequired ? 'Doğrulanıyor...' : 'Giriş Yapılıyor...'}
+                    {is2FARequired ? t('common.verifying') : t('login.loggingIn')}
                   </>
                 ) : (
                   <>
-                    {is2FARequired ? 'Doğrula ve Giriş Yap' : 'Giriş Yap'} 
+                    {is2FARequired ? t('common.verifyAndLogin') : t('login.submit')} 
                     {!is2FARequired && <ArrowRight className="ml-2 h-4 w-4" />}
                   </>
                 )}
@@ -383,9 +385,9 @@ export default function AdminLoginPage() {
           </CardContent>
           <CardFooter className="text-center text-sm text-muted-foreground pb-8">
             <div className="w-full">
-              Henüz hesabınız yok mu?{' '}
+              {t('login.noAccount')}{' '}
               <Link href="/admin/register" className="font-bold text-primary hover:underline">
-                Başvuru Yapın
+                {t('login.registerLink')}
               </Link>
             </div>
           </CardFooter>

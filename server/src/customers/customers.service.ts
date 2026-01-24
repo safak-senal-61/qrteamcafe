@@ -130,17 +130,35 @@ export class CustomersService {
   }
 
   async getRecommendations(id: string, cafeId?: string) {
-    // 1. Determine favorite category
-    const stats = await this.getStats(id);
-    const favoriteCategoryName = stats.favoriteCategory?.name;
-
-    let recommendations;
-
     // Base filter for products (always filter by available and cafeId if provided)
     const baseFilter: any = { isAvailable: true };
     if (cafeId) {
       baseFilter.cafeId = cafeId;
     }
+
+    // 1. Check for Manual Recommendations (Chef Recommended) - PRIORITY
+    // This allows admins to override automatic recommendations
+    const manualRecommendations = await this.prisma.product.findMany({
+      where: {
+        ...baseFilter,
+        isChefRecommended: true
+      },
+      take: 5,
+      include: { category: true }
+    });
+
+    if (manualRecommendations.length > 0) {
+      return manualRecommendations.map(product => ({
+        ...product,
+        imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+      }));
+    }
+
+    // 2. Fallback: Automatic Recommendations
+    const stats = await this.getStats(id);
+    const favoriteCategoryName = stats.favoriteCategory?.name;
+
+    let recommendations: any[] = [];
 
     if (favoriteCategoryName) {
       // Get top rated products in favorite category
@@ -153,15 +171,14 @@ export class CustomersService {
         take: 5,
         include: { category: true }
       });
-    } else {
-      // If no favorite category, get top rated products from current cafe or generally
+    }
+
+    // If no favorite category or empty results, get top rated generally
+    if (recommendations.length === 0) {
       recommendations = await this.prisma.product.findMany({
         where: { 
           ...baseFilter,
-          OR: [
-            { isChefRecommended: true },
-            { averageRating: { gte: 4.0 } }
-          ]
+          averageRating: { gte: 4.0 }
         },
         orderBy: { averageRating: 'desc' },
         take: 5,
@@ -169,7 +186,7 @@ export class CustomersService {
       });
     }
 
-    // If still no recommendations (e.g. no favorites, no chef recommended), get random popular ones from the cafe
+    // If still no recommendations, get random popular ones from the cafe
     if (recommendations.length === 0) {
        recommendations = await this.prisma.product.findMany({
         where: baseFilter,

@@ -69,6 +69,7 @@ export interface TemplateProps {
   currentTableId: string | null;
   copyWifi: () => void;
   getSocialUrl: (platform: 'instagram' | 'facebook' | 'twitter' | 'website', url: string) => string;
+  isDemoMode?: boolean;
 }
 
 export interface Customer {
