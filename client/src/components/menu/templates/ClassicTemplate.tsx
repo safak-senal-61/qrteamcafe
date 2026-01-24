@@ -49,6 +49,17 @@ export function ClassicTemplate({
 
   return (
     <div className="min-h-screen bg-background pb-24 relative font-sans">
+      {/* Dialogs */}
+      <CustomerAuthDialog variant="classic" />
+      <CartSheet
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        activeOrders={activeOrders}
+        onCancelOrder={handleCancelOrder}
+      />
+      <ProductDetailDialog />
+      <CreateReviewDialog />
+
       {/* Header Image */}
       <div className="relative h-64 md:h-80 w-full overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-background z-10" />
@@ -345,7 +356,7 @@ export function ClassicTemplate({
           </div>
         </DialogContent>
       </Dialog>
-      <CustomerAuthDialog />
+      <CustomerAuthDialog variant="classic" />
     </div>
   );
 }

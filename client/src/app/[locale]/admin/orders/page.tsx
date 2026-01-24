@@ -1,15 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Receipt, ChefHat, CheckCircle2, XCircle, Armchair, ArrowRightLeft } from 'lucide-react';
+import { Loader2, Receipt, ChefHat, CheckCircle2, XCircle, Armchair, ArrowRightLeft, Filter } from 'lucide-react';
 import { API_URL } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -19,6 +21,9 @@ export default function OrdersPage() {
   const [printTable, setPrintTable] = useState<any | null>(null);
   const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
   
+  // Filter State
+  const [dateFilter, setDateFilter] = useState('active');
+
   // Move Table State
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [moveSourceTable, setMoveSourceTable] = useState<any | null>(null);
@@ -167,8 +172,65 @@ export default function OrdersPage() {
     }
   };
 
+  const getFilteredOrders = () => {
+    return orders.filter(o => {
+      const orderDate = new Date(o.createdAt);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      switch (dateFilter) {
+        case 'active':
+          return o.status !== 'PAID' && o.status !== 'CANCELLED' && o.status !== 'COMPLETED';
+        case 'today':
+          return orderDate >= today;
+        case 'yesterday':
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          const orderDay = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate());
+          return orderDay.getTime() === yesterday.getTime();
+        case 'week':
+          const lastWeek = new Date(today);
+          lastWeek.setDate(lastWeek.getDate() - 7);
+          return orderDate >= lastWeek;
+        default:
+          return true;
+      }
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  };
+
+  const getTableNumber = (tableId: string) => {
+    const table = tables.find(t => t.id === tableId);
+    return table ? table.tableNumber : '-';
+  };
+
   const getTableOrders = (tableId: string) => {
-    return orders.filter(o => o.tableId === tableId && o.status !== 'PAID');
+    return orders.filter(o => {
+      // Filter by Table ID
+      if (o.tableId !== tableId) return false;
+
+      // Filter by Date/Status
+      const orderDate = new Date(o.createdAt);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      switch (dateFilter) {
+        case 'active':
+          return o.status !== 'PAID' && o.status !== 'CANCELLED' && o.status !== 'COMPLETED';
+        case 'today':
+          return orderDate >= today;
+        case 'yesterday':
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          const orderDay = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate());
+          return orderDay.getTime() === yesterday.getTime();
+        case 'week':
+          const lastWeek = new Date(today);
+          lastWeek.setDate(lastWeek.getDate() - 7);
+          return orderDate >= lastWeek;
+        default:
+          return true;
+      }
+    });
   };
 
   const calculateTableTotal = (tableId: string) => {
@@ -243,11 +305,40 @@ export default function OrdersPage() {
         )}
       </div>
 
-      <div className="flex items-center justify-between print:hidden">
-        <h2 className="text-3xl font-bold tracking-tight">Sipariş Yönetimi</h2>
-        <Button onClick={fetchData} variant="outline" size="sm">Yenile</Button>
+      <div className="flex flex-col gap-4 print:hidden">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight">Sipariş Yönetimi</h2>
+          <Button onClick={fetchData} variant="outline" size="sm">Yenile</Button>
+        </div>
+
+        {/* Filter Bar */}
+        <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+          <div className="flex items-center gap-2 min-w-max">
+            {[
+              { id: 'active', label: 'Aktif Siparişler' },
+              { id: 'today', label: 'Bugün' },
+              { id: 'yesterday', label: 'Dün' },
+              { id: 'week', label: 'Son 7 Gün' },
+            ].map((filter) => (
+              <Badge
+                key={filter.id}
+                variant={dateFilter === filter.id ? 'default' : 'outline'}
+                className={cn(
+                  "cursor-pointer whitespace-nowrap px-3 py-1.5 transition-all hover:scale-105 active:scale-95",
+                  dateFilter === filter.id 
+                    ? "bg-emerald-600 hover:bg-emerald-700 border-emerald-600 shadow-sm" 
+                    : "hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 border-gray-200 text-gray-600 bg-white"
+                )}
+                onClick={() => setDateFilter(filter.id)}
+              >
+                {filter.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
       </div>
 
+      {dateFilter === 'active' ? (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tables.map((table) => {
           const activeOrders = getTableOrders(table.id);
@@ -339,6 +430,46 @@ export default function OrdersPage() {
           );
         })}
       </div>
+      ) : (
+        <div className="rounded-md border bg-white shadow-sm overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Sipariş No</TableHead>
+                <TableHead>Masa</TableHead>
+                <TableHead>Tarih</TableHead>
+                <TableHead>İçerik</TableHead>
+                <TableHead>Tutar</TableHead>
+                <TableHead>Durum</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {getFilteredOrders().length > 0 ? (
+                getFilteredOrders().map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">#{order.id.slice(-4)}</TableCell>
+                    <TableCell>Masa {getTableNumber(order.tableId)}</TableCell>
+                    <TableCell>{new Date(order.createdAt).toLocaleString('tr-TR')}</TableCell>
+                    <TableCell>
+                      <div className="text-sm text-muted-foreground max-w-[300px] truncate" title={order.items.map((i: any) => `${i.quantity}x ${i.product.name}`).join(', ')}>
+                        {order.items.map((i: any) => `${i.quantity}x ${i.product.name}`).join(', ')}
+                      </div>
+                    </TableCell>
+                    <TableCell>{Number(order.totalAmount).toFixed(2)} ₺</TableCell>
+                    <TableCell>{getStatusBadge(order.status)}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                 <TableRow>
+                   <TableCell colSpan={6} className="h-24 text-center">
+                     Bu tarih aralığında sipariş bulunamadı.
+                   </TableCell>
+                 </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <Dialog open={isPayDialogOpen} onOpenChange={setIsPayDialogOpen}>
         <DialogContent>

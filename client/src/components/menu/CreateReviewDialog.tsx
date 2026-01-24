@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Star, CheckCircle2 } from 'lucide-react';
+import { Star, CheckCircle2, UtensilsCrossed } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 import axios from 'axios';

@@ -44,8 +44,14 @@ export function MinimalTemplate({
   copyWifi,
   getSocialUrl
 }: TemplateProps) {
+  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale;
+
   return (
     <div className="min-h-screen bg-white pb-24 relative font-sans text-zinc-900 selection:bg-zinc-100">
+      <CustomerAuthDialog variant="minimal" />
+      
       {/* Minimal Header */}
       <div className="pt-8 pb-4 px-6 bg-white border-b border-zinc-100">
         <div className="container mx-auto flex flex-col items-center gap-6">
@@ -261,7 +267,7 @@ export function MinimalTemplate({
         onOpenChange={setIsCartOpen}
       />
 
-      <CustomerAuthDialog />
+      <CustomerAuthDialog variant="minimal" />
       
       <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
         <DialogContent className="sm:max-w-md text-center border-none shadow-none bg-white">

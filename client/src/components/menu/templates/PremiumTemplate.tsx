@@ -285,7 +285,7 @@ export function PremiumTemplate({
         onOpenChange={setIsCartOpen}
       />
 
-      <CustomerAuthDialog />
+      <CustomerAuthDialog variant="premium" />
       
       <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
         <DialogContent className="sm:max-w-md text-center bg-[#111] border border-[#c6a355]/30 text-[#e5e5e5]">

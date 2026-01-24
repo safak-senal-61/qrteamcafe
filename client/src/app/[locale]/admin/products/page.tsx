@@ -205,6 +205,9 @@ export default function MenuPage() {
         setEditingCategory(null);
         setCategoryForm({ name: '' });
         fetchData();
+      } else {
+        const data = await res.json();
+        toast.error(data.message || 'İşlem başarısız.');
       }
     } catch (error) {
       toast.error('İşlem başarısız.');
@@ -624,7 +627,9 @@ export default function MenuPage() {
                 required
               />
               <div className="flex flex-wrap gap-2 mt-2">
-                {CATEGORY_SUGGESTIONS.map(suggestion => (
+                {CATEGORY_SUGGESTIONS.filter(suggestion => 
+                  !categories.some(c => c.name.toLowerCase() === suggestion.toLowerCase())
+                ).map(suggestion => (
                   <Badge 
                     key={suggestion} 
                     variant="outline" 

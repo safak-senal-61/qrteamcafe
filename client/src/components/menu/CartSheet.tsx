@@ -182,7 +182,7 @@ export function CartSheet({
           </div>
 
           <TabsContent value="cart" className="flex-1 overflow-hidden relative mt-0 data-[state=inactive]:hidden">
-            <div className="flex-1 overflow-hidden relative h-full flex flex-col">
+            <div className="flex-1 overflow-hidden relative flex flex-col h-full">
               {items.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-6 p-8 text-center animate-in fade-in zoom-in duration-500">
                   <div className="bg-secondary p-8 rounded-full">
@@ -197,80 +197,82 @@ export function CartSheet({
                 </div>
               ) : (
                 <>
-                  <ScrollArea className="flex-1 px-6 py-4">
-                    <AnimatePresence initial={false}>
-                      <div className="space-y-4 pb-4">
-                        {items.map((item) => (
-                          <motion.div
-                            key={item.cartItemId}
-                            layout
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -100 }}
-                            className="group flex items-center space-x-4 bg-white p-3 rounded-2xl shadow-sm border border-border/50 hover:shadow-md transition-all"
-                          >
-                            <div className="relative h-20 w-20 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">
-                              <Image
-                                src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
-                                alt={item.name}
-                                fill
-                                sizes="80px"
-                                className="object-cover transition-transform group-hover:scale-110"
-                                unoptimized={!!item.image?.includes('localhost') || !!item.image?.includes('127.0.0.1') || !!item.image?.startsWith('/uploads/')}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0 py-1">
-                              <h4 className="font-bold truncate text-base mb-1">{item.name}</h4>
-                              {item.note && (
-                                <p className="text-xs text-muted-foreground mb-1 italic">
-                                  Not: {item.note}
-                                </p>
-                              )}
-                              <p className="text-primary font-extrabold text-lg">
-                                {(item.price * item.quantity).toFixed(2)} ₺
-                              </p>
-                              <div className="flex items-center mt-2 space-x-1">
-                                <Button
-                                  variant="secondary"
-                                  size="icon"
-                                  className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
-                                  onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
-                                >
-                                  <Minus className="h-3.5 w-3.5" />
-                                </Button>
-                                <span className="text-sm font-bold w-6 text-center tabular-nums">
-                                  {item.quantity}
-                                </span>
-                                <Button
-                                  variant="secondary"
-                                  size="icon"
-                                  className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
-                                  onClick={() => {
-                                      if (item.stock && item.quantity < item.stock) {
-                                          updateQuantity(item.cartItemId, item.quantity + 1)
-                                      }
-                                  }}
-                                  disabled={!!item.stock && item.quantity >= item.stock}
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-xl h-10 w-10 transition-all"
-                              onClick={() => removeItem(item.cartItemId)}
+                  <ScrollArea className="flex-1 -mr-4 pr-4">
+                    <div className="px-6 py-4">
+                      <AnimatePresence initial={false}>
+                        <div className="space-y-4 pb-4">
+                          {items.map((item) => (
+                            <motion.div
+                              key={item.cartItemId}
+                              layout
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -100 }}
+                              className="group flex items-center space-x-4 bg-white p-3 rounded-2xl shadow-sm border border-border/50 hover:shadow-md transition-all"
                             >
-                              <Trash2 className="h-5 w-5" />
-                            </Button>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </AnimatePresence>
+                              <div className="relative h-20 w-20 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">
+                                <Image
+                                  src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
+                                  alt={item.name}
+                                  fill
+                                  sizes="80px"
+                                  className="object-cover transition-transform group-hover:scale-110"
+                                  unoptimized={!!item.image?.includes('localhost') || !!item.image?.includes('127.0.0.1') || !!item.image?.startsWith('/uploads/')}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0 py-1">
+                                <h4 className="font-bold truncate text-base mb-1">{item.name}</h4>
+                                {item.note && (
+                                  <p className="text-xs text-muted-foreground mb-1 italic">
+                                    Not: {item.note}
+                                  </p>
+                                )}
+                                <p className="text-primary font-extrabold text-lg">
+                                  {(item.price * item.quantity).toFixed(2)} ₺
+                                </p>
+                                <div className="flex items-center mt-2 space-x-1">
+                                  <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                    onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
+                                  >
+                                    <Minus className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <span className="text-sm font-bold w-6 text-center tabular-nums">
+                                    {item.quantity}
+                                  </span>
+                                  <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
+                                    onClick={() => {
+                                        if (item.stock && item.quantity < item.stock) {
+                                            updateQuantity(item.cartItemId, item.quantity + 1)
+                                        }
+                                    }}
+                                    disabled={!!item.stock && item.quantity >= item.stock}
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-xl h-10 w-10 transition-all"
+                                onClick={() => removeItem(item.cartItemId)}
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </Button>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </AnimatePresence>
+                    </div>
                   </ScrollArea>
                   
-                  <div className="bg-background/80 backdrop-blur-xl border-t p-6 space-y-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+                  <div className="bg-background/80 backdrop-blur-xl border-t p-6 space-y-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] z-10 relative">
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <span>Ara Toplam</span>

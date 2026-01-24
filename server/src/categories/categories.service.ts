@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -8,6 +8,20 @@ export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
   async create(cafeId: string, createCategoryDto: CreateCategoryDto) {
+    const existingCategory = await this.prisma.category.findFirst({
+      where: {
+        cafeId,
+        name: {
+          equals: createCategoryDto.name,
+          mode: 'insensitive', // Case insensitive check
+        },
+      },
+    });
+
+    if (existingCategory) {
+      throw new BadRequestException('Bu isimde bir kategori zaten mevcut.');
+    }
+
     return this.prisma.category.create({
       data: {
         ...createCategoryDto,
@@ -49,7 +63,25 @@ export class CategoriesService {
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto) {
-    await this.findOne(id);
+    const category = await this.findOne(id);
+
+    if (updateCategoryDto.name) {
+      const existingCategory = await this.prisma.category.findFirst({
+        where: {
+          cafeId: category.cafeId,
+          name: {
+            equals: updateCategoryDto.name,
+            mode: 'insensitive',
+          },
+          id: { not: id }, // Exclude current category
+        },
+      });
+
+      if (existingCategory) {
+        throw new BadRequestException('Bu isimde bir kategori zaten mevcut.');
+      }
+    }
+
     return this.prisma.category.update({
       where: { id },
       data: updateCategoryDto,
@@ -57,7 +89,7 @@ export class CategoriesService {
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    const category = await this.findOne(id);
     return this.prisma.category.delete({
       where: { id },
     });

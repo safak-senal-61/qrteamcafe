@@ -11,12 +11,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, User, ShoppingBag, Clock, MapPin, ChevronRight, Loader2, Star, TrendingUp, Trophy, Heart, Award, Utensils, ArrowLeft, Mail, Phone, Lock, Trash2, Shield, Key, AlertTriangle, Settings, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { LogOut, User, ShoppingBag, Clock, MapPin, ChevronRight, Loader2, Star, TrendingUp, Trophy, Heart, Award, Utensils, ArrowLeft, Mail, Phone, Lock, Trash2, Shield, Key, AlertTriangle, Settings, CheckCircle2, ChevronDown, ChevronUp, Calendar, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { CreateReviewDialog } from '@/components/menu/CreateReviewDialog';
+import { ProductDetailDialog } from '@/components/menu/ProductDetailDialog';
 
 interface OrderItem {
   id: string;
@@ -148,8 +149,9 @@ const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order)
   
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-md">
-       <div 
-         className="p-4 flex items-center justify-between cursor-pointer bg-white hover:bg-gray-50/50 transition-colors"
+       <button 
+         type="button"
+         className="w-full p-4 flex items-center justify-between cursor-pointer bg-white hover:bg-gray-50/50 transition-colors text-left"
          onClick={() => setExpanded(!expanded)}
        >
          <div className="flex items-center gap-3">
@@ -181,7 +183,7 @@ const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order)
             </span>
             {expanded ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
          </div>
-       </div>
+       </button>
 
        {expanded && (
          <div className="bg-gray-50/50 border-t border-gray-100 p-3 space-y-3 animate-in slide-in-from-top-1 duration-200">
@@ -243,8 +245,9 @@ const Section = ({ title, icon: Icon, children, defaultOpen = true, className }:
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <div className={cn("bg-white rounded-2xl p-5 shadow-sm border border-gray-100 h-fit transition-all duration-200", className)}>
-      <div 
-        className={cn("flex justify-between items-center cursor-pointer", isOpen ? "mb-5 pb-3 border-b border-gray-50" : "")}
+      <button 
+        type="button"
+        className={cn("w-full flex justify-between items-center cursor-pointer text-left", isOpen ? "mb-5 pb-3 border-b border-gray-50" : "")}
         onClick={() => setIsOpen(!isOpen)}
       >
         <h3 className="text-lg font-bold text-gray-900 flex items-center">
@@ -252,7 +255,7 @@ const Section = ({ title, icon: Icon, children, defaultOpen = true, className }:
           {title}
         </h3>
         {isOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-      </div>
+      </button>
       {isOpen && (
         <div className="animate-in slide-in-from-top-2 duration-200">
           {children}
@@ -276,6 +279,9 @@ export default function ProfilePage() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingStats, setLoadingStats] = useState(false);
   
+  // Order Filtering
+  const [dateFilter, setDateFilter] = useState('all');
+
   // Profile Form States
   const [name, setName] = useState(customer?.name || '');
   const [phone, setPhone] = useState(customer?.phone || '');
@@ -292,6 +298,10 @@ export default function ProfilePage() {
 
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedOrderForReview, setSelectedOrderForReview] = useState<Order | null>(null);
+  
+  // Product Detail Dialog
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [productDetailOpen, setProductDetailOpen] = useState(false);
 
   useEffect(() => {
     if (!customer) {
@@ -310,6 +320,19 @@ export default function ProfilePage() {
   const handleOpenReview = (order: Order) => {
     setSelectedOrderForReview(order);
     setReviewDialogOpen(true);
+  };
+
+  const handleProductClick = (product: Product) => {
+    // Map to cart store product type format
+    const mappedProduct = {
+      ...product,
+      image: product.imageUrl || '',
+      category: product.categoryId,
+      stock: 100, // Default assumption since we don't have stock in this view
+      originalPrice: undefined
+    };
+    setSelectedProduct(mappedProduct);
+    setProductDetailOpen(true);
   };
 
   const fetchStats = async () => {
@@ -465,8 +488,37 @@ export default function ProfilePage() {
     router.push(`/${locale}/menu/${cafeId}`);
   };
 
+  const getFilteredOrders = () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const lastMonth = new Date(today);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+    return orders.filter(order => {
+      const orderDate = new Date(order.createdAt);
+      switch (dateFilter) {
+        case 'today':
+          return orderDate >= today;
+        case 'yesterday':
+          const orderDay = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate());
+          return orderDay.getTime() === yesterday.getTime();
+        case 'week':
+          return orderDate >= lastWeek;
+        case 'month':
+          return orderDate >= lastMonth;
+        default:
+          return true;
+      }
+    });
+  };
+
   if (!customer) return null;
 
+  const filteredOrders = getFilteredOrders();
   const membership = stats ? getMembershipLevel(stats.totalSpent) : getMembershipLevel(0);
 
   return (
@@ -532,18 +584,57 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden relative bg-gray-50">
-          <TabsContent value="panel" className="absolute inset-0 m-0 p-4 md:p-8 overflow-y-auto">
-            <div className="max-w-5xl mx-auto space-y-6 pb-20">
+        <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+          {/* Order Filters - Moved outside TabsContent to ensure visibility */}
+          {activeTab === 'orders' && (
+            <div className="bg-white border-b border-gray-100 p-4 shrink-0 shadow-sm z-20 relative">
+              <div className="max-w-3xl mx-auto flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                <div className="flex items-center text-xs font-bold text-emerald-700 mr-2 shrink-0 bg-emerald-50 px-3 py-1.5 rounded-md border border-emerald-100">
+                  <Filter className="w-3.5 h-3.5 mr-1.5" />
+                  Filtrele:
+                </div>
+                {[
+                  { id: 'all', label: 'Tümü' },
+                  { id: 'today', label: 'Bugün' },
+                  { id: 'yesterday', label: 'Dün' },
+                  { id: 'week', label: 'Son 7 Gün' },
+                  { id: 'month', label: 'Son 30 Gün' },
+                ].map((filter) => (
+                  <Badge
+                    key={filter.id}
+                    variant={dateFilter === filter.id ? 'default' : 'outline'}
+                    className={cn(
+                      "cursor-pointer whitespace-nowrap px-3 py-1.5 transition-all hover:scale-105 active:scale-95",
+                      dateFilter === filter.id 
+                        ? "bg-emerald-600 hover:bg-emerald-700 border-emerald-600 shadow-sm" 
+                        : "hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 border-gray-200 text-gray-600 bg-white"
+                    )}
+                    asChild
+                  >
+                    <button type="button" onClick={() => setDateFilter(filter.id)}>
+                      {filter.label}
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <TabsContent value="panel" className="flex-1 flex flex-col m-0 p-4 md:p-8 overflow-y-auto">
+            <div className="max-w-5xl mx-auto space-y-6 pb-20 w-full">
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm relative overflow-hidden group col-span-1 md:col-span-2">
+                <button 
+                  type="button"
+                  onClick={() => setActiveTab('orders')}
+                  className="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm relative overflow-hidden group col-span-1 md:col-span-2 cursor-pointer hover:shadow-md transition-all text-left w-full"
+                >
                   <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                     <ShoppingBag className="w-16 h-16 text-emerald-600" />
                   </div>
                   <p className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-2">Toplam Sipariş</p>
                   <div className="text-3xl font-black text-gray-900">{stats?.totalOrders || 0}</div>
-                </div>
+                </button>
                 <div className="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm relative overflow-hidden group col-span-1 md:col-span-2">
                   <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                     <Trophy className="w-16 h-16 text-amber-500" />
@@ -551,6 +642,47 @@ export default function ProfilePage() {
                   <p className="text-xs text-amber-600 font-bold uppercase tracking-wider mb-2">Toplam Harcama</p>
                   <div className="text-3xl font-black text-gray-900">₺{stats?.totalSpent?.toFixed(2) || '0.00'}</div>
                 </div>
+              </div>
+
+              {/* Recent Orders Preview */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center">
+                    <Clock className="w-4 h-4 mr-2 text-emerald-600" />
+                    Son Siparişleriniz
+                  </h3>
+                  <button 
+                    type="button"
+                    onClick={() => setActiveTab('orders')}
+                    className="text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+                  >
+                    Tümünü Gör
+                  </button>
+                </div>
+                
+                {orders.length > 0 ? (
+                  <div className="space-y-3">
+                    {orders.slice(0, 2).map((order) => (
+                      <OrderCard key={order.id} order={order} onReview={handleOpenReview} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center">
+                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <ShoppingBag className="w-6 h-6 text-gray-300" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 mb-1">Henüz siparişiniz yok</p>
+                    <p className="text-xs text-gray-500 mb-4">Verdiğiniz siparişler burada listelenecektir.</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleBack}
+                      className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                    >
+                      Menüye Git
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Favorites Section */}
@@ -603,7 +735,7 @@ export default function ProfilePage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="orders" className="absolute inset-0 m-0 data-[state=active]:flex flex-col bg-gray-50">
+          <TabsContent value="orders" className="flex-1 flex flex-col m-0 bg-gray-50 h-full">
             <ScrollArea className="flex-1 p-4 md:p-8">
               <div className="max-w-3xl mx-auto">
                 {loadingOrders ? (
@@ -621,9 +753,19 @@ export default function ProfilePage() {
                       Menüye Göz At
                     </Button>
                   </div>
+                ) : filteredOrders.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-gray-400 text-center">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                      <Calendar className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <p className="text-medium font-medium text-gray-600">Bu tarihte sipariş bulunamadı.</p>
+                    <Button variant="ghost" className="mt-2 text-emerald-600" onClick={() => setDateFilter('all')}>
+                      Tüm Siparişleri Göster
+                    </Button>
+                  </div>
                 ) : (
                   <div className="space-y-4 pb-20">
-                    {orders.map((order) => (
+                    {filteredOrders.map((order) => (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -638,8 +780,8 @@ export default function ProfilePage() {
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="profile" className="absolute inset-0 m-0 p-4 md:p-8 overflow-y-auto bg-gray-50">
-            <div className="max-w-5xl mx-auto pb-20">
+          <TabsContent value="profile" className="flex-1 flex flex-col m-0 p-4 md:p-8 overflow-y-auto">
+            <div className="max-w-5xl mx-auto pb-20 w-full">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                 {/* Left Column: Personal Info */}
               <Section title="Kişisel Bilgiler" icon={User} defaultOpen={true}>
@@ -831,6 +973,16 @@ export default function ProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Product Detail Dialog */}
+      {selectedProduct && (
+        <ProductDetailDialog
+          product={selectedProduct}
+          open={productDetailOpen}
+          onOpenChange={setProductDetailOpen}
+          showRating={true}
+        />
+      )}
     </div>
   );
 }

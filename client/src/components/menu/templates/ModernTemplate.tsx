@@ -324,7 +324,7 @@ export function ModernTemplate({
           </div>
         </DialogContent>
       </Dialog>
-      <CustomerAuthDialog />
+      <CustomerAuthDialog variant="modern" />
     </div>
   );
 }

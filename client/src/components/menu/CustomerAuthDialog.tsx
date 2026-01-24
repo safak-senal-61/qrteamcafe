@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useCustomerStore } from '@/store/customer-store';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -66,11 +67,128 @@ const resetPasswordSchema = z.object({
 
 type AuthView = 'welcome' | 'login' | 'register' | 'verification' | 'forgot-password' | 'reset-password';
 
-export function CustomerAuthDialog() {
+interface CustomerAuthDialogProps {
+  variant?: 'default' | 'premium' | 'bistro' | 'modern' | 'classic' | 'minimal';
+}
+
+export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogProps) {
   const { isAuthDialogOpen, setAuthDialogOpen, setCustomer, setGuest } = useCustomerStore();
   const [view, setView] = useState<AuthView>('welcome');
   const [loading, setLoading] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+
+  const theme = {
+    default: {
+      gradient: "bg-gradient-to-br from-emerald-500 to-teal-600",
+      contentBg: "bg-white/75",
+      titleColor: "text-gray-900",
+      textColor: "text-gray-500",
+      labelColor: "text-gray-700",
+      inputBg: "bg-white/50",
+      inputBorder: "border-gray-200",
+      inputFocus: "focus:border-emerald-500 focus:ring-emerald-500",
+      primaryBtn: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20 hover:shadow-emerald-500/30",
+      secondaryBtn: "border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 bg-white/50 text-emerald-600",
+      link: "text-emerald-600 hover:text-emerald-700",
+      iconBox: "bg-white/20 border-white/10",
+      iconColor: "text-white",
+      divider: "bg-white/50 text-gray-400",
+      successIconBg: "bg-emerald-100",
+      successIconColor: "text-emerald-600"
+    },
+    classic: {
+      gradient: "bg-gradient-to-br from-blue-600 to-indigo-700",
+      contentBg: "bg-white",
+      titleColor: "text-gray-900",
+      textColor: "text-gray-600",
+      labelColor: "text-gray-700",
+      inputBg: "bg-white",
+      inputBorder: "border-gray-200",
+      inputFocus: "focus:border-blue-500 focus:ring-blue-500",
+      primaryBtn: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 hover:shadow-blue-500/30",
+      secondaryBtn: "border-blue-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 bg-white text-blue-600",
+      link: "text-blue-600 hover:text-blue-700",
+      iconBox: "bg-white/20 border-white/10",
+      iconColor: "text-white",
+      divider: "bg-gray-100 text-gray-400",
+      successIconBg: "bg-blue-50",
+      successIconColor: "text-blue-600"
+    },
+    minimal: {
+      gradient: "bg-zinc-50 border-b border-zinc-200",
+      contentBg: "bg-white",
+      titleColor: "text-zinc-900",
+      textColor: "text-zinc-500",
+      labelColor: "text-zinc-700",
+      inputBg: "bg-white",
+      inputBorder: "border-zinc-200",
+      inputFocus: "focus:border-zinc-400 focus:ring-zinc-200 text-zinc-900",
+      primaryBtn: "bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/10",
+      secondaryBtn: "border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900 hover:border-zinc-300 bg-white text-zinc-600",
+      link: "text-zinc-900 hover:text-zinc-600",
+      iconBox: "bg-zinc-200 text-zinc-700",
+      iconColor: "text-zinc-700",
+      divider: "bg-zinc-100 text-zinc-400",
+      successIconBg: "bg-zinc-100",
+      successIconColor: "text-zinc-900"
+    },
+    modern: {
+      gradient: "bg-gradient-to-br from-slate-900 to-slate-950 border-b border-white/10",
+      contentBg: "bg-slate-950 border border-white/10",
+      titleColor: "text-white",
+      textColor: "text-slate-400",
+      labelColor: "text-slate-300",
+      inputBg: "bg-slate-900",
+      inputBorder: "border-white/10",
+      inputFocus: "focus:border-white/30 focus:ring-white/20 text-white",
+      primaryBtn: "bg-white text-black hover:bg-slate-200 shadow-lg shadow-white/10",
+      secondaryBtn: "border-white/10 hover:bg-white/10 hover:text-white text-slate-300 bg-transparent",
+      link: "text-white hover:text-slate-300",
+      iconBox: "bg-white/10 border-white/10",
+      iconColor: "text-white",
+      divider: "bg-white/10 text-slate-600",
+      successIconBg: "bg-white/10",
+      successIconColor: "text-white"
+    },
+    premium: {
+      gradient: "bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-b border-[#c6a355]/20",
+      contentBg: "bg-[#111]/95 border border-[#c6a355]/20",
+      titleColor: "text-[#c6a355]",
+      textColor: "text-zinc-400",
+      labelColor: "text-zinc-300",
+      inputBg: "bg-zinc-900/50",
+      inputBorder: "border-zinc-800",
+      inputFocus: "focus:border-[#c6a355] focus:ring-[#c6a355] text-[#e5e5e5]",
+      primaryBtn: "bg-[#c6a355] hover:bg-[#d4b060] text-black shadow-[#c6a355]/20 hover:shadow-[#c6a355]/30",
+      secondaryBtn: "border-[#c6a355]/30 hover:bg-[#c6a355]/10 hover:text-[#c6a355] hover:border-[#c6a355] bg-transparent text-[#c6a355]",
+      link: "text-[#c6a355] hover:text-[#d4b060]",
+      iconBox: "bg-[#c6a355]/10 border-[#c6a355]/20",
+      iconColor: "text-[#c6a355]",
+      divider: "bg-zinc-800 text-zinc-500",
+      successIconBg: "bg-[#c6a355]/20",
+      successIconColor: "text-[#c6a355]"
+    },
+    bistro: {
+      gradient: "bg-gradient-to-br from-orange-50 to-stone-100 border-b border-stone-200",
+      contentBg: "bg-[#f8f5e6]",
+      titleColor: "text-stone-800 font-serif",
+      textColor: "text-stone-600",
+      labelColor: "text-stone-700",
+      inputBg: "bg-white",
+      inputBorder: "border-stone-200",
+      inputFocus: "focus:border-orange-400 focus:ring-orange-200 text-stone-800",
+      primaryBtn: "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-500/20 hover:shadow-orange-500/30",
+      secondaryBtn: "border-orange-200 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 bg-white text-orange-700",
+      link: "text-orange-700 hover:text-orange-800",
+      iconBox: "bg-orange-100 text-orange-600",
+      iconColor: "text-orange-600",
+      divider: "bg-stone-200 text-stone-400",
+      successIconBg: "bg-orange-100",
+      successIconColor: "text-orange-600"
+    }
+  };
+
+  const styles = theme[variant] || theme.default;
 
   const handleGuestContinue = () => {
     setGuest(true);
@@ -212,7 +330,10 @@ export function CustomerAuthDialog() {
   return (
     <Dialog open={isAuthDialogOpen} onOpenChange={resetView}>
       <DialogContent 
-        className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl bg-white/75 backdrop-blur-lg"
+        className={cn(
+          "sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl backdrop-blur-lg",
+          styles.contentBg
+        )}
         showCloseButton={false}
         overlayClassName="bg-black/5 backdrop-blur-[1px]"
         aria-describedby="auth-description"
@@ -223,7 +344,11 @@ export function CustomerAuthDialog() {
         </div>
         <div className="relative h-full flex flex-col">
           {/* Header Section - Dynamic based on view */}
-          <div className={`relative transition-all duration-500 ease-in-out ${view === 'welcome' ? 'h-48' : 'h-32'} bg-gradient-to-br from-emerald-500 to-teal-600 flex flex-col items-center justify-center text-white overflow-hidden`}>
+          <div className={cn(
+            "relative transition-all duration-500 ease-in-out flex flex-col items-center justify-center overflow-hidden",
+            view === 'welcome' ? 'h-48' : 'h-32',
+            styles.gradient
+          )}>
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-20">
               <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
@@ -234,7 +359,7 @@ export function CustomerAuthDialog() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-4 left-4 text-white hover:bg-white/20 hover:text-white"
+                className={cn("absolute top-4 left-4 hover:bg-white/20", styles.iconColor)}
                 onClick={() => setView('welcome')}
               >
                 <ChevronLeft className="h-6 w-6" />
@@ -247,12 +372,12 @@ export function CustomerAuthDialog() {
               transition={{ duration: 0.5 }}
               className="z-10 flex flex-col items-center"
             >
-              <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md mb-3 shadow-lg border border-white/10">
-                <UtensilsCrossed className="h-8 w-8 text-white" />
+              <div className={cn("p-3 rounded-2xl backdrop-blur-md mb-3 shadow-lg", styles.iconBox)}>
+                <UtensilsCrossed className={cn("h-8 w-8", styles.iconColor)} />
               </div>
-              <h2 className="text-2xl font-bold tracking-tight">QR Team Cafe</h2>
+              <h2 className={cn("text-2xl font-bold tracking-tight", styles.titleColor)}>QR Team Cafe</h2>
               {view === 'welcome' && (
-                <p className="text-sm text-white/90 mt-1 font-medium">Lezzetin Adresi</p>
+                <p className={cn("text-sm mt-1 font-medium", styles.textColor)}>Lezzetin Adresi</p>
               )}
             </motion.div>
           </div>
@@ -270,15 +395,18 @@ export function CustomerAuthDialog() {
                   className="space-y-4"
                 >
                   <div className="text-center space-y-2 mb-6">
-                    <h3 className="text-xl font-semibold text-gray-900">Hoş Geldiniz!</h3>
-                    <p className="text-gray-500 text-sm">
+                    <h3 className={cn("text-xl font-semibold", styles.titleColor)}>Hoş Geldiniz!</h3>
+                    <p className={cn("text-sm", styles.textColor)}>
                       Siparişinizi vermek için hemen menüyü incelemeye başlayın.
                     </p>
                   </div>
 
                   <Button 
                     size="lg" 
-                    className="w-full h-14 text-lg font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all group bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+                    className={cn(
+                      "w-full h-14 text-lg font-semibold transition-all group border-0",
+                      styles.primaryBtn
+                    )}
                     onClick={handleGuestContinue}
                   >
                     <Coffee className="mr-2 h-5 w-5" />
@@ -288,17 +416,20 @@ export function CustomerAuthDialog() {
 
                   <div className="relative py-4">
                     <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-gray-200" />
+                      <span className={cn("w-full border-t", styles.inputBorder)} />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white/50 backdrop-blur-sm px-2 text-gray-400">veya</span>
+                      <span className={cn("backdrop-blur-sm px-2 rounded", styles.divider)}>veya</span>
                     </div>
                   </div>
 
                   <Button 
                     variant="outline" 
                     size="lg"
-                    className="w-full h-12 border-2 border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-colors bg-white/50 text-emerald-600"
+                    className={cn(
+                      "w-full h-12 border-2 transition-colors",
+                      styles.secondaryBtn
+                    )}
                     onClick={() => setView('login')}
                   >
                     <UserCircle2 className="mr-2 h-5 w-5" />
@@ -317,8 +448,8 @@ export function CustomerAuthDialog() {
                   className="space-y-4"
                 >
                   <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Giriş Yap</h3>
-                    <p className="text-sm text-gray-500">Hesabınıza erişin ve sipariş verin</p>
+                    <h3 className={cn("text-lg font-semibold", styles.titleColor)}>Giriş Yap</h3>
+                    <p className={cn("text-sm", styles.textColor)}>Hesabınıza erişin ve sipariş verin</p>
                   </div>
 
                   <Form {...loginForm}>
@@ -328,9 +459,18 @@ export function CustomerAuthDialog() {
                         name="email"
                         render={({ field }: { field: any }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">E-posta</FormLabel>
+                            <FormLabel className={styles.labelColor}>E-posta</FormLabel>
                             <FormControl>
-                              <Input placeholder="ornek@email.com" {...field} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" />
+                              <Input 
+                                placeholder="ornek@email.com" 
+                                {...field} 
+                                className={cn(
+                                  "h-11", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -341,9 +481,19 @@ export function CustomerAuthDialog() {
                         name="password"
                         render={({ field }: { field: any }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Şifre</FormLabel>
+                            <FormLabel className={styles.labelColor}>Şifre</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="******" {...field} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" />
+                              <Input 
+                                type="password" 
+                                placeholder="******" 
+                                {...field} 
+                                className={cn(
+                                  "h-11", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -354,14 +504,14 @@ export function CustomerAuthDialog() {
                         <Button 
                           type="button" 
                           variant="link" 
-                          className="px-0 h-auto text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                          className={cn("px-0 h-auto text-sm font-medium", styles.link)}
                           onClick={() => setView('forgot-password')}
                         >
                           Şifremi Unuttum?
                         </Button>
                       </div>
 
-                      <Button type="submit" className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white" disabled={loading}>
+                      <Button type="submit" className={cn("w-full h-11", styles.primaryBtn)} disabled={loading}>
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Giriş Yap
                       </Button>
@@ -370,16 +520,16 @@ export function CustomerAuthDialog() {
                   
                   <div className="relative py-2">
                     <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-gray-200" />
+                      <span className={cn("w-full border-t", styles.inputBorder)} />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white/50 backdrop-blur-sm px-2 text-gray-400">veya</span>
+                      <span className={cn("backdrop-blur-sm px-2 rounded", styles.divider)}>veya</span>
                     </div>
                   </div>
 
                   <Button 
                     variant="outline" 
-                    className="w-full h-11 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    className={cn("w-full h-11 border-2", styles.secondaryBtn)}
                     onClick={() => setView('register')}
                   >
                     Yeni Hesap Oluştur
@@ -397,8 +547,8 @@ export function CustomerAuthDialog() {
                   className="space-y-4"
                 >
                   <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Şifre Sıfırlama</h3>
-                    <p className="text-sm text-gray-500">E-posta adresinize bir kod göndereceğiz</p>
+                    <h3 className={cn("text-lg font-semibold", styles.titleColor)}>Şifre Sıfırlama</h3>
+                    <p className={cn("text-sm", styles.textColor)}>E-posta adresinize bir kod göndereceğiz</p>
                   </div>
 
                   <Form {...forgotPasswordForm}>
@@ -408,15 +558,24 @@ export function CustomerAuthDialog() {
                         name="email"
                         render={({ field }: { field: any }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">E-posta</FormLabel>
+                            <FormLabel className={styles.labelColor}>E-posta</FormLabel>
                             <FormControl>
-                              <Input placeholder="ornek@email.com" {...field} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" />
+                              <Input 
+                                placeholder="ornek@email.com" 
+                                {...field} 
+                                className={cn(
+                                  "h-11", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white" disabled={loading}>
+                      <Button type="submit" className={cn("w-full h-11", styles.primaryBtn)} disabled={loading}>
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Kod Gönder
                       </Button>
@@ -435,8 +594,8 @@ export function CustomerAuthDialog() {
                   className="space-y-4"
                 >
                   <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Yeni Şifre Belirle</h3>
-                    <p className="text-sm text-gray-500">Gelen kodu ve yeni şifrenizi girin</p>
+                    <h3 className={cn("text-lg font-semibold", styles.titleColor)}>Yeni Şifre Belirle</h3>
+                    <p className={cn("text-sm", styles.textColor)}>Gelen kodu ve yeni şifrenizi girin</p>
                   </div>
 
                   <Form {...resetPasswordForm}>
@@ -446,9 +605,17 @@ export function CustomerAuthDialog() {
                         name="email"
                         render={({ field }: { field: any }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">E-posta</FormLabel>
+                            <FormLabel className={styles.labelColor}>E-posta</FormLabel>
                             <FormControl>
-                              <Input {...field} readOnly className="h-11 bg-gray-100 border-gray-200" />
+                              <Input 
+                                {...field} 
+                                readOnly 
+                                className={cn(
+                                  "h-11 opacity-50 cursor-not-allowed", 
+                                  styles.inputBg, 
+                                  styles.inputBorder
+                                )} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -459,9 +626,19 @@ export function CustomerAuthDialog() {
                         name="code"
                         render={({ field }: { field: any }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Doğrulama Kodu</FormLabel>
+                            <FormLabel className={styles.labelColor}>Doğrulama Kodu</FormLabel>
                             <FormControl>
-                              <Input placeholder="123456" {...field} maxLength={6} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 tracking-widest text-center text-lg" />
+                              <Input 
+                                placeholder="123456" 
+                                {...field} 
+                                maxLength={6} 
+                                className={cn(
+                                  "h-11 tracking-widest text-center text-lg", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -472,15 +649,25 @@ export function CustomerAuthDialog() {
                         name="newPassword"
                         render={({ field }: { field: any }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Yeni Şifre</FormLabel>
+                            <FormLabel className={styles.labelColor}>Yeni Şifre</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="******" {...field} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" />
+                              <Input 
+                                type="password" 
+                                placeholder="******" 
+                                {...field} 
+                                className={cn(
+                                  "h-11", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white" disabled={loading}>
+                      <Button type="submit" className={cn("w-full h-11", styles.primaryBtn)} disabled={loading}>
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Şifreyi Güncelle
                       </Button>
@@ -499,8 +686,8 @@ export function CustomerAuthDialog() {
                   className="space-y-4"
                 >
                   <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Kayıt Ol</h3>
-                    <p className="text-sm text-gray-500">Yeni bir hesap oluşturun</p>
+                    <h3 className={cn("text-lg font-semibold", styles.titleColor)}>Kayıt Ol</h3>
+                    <p className={cn("text-sm", styles.textColor)}>Yeni bir hesap oluşturun</p>
                   </div>
 
                   <Form {...registerForm}>
@@ -510,9 +697,18 @@ export function CustomerAuthDialog() {
                         name="name"
                         render={({ field }: { field: any }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Ad Soyad</FormLabel>
+                            <FormLabel className={styles.labelColor}>Ad Soyad</FormLabel>
                             <FormControl>
-                              <Input placeholder="Adınız Soyadınız" {...field} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" />
+                              <Input 
+                                placeholder="Adınız Soyadınız" 
+                                {...field} 
+                                className={cn(
+                                  "h-11", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -523,9 +719,18 @@ export function CustomerAuthDialog() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">E-posta</FormLabel>
+                            <FormLabel className={styles.labelColor}>E-posta</FormLabel>
                             <FormControl>
-                              <Input placeholder="ornek@email.com" {...field} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" />
+                              <Input 
+                                placeholder="ornek@email.com" 
+                                {...field} 
+                                className={cn(
+                                  "h-11", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -536,9 +741,18 @@ export function CustomerAuthDialog() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Telefon</FormLabel>
+                            <FormLabel className={styles.labelColor}>Telefon</FormLabel>
                             <FormControl>
-                              <Input placeholder="0555 555 55 55" {...field} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" />
+                              <Input 
+                                placeholder="0555 555 55 55" 
+                                {...field} 
+                                className={cn(
+                                  "h-11", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -549,26 +763,36 @@ export function CustomerAuthDialog() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Şifre</FormLabel>
+                            <FormLabel className={styles.labelColor}>Şifre</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="******" {...field} className="h-11 bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" />
+                              <Input 
+                                type="password" 
+                                placeholder="******" 
+                                {...field} 
+                                className={cn(
+                                  "h-11", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full h-11 text-base shadow-md bg-emerald-600 hover:bg-emerald-700 text-white" disabled={loading}>
+                      <Button type="submit" className={cn("w-full h-11 text-base shadow-md", styles.primaryBtn)} disabled={loading}>
                         {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Kayıt Ol'}
                       </Button>
                     </form>
                   </Form>
 
                   <div className="text-center mt-4">
-                    <p className="text-sm text-gray-500">
+                    <p className={cn("text-sm", styles.textColor)}>
                       Zaten hesabınız var mı?{' '}
                       <button 
                         onClick={() => setView('login')} 
-                        className="text-emerald-600 font-semibold hover:underline"
+                        className={cn("font-semibold hover:underline", styles.link)}
                       >
                         Giriş Yap
                       </button>
@@ -587,12 +811,12 @@ export function CustomerAuthDialog() {
                   className="space-y-4"
                 >
                   <div className="text-center mb-4">
-                    <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <MailCheck className="h-6 w-6 text-emerald-600" />
+                    <div className={cn("w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3", styles.successIconBg)}>
+                      <MailCheck className={cn("h-6 w-6", styles.successIconColor)} />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Hesabı Doğrula</h3>
-                    <p className="text-sm text-gray-500">
-                      <span className="font-medium text-gray-900">{verificationEmail}</span> adresine gönderilen 6 haneli kodu giriniz
+                    <h3 className={cn("text-lg font-semibold", styles.titleColor)}>Hesabı Doğrula</h3>
+                    <p className={cn("text-sm", styles.textColor)}>
+                      <span className={cn("font-medium", styles.titleColor)}>{verificationEmail}</span> adresine gönderilen 6 haneli kodu giriniz
                     </p>
                   </div>
 
@@ -614,12 +838,17 @@ export function CustomerAuthDialog() {
                         name="code"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700 text-center block">Doğrulama Kodu</FormLabel>
+                            <FormLabel className={cn("text-center block", styles.labelColor)}>Doğrulama Kodu</FormLabel>
                             <FormControl>
                               <Input 
                                 placeholder="123456" 
                                 {...field} 
-                                className="h-14 text-center text-2xl tracking-[0.5em] font-bold bg-white/50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500" 
+                                className={cn(
+                                  "h-14 text-center text-2xl tracking-[0.5em] font-bold", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
                                 maxLength={6}
                               />
                             </FormControl>
@@ -627,18 +856,18 @@ export function CustomerAuthDialog() {
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full h-11 text-base shadow-md bg-emerald-600 hover:bg-emerald-700 text-white" disabled={loading}>
+                      <Button type="submit" className={cn("w-full h-11 text-base shadow-md", styles.primaryBtn)} disabled={loading}>
                         {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Doğrula ve Giriş Yap'}
                       </Button>
                     </form>
                   </Form>
 
                   <div className="text-center mt-4">
-                    <p className="text-sm text-gray-500">
+                    <p className={cn("text-sm", styles.textColor)}>
                       Kod gelmedi mi?{' '}
                       <button 
                         onClick={() => toast.info('Kod tekrar gönderildi (Simülasyon)')} 
-                        className="text-emerald-600 font-semibold hover:underline"
+                        className={cn("font-semibold hover:underline", styles.link)}
                         type="button"
                       >
                         Tekrar Gönder

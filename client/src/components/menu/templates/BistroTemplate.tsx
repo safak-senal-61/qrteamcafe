@@ -297,7 +297,7 @@ export function BistroTemplate({
       </div>
 
       {/* Dialogs */}
-      <CustomerAuthDialog />
+      <CustomerAuthDialog variant="bistro" />
       <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
         <DialogContent className="sm:max-w-md bg-[#f8f5e6] border-2 border-stone-800">
           <DialogHeader>

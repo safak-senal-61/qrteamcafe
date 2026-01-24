@@ -207,6 +207,7 @@ export default function DashboardPage() {
       icon: UtensilsCrossed,
       color: 'text-blue-600',
       bg: 'bg-blue-100',
+      href: '/admin/orders',
     },
     {
       title: 'Günlük Ciro',
@@ -215,6 +216,7 @@ export default function DashboardPage() {
       icon: DollarSign,
       color: 'text-green-600',
       bg: 'bg-green-100',
+      href: '/admin/statistics',
     },
     {
       title: 'Aktif Masa',
@@ -223,6 +225,7 @@ export default function DashboardPage() {
       icon: Users,
       color: 'text-purple-600',
       bg: 'bg-purple-100',
+      href: '/admin/orders',
     },
     {
       title: 'Toplam Ürün',
@@ -231,6 +234,7 @@ export default function DashboardPage() {
       icon: Package,
       color: 'text-orange-600',
       bg: 'bg-orange-100',
+      href: '/admin/products',
     },
   ];
 
@@ -295,8 +299,8 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
-          return (
-            <Card key={index} className="border-none shadow-sm hover:shadow-md transition-all">
+          const CardComponent = (
+            <Card className={`border-none shadow-sm hover:shadow-md transition-all h-full ${stat.href ? 'cursor-pointer hover:bg-gray-50/50' : ''}`}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   {stat.title}
@@ -315,6 +319,16 @@ export default function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
+          );
+
+          return stat.href ? (
+            <Link key={index} href={stat.href} className="block h-full">
+              {CardComponent}
+            </Link>
+          ) : (
+            <div key={index} className="h-full">
+              {CardComponent}
+            </div>
           );
         })}
       </div>
