@@ -73,7 +73,7 @@
     "company": "Şirket",
     "legal": "Yasal",
     "description": "Restoran ve kafeler için yeni nesil dijital menü ve sipariş yönetim sistemi.",
-    "rights": "© 2024 QR Team Cafe. Tüm hakları saklıdır."
+    "rights": "© 2026 QR Team Cafe. Tüm hakları saklıdır."
   },
   "NotFound": {
     "title": "Sayfa Bulunamadı",
@@ -148,6 +148,339 @@
           "3": "Özel Müşteri Temsilcisi",
           "4": "Sınırsız Şube Yönetimi"
         }
+      }
+    }
+  },
+  "PrivacyPage": {
+    "title": "Gizlilik Politikası",
+    "lastUpdated": "Son Güncelleme: 21 Ocak 2026",
+    "subtitle": "Verilerinizin güvenliği ve gizliliği bizim için en önemli önceliktir.",
+    "intro": "QR Team Cafe (\"Biz\", \"Şirket\") olarak, müşterilerimizin ve kullanıcılarımızın gizliliğine büyük önem veriyoruz. Bu politika, hizmetlerimizi kullandığınızda kişisel verilerinizin nasıl toplandığını, kullanıldığını, korunduğunu ve paylaşıldığını şeffaf bir şekilde açıklamaktadır.",
+    "sections": {
+      "1": {
+        "title": "1. Toplanan Kişisel Veriler",
+        "content": "Hizmetlerimizi kullandığınızda aşağıdaki veri kategorilerini toplayabiliriz:",
+        "list": {
+          "0": "Kimlik Bilgileri: Adınız, soyadınız, T.C. kimlik numarası (fatura işlemleri için gerekliyse).",
+          "1": "İletişim Bilgileri: E-posta adresi, telefon numarası, işletme adresi.",
+          "2": "İşletme Verileri: Restoran/Kafe adı, menü içerikleri, fiyatlandırma politikaları, masa düzeni.",
+          "3": "Finansal Bilgiler: Ödeme geçmişi, fatura detayları (Kredi kartı bilgileriniz doğrudan ödeme sağlayıcımız tarafından işlenir, sunucularımızda saklanmaz).",
+          "4": "Teknik Veriler: IP adresi, tarayıcı türü, cihaz bilgileri, işletim sistemi ve erişim zamanları."
+        }
+      },
+      "2": {
+        "title": "2. Verilerin Kullanım Amaçları",
+        "content": "Toplanan verileriniz aşağıdaki amaçlarla işlenmektedir:",
+        "list": {
+          "0": "Hizmet Sunumu: QR menü sisteminin çalıştırılması, siparişlerin yönetimi ve hesap oluşturma süreçleri.",
+          "1": "İyileştirme ve Analiz: Kullanıcı deneyimini geliştirmek, sistem performansını izlemek ve hataları gidermek.",
+          "2": "Müşteri Desteği: Sorunlarınızın çözümü ve taleplerinizin yanıtlanması.",
+          "3": "Yasal Uyum: Vergi mevzuatı ve diğer yasal yükümlülüklerin yerine getirilmesi.",
+          "4": "Güvenlik: Hesabınızın ve sistemimizin güvenliğinin sağlanması, şüpheli işlemlerin tespiti."
+        }
+      },
+      "3": {
+        "title": "3. Veri Güvenliği ve Saklama",
+        "content": "Verilerinizin güvenliği bizim için en öncelikli konudur:",
+        "list": {
+          "0": "Şifreleme: Tüm veri iletimi SSL/TLS şifreleme protokolleri ile korunmaktadır.",
+          "1": "Erişim Kontrolü: Verilerinize sadece yetkili personelimiz ve yasal zorunluluk durumunda ilgili kurumlar erişebilir.",
+          "2": "Altyapı: Verileriniz modern ve güvenli bulut sunucularında, düzenli yedekleme ile saklanmaktadır.",
+          "3": "Saklama Süresi: Verileriniz, hizmet aldığınız süre boyunca ve yasal saklama süreleri (örn. fatura kayıtları için 10 yıl) boyunca muhafaza edilir."
+        }
+      },
+      "4": {
+        "title": "4. Üçüncü Taraflarla Paylaşım",
+        "content": "Verilerinizi asla üçüncü taraflara satmayız. Ancak hizmetin sürdürülebilmesi için bazı sağlayıcılarla paylaşım gerekebilir:",
+        "list": {
+          "0": "Altyapı Sağlayıcıları: Sunucu ve veritabanı hizmetleri (örn. AWS, Vercel).",
+          "1": "Ödeme İşlemcileri: Kredi kartı ödemelerinin güvenli işlenmesi için (örn. Iyzico, Stripe).",
+          "2": "Analiz Araçları: Hizmet kullanımını anonim olarak analiz etmek için (örn. Google Analytics).",
+          "3": "Yasal Merciler: Mahkeme kararı veya yasal zorunluluk durumunda yetkili kamu kurumları."
+        }
+      },
+      "5": {
+        "title": "5. Çerez (Cookie) Politikası",
+        "content": "Sitemizde deneyiminizi iyileştirmek için çerezler kullanıyoruz. Zorunlu çerezler sitenin çalışması için gereklidir. Analitik çerezler ise sitemizi nasıl kullandığınızı anlamamıza yardımcı olur. Tarayıcı ayarlarınızdan çerezleri yönetebilirsiniz."
+      },
+      "6": {
+        "title": "6. Haklarınız (KVKK)",
+        "content": "KVKK ve ilgili mevzuat uyarınca aşağıdaki haklara sahipsiniz:",
+        "list": {
+          "0": "Verilerinizin işlenip işlenmediğini öğrenme.",
+          "1": "İşlenen verileriniz hakkında bilgi talep etme.",
+          "2": "Yanlış veya eksik verilerin düzeltilmesini isteme.",
+          "3": "Verilerinizin silinmesini veya yok edilmesini talep etme (yasal saklama yükümlülükleri saklı kalmak kaydıyla).",
+          "4": "Verilerinizin kanuna aykırı işlenmesi sebebiyle zarara uğramanız halinde zararın giderilmesini talep etme."
+        }
+      }
+    },
+    "contact": {
+      "title": "Sorularınız mı var?",
+      "description": "Gizlilik politikamız veya verileriniz hakkında daha fazla bilgi almak için bizimle iletişime geçebilirsiniz.",
+      "button": "Bize Ulaşın"
+    }
+  },
+  "TermsPage": {
+    "title": "Kullanım Şartları",
+    "lastUpdated": "Son Güncelleme: 21 Ocak 2026",
+    "subtitle": "Hizmetlerimizi kullanırken uymanız gereken kurallar ve yasal sorumluluklar.",
+    "intro": "QR Team Cafe (\"Biz\", \"Platform\") olarak, sizlere en iyi dijital menü ve restoran yönetim deneyimini sunmayı hedefliyoruz. Aşağıdaki şartlar, platformumuzun adil, güvenli ve yasalara uygun kullanımını sağlamak amacıyla belirlenmiştir.",
+    "sections": {
+      "1": {
+        "title": "1. Hizmetin Tanımı ve Kabulü",
+        "content": "QR Team Cafe, restoran ve kafeler için dijital menü, sipariş yönetimi, personel takibi ve raporlama hizmetleri sunan bulut tabanlı bir SaaS (Hizmet Olarak Yazılım) platformudur.",
+        "content2": "Hizmetlerimizi kullanarak veya platformumuza erişerek, bu Kullanım Şartları'nı okuduğunuzu, anladığınızı ve bunlara uymayı kabul ettiğinizi beyan edersiniz."
+      },
+      "2": {
+        "title": "2. Hesap Güvenliği ve Kullanımı",
+        "content": "Platformu kullanmak için oluşturduğunuz hesabın güvenliğinden siz sorumlusunuz:",
+        "list": {
+          "0": "Kayıt sırasında doğru ve güncel bilgiler sağlamalısınız.",
+          "1": "Şifrenizi güvenli tutmalı ve üçüncü şahıslarla paylaşmamalısınız.",
+          "2": "Hesabınızda gerçekleşen tüm işlemlerden doğrudan siz sorumlusunuz.",
+          "3": "Yetkisiz kullanım şüphesi durumunda derhal bize bildirimde bulunmalısınız."
+        }
+      },
+      "3": {
+        "title": "3. Kullanım Kuralları ve Yasaklar",
+        "content": "Platformu aşağıdaki şekillerde kullanmanız kesinlikle yasaktır:",
+        "list": {
+          "0": "Yasalara aykırı, tehditkar, hakaret içeren veya zararlı içerik barındırmak.",
+          "1": "Sistemin güvenliğini, bütünlüğünü veya performansını tehlikeye atacak girişimlerde bulunmak (örn. DDoS saldırıları, tersine mühendislik).",
+          "2": "Diğer kullanıcıların hizmetten yararlanmasını engellemek.",
+          "3": "Platformu spam veya istenmeyen ticari iletiler göndermek için kullanmak."
+        }
+      },
+      "4": {
+        "title": "4. Ödeme, Abonelik ve İptal",
+        "content": "Ücretli hizmetlerimiz için aşağıdaki koşullar geçerlidir:",
+        "list": {
+          "0": "Abonelikler: Seçilen plana göre aylık veya yıllık olarak otomatik yenilenir.",
+          "1": "Ödemeler: Belirtilen ödeme yöntemleri üzerinden güvenli bir şekilde tahsil edilir.",
+          "2": "İptal: Aboneliğinizi dilediğiniz zaman panel üzerinden iptal edebilirsiniz. İptal işlemi, mevcut fatura döneminin sonunda geçerli olur.",
+          "3": "İade: Yasal cayma hakkı saklı kalmak kaydıyla, kullanılan hizmet periyotları için iade yapılmaz."
+        }
+      },
+      "5": {
+        "title": "5. Fikri Mülkiyet Hakları",
+        "content": "Platform üzerindeki tüm yazılım, tasarım, grafikler, logolar, ticari markalar ve içerikler QR Team Cafe'nin veya lisans verenlerinin mülkiyetindedir. İzinsiz kopyalanması, çoğaltılması, dağıtılması veya türev çalışmaların oluşturulması yasaktır."
+      },
+      "6": {
+        "title": "6. Sorumluluk Reddi ve Sınırlamalar",
+        "content": "Hizmetlerimiz \"olduğu gibi\" ve \"mevcut haliyle\" sunulmaktadır:",
+        "list": {
+          "0": "Platformun kesintisiz, hatasız veya virüssüz çalışacağını garanti etmeyiz.",
+          "1": "Kullanıcı hatalarından, veri kayıplarından veya üçüncü taraf hizmetlerden kaynaklanan sorunlardan sorumlu tutulamayız.",
+          "2": "Yasal olarak izin verilen azami ölçüde, dolaylı veya arızi zararlardan (kar kaybı, veri kaybı vb.) sorumlu değiliz."
+        }
+      },
+      "7": {
+        "title": "7. Değişiklikler ve Yürürlük",
+        "content": "Bu kullanım şartlarını, yasal gereklilikler veya hizmet güncellemeleri nedeniyle zaman zaman değiştirebiliriz. Önemli değişiklikler yapıldığında size e-posta veya platform içi bildirim yoluyla haber vereceğiz. Değişiklikler yayınlandığı tarihte yürürlüğe girer ve hizmeti kullanmaya devam etmeniz, yeni şartları kabul ettiğiniz anlamına gelir."
+      }
+    },
+    "contact": {
+      "title": "Sorularınız mı var?",
+      "description": "Kullanım şartları hakkında aklınıza takılan her türlü soru için hukuk departmanımızla iletişime geçebilirsiniz.",
+      "button": "Bize Ulaşın"
+    }
+  },
+  "KvkkPage": {
+    "title": "KVKK Aydınlatma Metni",
+    "lastUpdated": "Son Güncelleme: 21 Ocak 2026",
+    "subtitle": "6698 Sayılı Kişisel Verilerin Korunması Kanunu Kapsamında Bilgilendirme",
+    "intro": "Şeffaflık ve güven ilkemiz gereği, kişisel verilerinizin nasıl işlendiği, kimlere aktarıldığı ve haklarınız konusunda sizi en açık şekilde bilgilendirmek istiyoruz.",
+    "sections": {
+      "1": {
+        "title": "1. Veri Sorumlusu ve Amacı",
+        "content": "QR Team Cafe (\"Şirket\") olarak, 6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca, veri sorumlusu sıfatıyla kişisel verilerinizi işleme amaçlarımız şunlardır:",
+        "list": {
+          "0": "Ürün ve hizmetlerimizin sizlere sunulabilmesi ve kesintisiz devamlılığı.",
+          "1": "Müşteri ilişkileri yönetimi ve memnuniyet süreçlerinin takibi.",
+          "2": "Yasal yükümlülüklerin (fatura düzenleme, vergi mevzuatı vb.) yerine getirilmesi.",
+          "3": "Bilgi güvenliği süreçlerinin yürütülmesi."
+        }
+      },
+      "2": {
+        "title": "2. İşlenen Kişisel Veri Kategorileri",
+        "content": "Faaliyetlerimiz kapsamında aşağıdaki veri kategorileri işlenmektedir:",
+        "list": {
+          "0": "Kimlik Bilgileri: Ad, soyad, T.C. kimlik numarası (yasal zorunluluk halinde).",
+          "1": "İletişim Bilgileri: E-posta adresi, telefon numarası, tebligat adresi.",
+          "2": "Müşteri İşlem Bilgileri: Sipariş geçmişi, talep ve şikayet bilgileri.",
+          "3": "Finansal Bilgiler: Ödeme bilgileri, fatura detayları.",
+          "4": "İşlem Güvenliği: IP adresi, erişim logları, şifre ve parola bilgileri."
+        }
+      },
+      "3": {
+        "title": "3. Kişisel Verilerin Aktarılması",
+        "content": "Kişisel verileriniz, Kanun'un 8. ve 9. maddelerinde belirtilen şartlara uygun olarak aşağıdaki taraflarla paylaşılabilir:",
+        "list": {
+          "0": "Kanunen yetkili kamu kurum ve kuruluşları (örn. Gelir İdaresi Başkanlığı, Mahkemeler).",
+          "1": "Hizmet aldığımız iş ortakları ve tedarikçiler (örn. veri merkezi hizmeti, ödeme altyapısı sağlayıcıları).",
+          "2": "Hukuki uyuşmazlıkların giderilmesi amacıyla hukuk müşavirlerimiz."
+        }
+      },
+      "4": {
+        "title": "4. Veri Toplama Yöntemi ve Hukuki Sebep",
+        "content": "Kişisel verileriniz; internet sitemiz, mobil uygulamamız, e-posta, çağrı merkezi ve sosyal medya kanalları aracılığıyla elektronik ortamda toplanmaktadır.",
+        "content2": "Bu veriler, \"Sözleşmenin ifası\", \"Kanunlarda öngörülmesi\", \"Veri sorumlusunun hukuki yükümlülüğü\" ve \"İlgili kişinin temel hak ve özgürlüklerine zarar vermemek kaydıyla veri sorumlusunun meşru menfaati\" hukuki sebeplerine dayanılarak işlenmektedir."
+      },
+      "5": {
+        "title": "5. İlgili Kişinin Hakları (Madde 11)",
+        "content": "KVKK'nın 11. maddesi uyarınca veri sahibi olarak aşağıdaki haklara sahipsiniz:",
+        "list": {
+          "0": "Kişisel verilerinizin işlenip işlenmediğini öğrenme.",
+          "1": "İşlenmişse buna ilişkin bilgi talep etme.",
+          "2": "İşlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme.",
+          "3": "Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme.",
+          "4": "Eksik veya yanlış işlenmişse düzeltilmesini isteme.",
+          "5": "KVKK'nın 7. maddesi çerçevesinde silinmesini veya yok edilmesini isteme.",
+          "6": "İşlenen verilerin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme.",
+          "7": "Kanuna aykırı işleme sebebiyle zarara uğramanız halinde zararın giderilmesini talep etme."
+        }
+      }
+    },
+    "contact": {
+      "title": "KVKK Başvurusu",
+      "description": "Haklarınızı kullanmak veya daha fazla bilgi almak için bizimle iletişime geçebilirsiniz.",
+      "button": "Bize Ulaşın"
+    }
+  },
+  "AboutPage": {
+    "hero": {
+      "badge": "Restoran Teknolojilerinde Lider",
+      "title": "Geleceğin Restoran",
+      "titleHighlight": "Deneyimini Tasarlıyoruz",
+      "description": "QR Team Cafe, işletmenizi dijital çağa taşıyan, operasyonları basitleştiren ve müşteri memnuniyetini artıran uçtan uca bir teknoloji çözümüdür.",
+      "buttonContact": "Bizimle Tanışın",
+      "buttonFeatures": "Özellikleri Keşfet"
+    },
+    "stats": {
+      "happyBusiness": "Mutlu İşletme",
+      "digitalMenu": "Dijital Menü",
+      "monthlyTransaction": "Aylık İşlem",
+      "citiesServed": "Hizmet Verilen Şehir"
+    },
+    "mission": {
+      "title": "Misyonumuz:",
+      "highlight": "İşinize Odaklanın",
+      "description": "Amacımız, teknolojiyi karmaşık bir yük olmaktan çıkarıp, işletmenizi büyüten görünmez bir güce dönüştürmektir. Siz lezzetli yemekler ve harika bir atmosfer yaratmaya odaklanırken, siparişten ödemeye, stoktan müşteri sadakatine kadar tüm dijital süreçleri biz yönetiyoruz.",
+      "list": {
+        "0": "Operasyonel Verimlilik",
+        "1": "Kusursuz Müşteri Deneyimi",
+        "2": "Veri Odaklı Büyüme"
+      }
+    },
+    "vision": {
+      "title": "Vizyonumuz",
+      "description": "Dünyanın dört bir yanındaki restoran ve kafelerin dijital dönüşümünde standart belirleyici olmak. Yapay zeka destekli çözümlerimizle, gastronomi sektöründe teknoloji kullanımını demokratikleştirmek ve her ölçekteki işletmenin global standartlarda hizmet vermesini sağlamak."
+    },
+    "values": {
+      "title": "Değerlerimiz",
+      "subtitle": "Bizi biz yapan ve her kararımızda bize yol gösteren temel prensiplerimiz.",
+      "transparency": {
+        "title": "Şeffaflık",
+        "description": "Gizli ücretler veya karmaşık sözleşmeler yok. Her adımda dürüst ve açık iletişim kuruyoruz."
+      },
+      "innovation": {
+        "title": "İnovasyon",
+        "description": "Teknolojiyi takip etmiyor, onu şekillendiriyoruz. Sürekli gelişen özelliklerle rakiplerinizden önde olun."
+      },
+      "customerFocus": {
+        "title": "Müşteri Odaklılık",
+        "description": "Başarımız, sizin başarınıza bağlıdır. 7/24 destek ve size özel çözümlerle her zaman yanınızdayız."
+      }
+    },
+    "team": {
+      "title": "Ekibimizle Tanışın",
+      "subtitle": "Tutkulu, deneyimli ve yenilikçi. İşte QR Team Cafe'nin arkasındaki güç.",
+      "roles": {
+        "founder": "Kurucu & CEO",
+        "cto": "CTO",
+        "productManager": "Ürün Müdürü",
+        "designLead": "Tasarım Lideri"
+      }
+    }
+  },
+  "FeaturesPage": {
+    "title": "İşletmenizi Güçlendiren",
+    "titleHighlight": "Gelişmiş Özellikler",
+    "subtitle": "QR Team Cafe, bir menüden çok daha fazlası. İşletmenizin tüm ihtiyaçlarını karşılayan kapsamlı bir çözüm.",
+    "items": {
+      "mobile": {
+        "title": "Mobil Uyumlu QR Menü",
+        "description": "Tüm cihazlarda kusursuz çalışan, hızlı ve modern bir menü deneyimi. Uygulama indirmeye gerek yok."
+      },
+      "fastOrder": {
+        "title": "Hızlı Sipariş Sistemi",
+        "description": "Müşterileriniz garson beklemeden sipariş versin, operasyon hızınız %30 artsın."
+      },
+      "analytics": {
+        "title": "Detaylı Analizler",
+        "description": "Hangi ürün ne zaman satılıyor? Veriye dayalı kararlar alarak cironuzu artırın."
+      },
+      "multiLang": {
+        "title": "Çoklu Dil Desteği",
+        "description": "Menünüzü otomatik olarak farklı dillere çevirin, turist müşterilerinizi memnun edin."
+      },
+      "security": {
+        "title": "Güvenli Altyapı",
+        "description": "KVKK uyumlu, güvenli ve yedekli sunucu altyapısı ile verileriniz güvende."
+      },
+      "management": {
+        "title": "Kolay Yönetim Paneli",
+        "description": "Ürünlerinizi, fiyatlarınızı ve stok durumunuzu saniyeler içinde güncelleyin."
+      }
+    }
+  },
+  "IntegrationsPage": {
+    "title": "Güçlü",
+    "titleHighlight": "Entegrasyonlar",
+    "subtitle": "Mevcut sistemlerinizle sorunsuz çalışır. POS, ödeme ve muhasebe yazılımlarınızı tek tıkla bağlayın.",
+    "categories": {
+      "pos": "POS Sistemleri",
+      "payment": "Ödeme Sistemleri",
+      "delivery": "Yemek Sepeti & Getir",
+      "accounting": "Muhasebe"
+    },
+    "items": {
+      "pos": ["Micros", "Simpra", "Omni", "Vectron"],
+      "payment": ["Iyzico", "Stripe", "PayTR", "Garanti Sanal POS"],
+      "delivery": ["Yemeksepeti", "GetirYemek", "Trendyol Yemek"],
+      "accounting": ["Paraşüt", "Logo", "Mikro"]
+    }
+  },
+  "RoadmapPage": {
+    "title": "Yol",
+    "titleHighlight": "Haritası",
+    "subtitle": "Geleceği şimdiden inşa ediyoruz. İşte planlarımız ve hedeflerimiz.",
+    "status": {
+      "completed": "Tamamlandı",
+      "inProgress": "Sürüyor",
+      "planned": "Planlandı"
+    },
+    "milestones": {
+      "q1_2026": {
+        "quarter": "2026 Q1",
+        "title": "Başlangıç",
+        "items": ["QR Menü Lansmanı", "Temel Yönetim Paneli", "Çoklu Dil Desteği"]
+      },
+      "q2_2026": {
+        "quarter": "2026 Q2",
+        "title": "Büyüme",
+        "items": ["POS Entegrasyonları", "Stok Takibi Modülü", "Garson Çağrı Sistemi"]
+      },
+      "q3_2026": {
+        "quarter": "2026 Q3",
+        "title": "Gelişme",
+        "items": ["Yapay Zeka Destekli Öneriler", "Sadakat Programı", "Mobil Uygulama"]
+      },
+      "q4_2026": {
+        "quarter": "2026 Q4",
+        "title": "Global",
+        "items": ["Yurt Dışı Açılımı", "Pazaryeri Entegrasyonu", "Gelişmiş API"]
       }
     }
   }

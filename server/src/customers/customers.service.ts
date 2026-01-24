@@ -21,13 +21,45 @@ export class CustomersService {
     return this.prisma.customer.findMany();
   }
 
-  findOne(id: string) {
-    return this.prisma.customer.findUnique({
+  async findOne(id: string) {
+    const customer = await this.prisma.customer.findUnique({
       where: { id },
     });
+
+    if (!customer) return null;
+
+    if (!customer.referralCode) {
+      let referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      try {
+        const updated = await this.prisma.customer.update({
+          where: { id },
+          data: { referralCode },
+        });
+        // Return safe object
+        const { passwordHash, verificationCode, verificationCodeExpires, ...safeCustomer } = updated;
+        return safeCustomer;
+      } catch (error) {
+        referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const updated = await this.prisma.customer.update({
+          where: { id },
+          data: { referralCode },
+        });
+        const { passwordHash, verificationCode, verificationCodeExpires, ...safeCustomer } = updated;
+        return safeCustomer;
+      }
+    }
+
+    // Return safe object
+    const { passwordHash, verificationCode, verificationCodeExpires, ...safeCustomer } = customer;
+    return safeCustomer;
   }
 
   async getStats(id: string) {
+    const customer = await this.prisma.customer.findUnique({
+      where: { id },
+      select: { loyaltyPoints: true },
+    });
+
     const orders = await this.prisma.order.findMany({
       where: { customerId: id, status: { in: ['COMPLETED', 'DELIVERED', 'PAID'] } },
       include: {
@@ -91,6 +123,7 @@ export class CustomersService {
     return {
       totalOrders,
       totalSpent,
+      loyaltyPoints: customer?.loyaltyPoints || 0,
       favoriteProduct,
       favoriteCategory,
     };

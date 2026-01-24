@@ -61,25 +61,58 @@ let AuthService = class AuthService {
         this.jwtService = jwtService;
     }
     async registerCustomer(dto) {
-        const existingCustomer = await this.prisma.customer.findUnique({
-            where: { email: dto.email },
+        const email = dto.email.toLowerCase();
+        const whereConditions = [{ email }];
+        if (dto.phone) {
+            whereConditions.push({ phone: dto.phone });
+        }
+        const existingCustomer = await this.prisma.customer.findFirst({
+            where: {
+                OR: whereConditions,
+            },
+        });
+        const existingCafeAdmin = await this.prisma.cafeAdmin.findUnique({
+            where: { email },
+        });
+        const existingSuperAdmin = await this.prisma.superAdmin.findUnique({
+            where: { email },
         });
         if (existingCustomer) {
+            if (existingCustomer.email === email) {
+                throw new common_1.BadRequestException('Bu e-posta adresi zaten kullanımda.');
+            }
+            if (dto.phone && existingCustomer.phone === dto.phone) {
+                throw new common_1.BadRequestException('Bu telefon numarası zaten kullanımda.');
+            }
+        }
+        if (existingCafeAdmin || existingSuperAdmin) {
             throw new common_1.BadRequestException('Bu e-posta adresi zaten kullanımda.');
         }
+        let referredById = null;
+        if (dto.referralCode) {
+            const referrer = await this.prisma.customer.findUnique({
+                where: { referralCode: dto.referralCode },
+            });
+            if (referrer) {
+                referredById = referrer.id;
+            }
+        }
+        const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(dto.password, salt);
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         const verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000);
         const customer = await this.prisma.customer.create({
             data: {
-                email: dto.email,
+                email,
                 passwordHash,
                 name: dto.name,
                 phone: dto.phone,
                 isVerified: false,
                 verificationCode,
                 verificationCodeExpires,
+                referralCode,
+                referredById,
             },
         });
         if (customer.email) {
@@ -92,8 +125,9 @@ let AuthService = class AuthService {
         };
     }
     async verifyCustomer(dto) {
+        const email = dto.email.toLowerCase();
         const customer = await this.prisma.customer.findUnique({
-            where: { email: dto.email },
+            where: { email },
         });
         if (!customer) {
             throw new common_1.NotFoundException('Kullanıcı bulunamadı.');
@@ -114,6 +148,17 @@ let AuthService = class AuthService {
                 verificationCodeExpires: null,
             },
         });
+        if (customer.referredById) {
+            try {
+                await this.prisma.customer.update({
+                    where: { id: customer.referredById },
+                    data: { loyaltyPoints: { increment: 100 } },
+                });
+            }
+            catch (error) {
+                console.error('Error rewarding referrer:', error);
+            }
+        }
         const token = this.jwtService.sign({
             sub: updatedCustomer.id,
             email: updatedCustomer.email,
@@ -126,12 +171,14 @@ let AuthService = class AuthService {
                 email: updatedCustomer.email,
                 name: updatedCustomer.name,
                 phone: updatedCustomer.phone,
+                referralCode: updatedCustomer.referralCode,
             },
         };
     }
     async loginCustomer(dto) {
+        const email = dto.email.toLowerCase();
         const customer = await this.prisma.customer.findUnique({
-            where: { email: dto.email },
+            where: { email },
         });
         if (!customer) {
             throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
@@ -150,6 +197,23 @@ let AuthService = class AuthService {
                 email: customer.email
             });
         }
+        let referralCode = customer.referralCode;
+        if (!referralCode) {
+            referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            try {
+                await this.prisma.customer.update({
+                    where: { id: customer.id },
+                    data: { referralCode },
+                });
+            }
+            catch (error) {
+                referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                await this.prisma.customer.update({
+                    where: { id: customer.id },
+                    data: { referralCode },
+                });
+            }
+        }
         const token = this.jwtService.sign({
             sub: customer.id,
             email: customer.email,
@@ -162,6 +226,7 @@ let AuthService = class AuthService {
                 email: customer.email,
                 name: customer.name,
                 phone: customer.phone,
+                referralCode: referralCode,
             },
         };
     }
@@ -201,13 +266,17 @@ let AuthService = class AuthService {
         throw new common_1.NotFoundException('Kullanıcı bulunamadı.');
     }
     async registerCafe(dto) {
+        const email = dto.email.toLowerCase();
         const existingCafeAdmin = await this.prisma.cafeAdmin.findUnique({
-            where: { email: dto.email },
+            where: { email },
         });
         const existingSuperAdmin = await this.prisma.superAdmin.findUnique({
-            where: { email: dto.email },
+            where: { email },
         });
-        if (existingCafeAdmin || existingSuperAdmin) {
+        const existingCustomer = await this.prisma.customer.findUnique({
+            where: { email },
+        });
+        if (existingCafeAdmin || existingSuperAdmin || existingCustomer) {
             throw new common_1.BadRequestException('Bu e-posta adresi zaten kullanımda.');
         }
         const salt = await bcrypt.genSalt(10);
@@ -229,7 +298,7 @@ let AuthService = class AuthService {
                 data: {
                     cafeId: cafe.id,
                     name: dto.fullName,
-                    email: dto.email,
+                    email,
                     passwordHash: passwordHash,
                     isApproved: false,
                 },
@@ -242,14 +311,15 @@ let AuthService = class AuthService {
         };
     }
     async login(dto, ip, userAgent) {
+        const email = dto.email.toLowerCase();
         let user = await this.prisma.cafeAdmin.findUnique({
-            where: { email: dto.email },
+            where: { email },
             include: { cafe: true },
         });
         let role = 'CAFE_ADMIN';
         if (!user) {
             user = await this.prisma.superAdmin.findUnique({
-                where: { email: dto.email },
+                where: { email },
             });
             role = 'SUPER_ADMIN';
         }
@@ -318,8 +388,9 @@ let AuthService = class AuthService {
         };
     }
     async forgotPassword(dto) {
+        const email = dto.email.toLowerCase();
         const admin = await this.prisma.cafeAdmin.findUnique({
-            where: { email: dto.email },
+            where: { email },
         });
         if (!admin) {
             throw new common_1.NotFoundException('Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.');
@@ -365,8 +436,9 @@ let AuthService = class AuthService {
         return { message: 'Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.' };
     }
     async forgotPasswordCustomer(dto) {
+        const email = dto.email.toLowerCase();
         const customer = await this.prisma.customer.findUnique({
-            where: { email: dto.email },
+            where: { email },
         });
         if (!customer) {
             throw new common_1.NotFoundException('Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.');
@@ -386,8 +458,9 @@ let AuthService = class AuthService {
         return { message: 'Şifre sıfırlama kodu e-posta adresinize gönderildi.' };
     }
     async verifyResetCodeCustomer(dto) {
+        const email = dto.email.toLowerCase();
         const customer = await this.prisma.customer.findUnique({
-            where: { email: dto.email },
+            where: { email },
         });
         if (!customer || customer.resetCode !== dto.code || !customer.resetCodeExpires || customer.resetCodeExpires < new Date()) {
             throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş kod.');
@@ -395,8 +468,9 @@ let AuthService = class AuthService {
         return { message: 'Kod doğrulandı.' };
     }
     async resetPasswordCustomer(dto) {
+        const email = dto.email.toLowerCase();
         const customer = await this.prisma.customer.findUnique({
-            where: { email: dto.email },
+            where: { email },
         });
         if (!customer || customer.resetCode !== dto.code || !customer.resetCodeExpires || customer.resetCodeExpires < new Date()) {
             throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş kod.');

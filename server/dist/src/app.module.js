@@ -25,6 +25,7 @@ const waiter_calls_module_1 = require("./waiter-calls/waiter-calls.module");
 const reviews_module_1 = require("./reviews/reviews.module");
 const throttler_1 = require("@nestjs/throttler");
 const customers_module_1 = require("./customers/customers.module");
+const loyalty_module_1 = require("./loyalty/loyalty.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -51,6 +52,7 @@ exports.AppModule = AppModule = __decorate([
             waiter_calls_module_1.WaiterCallsModule,
             reviews_module_1.ReviewsModule,
             customers_module_1.CustomersModule,
+            loyalty_module_1.LoyaltyModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

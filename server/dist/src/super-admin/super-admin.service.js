@@ -65,7 +65,10 @@ let SuperAdminService = class SuperAdminService {
         const existingCafeAdmin = await this.prisma.cafeAdmin.findUnique({
             where: { email: dto.email },
         });
-        if (existingSuperAdmin || existingCafeAdmin) {
+        const existingCustomer = await this.prisma.customer.findUnique({
+            where: { email: dto.email },
+        });
+        if (existingSuperAdmin || existingCafeAdmin || existingCustomer) {
             throw new common_1.BadRequestException('Bu e-posta adresi zaten kullanımda.');
         }
         const salt = await bcrypt.genSalt(10);

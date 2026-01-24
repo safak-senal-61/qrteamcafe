@@ -16,4 +16,8 @@ export class RegisterCustomerDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  referralCode?: string;
 }

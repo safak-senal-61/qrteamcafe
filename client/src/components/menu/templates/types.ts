@@ -52,8 +52,8 @@ export interface TemplateProps {
   searchQuery: string;
   scrolled: boolean;
   tableNumber: string | null;
-  customer: any;
-  activeOrders: any[];
+  customer: Customer | null;
+  activeOrders: Order[];
   isCartOpen: boolean;
   welcomeOpen: boolean;
   isAuthDialogOpen: boolean;
@@ -69,4 +69,22 @@ export interface TemplateProps {
   currentTableId: string | null;
   copyWifi: () => void;
   getSocialUrl: (platform: 'instagram' | 'facebook' | 'twitter' | 'website', url: string) => string;
+}
+
+export interface Customer {
+  id: string;
+  email: string;
+  name?: string;
+  phone?: string;
+  referralCode?: string;
+  avatarUrl?: string;
+}
+
+export interface Order {
+  id: string;
+  status: string;
+  totalAmount: number;
+  createdAt: string;
+  table?: { name: string };
+  items: any[]; // Keeping any for items for now to minimize changes, or define OrderItem
 }
