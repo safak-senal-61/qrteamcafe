@@ -9,15 +9,12 @@ import { API_URL } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
   DialogClose,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Product, useCartStore } from '@/store/cart-store';
-import { useCustomerStore } from '@/store/customer-store';
 import { toast } from 'sonner';
 
 interface ProductDetailDialogProps {
@@ -39,7 +36,6 @@ interface Review {
 
 export function ProductDetailDialog({ product, open, onOpenChange, showRating = true, isReadOnly = false }: ProductDetailDialogProps) {
   const { addItem } = useCartStore();
-  const { customer, setAuthDialogOpen } = useCustomerStore();
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -61,18 +57,17 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
         .then(res => res.json())
         .then(data => {
           // Map API response to Product type
-          const mappedData = data.map((item: any) => ({
-            ...item,
-            image: item.imageUrl,
-            category: item.categoryId
-          }));
+          const mappedData = data.map((item: unknown) => {
+             const prod = item as (Product & { imageUrl: string, categoryId: string });
+             return {
+                ...prod,
+                image: prod.imageUrl,
+                category: prod.categoryId
+             };
+          });
           setRecommendations(mappedData);
         })
         .catch(err => console.error('Error fetching recommendations:', err));
-    } else {
-      setReviews([]);
-      setRecommendations([]);
-      setShowReviews(false);
     }
   }, [open, product.id, showRating]);
 
@@ -82,6 +77,8 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
       setQuantity(1);
       setNote('');
       setShowReviews(false);
+      setReviews([]);
+      setRecommendations([]);
     }
     onOpenChange(newOpen);
   };

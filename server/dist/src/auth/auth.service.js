@@ -97,7 +97,10 @@ let AuthService = class AuthService {
                 referredById = referrer.id;
             }
         }
-        const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const referralCode = Math.random()
+            .toString(36)
+            .substring(2, 8)
+            .toUpperCase();
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(dto.password, salt);
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -155,8 +158,8 @@ let AuthService = class AuthService {
                     data: { loyaltyPoints: { increment: 100 } },
                 });
             }
-            catch (error) {
-                console.error('Error rewarding referrer:', error);
+            catch (_error) {
+                console.error('Error rewarding referrer:', _error);
             }
         }
         const token = this.jwtService.sign({
@@ -194,7 +197,7 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException({
                 message: 'Hesabınız henüz doğrulanmamış.',
                 code: 'NOT_VERIFIED',
-                email: customer.email
+                email: customer.email,
             });
         }
         let referralCode = customer.referralCode;
@@ -206,7 +209,7 @@ let AuthService = class AuthService {
                     data: { referralCode },
                 });
             }
-            catch (error) {
+            catch {
                 referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
                 await this.prisma.customer.update({
                     where: { id: customer.id },
@@ -312,78 +315,80 @@ let AuthService = class AuthService {
     }
     async login(dto, ip, userAgent) {
         const email = dto.email.toLowerCase();
-        let user = await this.prisma.cafeAdmin.findUnique({
+        const cafeAdmin = await this.prisma.cafeAdmin.findUnique({
             where: { email },
             include: { cafe: true },
         });
-        let role = 'CAFE_ADMIN';
-        if (!user) {
-            user = await this.prisma.superAdmin.findUnique({
-                where: { email },
-            });
-            role = 'SUPER_ADMIN';
-        }
-        if (!user) {
+        const superAdmin = await this.prisma.superAdmin.findUnique({
+            where: { email },
+        });
+        if (!cafeAdmin && !superAdmin) {
             throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
         }
-        const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+        const user = cafeAdmin || superAdmin;
+        const role = cafeAdmin ? 'CAFE_ADMIN' : 'SUPER_ADMIN';
+        const passwordHash = user?.passwordHash;
+        if (!passwordHash) {
+            throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
+        }
+        const isPasswordValid = await bcrypt.compare(dto.password, passwordHash);
         if (!isPasswordValid) {
             throw new common_1.UnauthorizedException('E-posta veya şifre hatalı.');
         }
-        if (role === 'CAFE_ADMIN') {
-            if (!user.isApproved) {
+        if (cafeAdmin) {
+            if (!cafeAdmin.isApproved) {
                 throw new common_1.UnauthorizedException('Hesabınız henüz onaylanmamış.');
             }
-            if (!user.isActive || !user.cafe.isActive) {
+            if (!cafeAdmin.isActive || !cafeAdmin.cafe.isActive) {
                 throw new common_1.UnauthorizedException('Hesabınız veya işletmeniz pasif durumda.');
             }
         }
-        if (role === 'CAFE_ADMIN' && user.isTwoFactorEnabled) {
+        if (cafeAdmin && cafeAdmin.isTwoFactorEnabled) {
             if (!dto.twoFactorCode) {
                 throw new common_1.UnauthorizedException({
                     message: '2FA_REQUIRED',
-                    code: '2FA_REQUIRED'
+                    code: '2FA_REQUIRED',
                 });
             }
             const verifyResult = await (0, otplib_1.verify)({
                 token: dto.twoFactorCode,
-                secret: user.twoFactorSecret,
+                secret: cafeAdmin.twoFactorSecret || '',
             });
             if (!verifyResult.valid) {
                 throw new common_1.UnauthorizedException('Geçersiz 2FA kodu.');
             }
         }
         let sessionId;
-        if (role === 'CAFE_ADMIN') {
+        if (cafeAdmin) {
             const session = await this.prisma.adminSession.create({
                 data: {
-                    adminId: user.id,
+                    adminId: cafeAdmin.id,
                     device: userAgent || 'Unknown',
                     ip: ip || 'Unknown',
                     token: (0, crypto_1.randomBytes)(32).toString('hex'),
                     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-                }
+                },
             });
             sessionId = session.id;
         }
         const payload = {
-            sub: user.id,
-            email: user.email,
+            sub: user?.id,
+            email: user?.email,
             role,
             sessionId,
-            cafeId: role === 'CAFE_ADMIN' ? user.cafeId : undefined
+            cafeId: cafeAdmin ? cafeAdmin.cafeId : undefined,
         };
         const token = this.jwtService.sign(payload);
         return {
             message: 'Giriş başarılı',
             token,
             user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
+                id: user?.id,
+                name: user?.name,
+                email: user?.email,
                 role,
-                cafeId: role === 'CAFE_ADMIN' ? user.cafeId : undefined,
-                isTwoFactorEnabled: role === 'CAFE_ADMIN' ? user.isTwoFactorEnabled : false,
+                cafeId: cafeAdmin ? cafeAdmin.cafeId : undefined,
+                isTwoFactorEnabled: cafeAdmin ? cafeAdmin.isTwoFactorEnabled : false,
             },
         };
     }
@@ -411,7 +416,10 @@ let AuthService = class AuthService {
         const admin = await this.prisma.cafeAdmin.findUnique({
             where: { email: dto.email },
         });
-        if (!admin || admin.resetCode !== dto.code || !admin.resetCodeExpires || admin.resetCodeExpires < new Date()) {
+        if (!admin ||
+            admin.resetCode !== dto.code ||
+            !admin.resetCodeExpires ||
+            admin.resetCodeExpires < new Date()) {
             throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş kod.');
         }
         return { message: 'Kod doğrulandı.' };
@@ -420,7 +428,10 @@ let AuthService = class AuthService {
         const admin = await this.prisma.cafeAdmin.findUnique({
             where: { email: dto.email },
         });
-        if (!admin || admin.resetCode !== dto.code || !admin.resetCodeExpires || admin.resetCodeExpires < new Date()) {
+        if (!admin ||
+            admin.resetCode !== dto.code ||
+            !admin.resetCodeExpires ||
+            admin.resetCodeExpires < new Date()) {
             throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş kod.');
         }
         const salt = await bcrypt.genSalt(10);
@@ -433,7 +444,9 @@ let AuthService = class AuthService {
                 resetCodeExpires: null,
             },
         });
-        return { message: 'Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.' };
+        return {
+            message: 'Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.',
+        };
     }
     async forgotPasswordCustomer(dto) {
         const email = dto.email.toLowerCase();
@@ -462,7 +475,10 @@ let AuthService = class AuthService {
         const customer = await this.prisma.customer.findUnique({
             where: { email },
         });
-        if (!customer || customer.resetCode !== dto.code || !customer.resetCodeExpires || customer.resetCodeExpires < new Date()) {
+        if (!customer ||
+            customer.resetCode !== dto.code ||
+            !customer.resetCodeExpires ||
+            customer.resetCodeExpires < new Date()) {
             throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş kod.');
         }
         return { message: 'Kod doğrulandı.' };
@@ -472,7 +488,10 @@ let AuthService = class AuthService {
         const customer = await this.prisma.customer.findUnique({
             where: { email },
         });
-        if (!customer || customer.resetCode !== dto.code || !customer.resetCodeExpires || customer.resetCodeExpires < new Date()) {
+        if (!customer ||
+            customer.resetCode !== dto.code ||
+            !customer.resetCodeExpires ||
+            customer.resetCodeExpires < new Date()) {
             throw new common_1.BadRequestException('Geçersiz veya süresi dolmuş kod.');
         }
         const salt = await bcrypt.genSalt(10);
@@ -485,7 +504,9 @@ let AuthService = class AuthService {
                 resetCodeExpires: null,
             },
         });
-        return { message: 'Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.' };
+        return {
+            message: 'Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.',
+        };
     }
     async getProfile(userId) {
         const cafeAdmin = await this.prisma.cafeAdmin.findUnique({
@@ -495,7 +516,7 @@ let AuthService = class AuthService {
                 name: true,
                 email: true,
                 isTwoFactorEnabled: true,
-            }
+            },
         });
         if (cafeAdmin) {
             return { ...cafeAdmin, role: 'CAFE_ADMIN' };
@@ -505,7 +526,7 @@ let AuthService = class AuthService {
             select: {
                 id: true,
                 email: true,
-            }
+            },
         });
         if (superAdmin) {
             return { ...superAdmin, role: 'SUPER_ADMIN', isTwoFactorEnabled: false };
@@ -513,7 +534,9 @@ let AuthService = class AuthService {
         throw new common_1.NotFoundException('Kullanıcı bulunamadı.');
     }
     async generate2FASecret(userId) {
-        const user = await this.prisma.cafeAdmin.findUnique({ where: { id: userId } });
+        const user = await this.prisma.cafeAdmin.findUnique({
+            where: { id: userId },
+        });
         if (!user)
             throw new common_1.NotFoundException('Kullanıcı bulunamadı.');
         const secret = (0, otplib_1.generateSecret)();
@@ -524,24 +547,26 @@ let AuthService = class AuthService {
         });
         await this.prisma.cafeAdmin.update({
             where: { id: userId },
-            data: { twoFactorSecret: secret }
+            data: { twoFactorSecret: secret },
         });
         const qrCodeUrl = await (0, qrcode_1.toDataURL)(otpauthUrl);
         return { secret, qrCodeUrl };
     }
     async enable2FA(userId, code) {
-        const user = await this.prisma.cafeAdmin.findUnique({ where: { id: userId } });
+        const user = await this.prisma.cafeAdmin.findUnique({
+            where: { id: userId },
+        });
         if (!user || !user.twoFactorSecret)
             throw new common_1.BadRequestException('2FA kurulumu başlatılmamış.');
         const verifyResult = await (0, otplib_1.verify)({
             token: code,
-            secret: user.twoFactorSecret
+            secret: user.twoFactorSecret,
         });
         if (!verifyResult.valid)
             throw new common_1.BadRequestException('Geçersiz kod.');
         await this.prisma.cafeAdmin.update({
             where: { id: userId },
-            data: { isTwoFactorEnabled: true }
+            data: { isTwoFactorEnabled: true },
         });
         return { message: '2FA başarıyla etkinleştirildi.' };
     }
@@ -550,8 +575,8 @@ let AuthService = class AuthService {
             where: { id: userId },
             data: {
                 isTwoFactorEnabled: false,
-                twoFactorSecret: null
-            }
+                twoFactorSecret: null,
+            },
         });
         return { message: '2FA devre dışı bırakıldı.' };
     }
@@ -564,12 +589,14 @@ let AuthService = class AuthService {
                 device: true,
                 ip: true,
                 lastActive: true,
-                createdAt: true
-            }
+                createdAt: true,
+            },
         });
     }
     async terminateSession(userId, sessionId) {
-        const session = await this.prisma.adminSession.findUnique({ where: { id: sessionId } });
+        const session = await this.prisma.adminSession.findUnique({
+            where: { id: sessionId },
+        });
         if (!session || session.adminId !== userId)
             throw new common_1.NotFoundException('Oturum bulunamadı.');
         await this.prisma.adminSession.delete({ where: { id: sessionId } });
@@ -581,7 +608,7 @@ let AuthService = class AuthService {
             whereClause.id = { not: currentSessionId };
         }
         await this.prisma.adminSession.deleteMany({
-            where: whereClause
+            where: whereClause,
         });
         return { message: 'Diğer tüm oturumlar sonlandırıldı.' };
     }

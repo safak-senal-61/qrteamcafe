@@ -3,23 +3,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import Image from 'next/image';
 
 const images = [
-  '/panel/Ekran görüntüsü 2026-01-21 024141.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024200.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024220.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024419.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024438.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024453.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024517.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024531.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024548.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024607.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024620.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024633.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024650.png',
-  '/panel/Ekran görüntüsü 2026-01-21 024710.png',
+  '/panel/dashboard-01.png',
+  '/panel/dashboard-02.png',
+  '/panel/dashboard-03.png',
+  '/panel/dashboard-04.png',
+  '/panel/dashboard-05.png',
+  '/panel/dashboard-06.png',
+  '/panel/dashboard-07.png',
+  '/panel/dashboard-08.png',
+  '/panel/dashboard-09.png',
+  '/panel/dashboard-10.png',
+  '/panel/dashboard-11.png',
+  '/panel/dashboard-12.png',
+  '/panel/dashboard-13.png',
+  '/panel/dashboard-14.png',
 ];
 
 interface PanelGalleryProps {
@@ -40,6 +39,36 @@ export default function PanelGallery({ isOpen, onClose }: PanelGalleryProps) {
     setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   }, []);
+
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance (in px) 
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null); // Reset touch end
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      handleNext();
+    }
+    if (isRightSwipe) {
+      handlePrev();
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -109,9 +138,9 @@ export default function PanelGallery({ isOpen, onClose }: PanelGalleryProps) {
               e.stopPropagation();
               handlePrev();
             }}
-            className="absolute left-4 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors hidden md:block"
+            className="absolute left-2 md:left-4 z-50 p-2 md:p-3 rounded-full bg-black/20 hover:bg-white/20 text-white transition-colors backdrop-blur-sm"
           >
-            <ChevronLeft className="w-8 h-8" />
+            <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
           </button>
 
           <button
@@ -119,15 +148,18 @@ export default function PanelGallery({ isOpen, onClose }: PanelGalleryProps) {
               e.stopPropagation();
               handleNext();
             }}
-            className="absolute right-4 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors hidden md:block"
+            className="absolute right-2 md:right-4 z-50 p-2 md:p-3 rounded-full bg-black/20 hover:bg-white/20 text-white transition-colors backdrop-blur-sm"
           >
-            <ChevronRight className="w-8 h-8" />
+            <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
           </button>
 
           {/* Main Image Container */}
           <div 
             className="relative w-full h-full max-w-7xl max-h-[85vh] flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
           >
             <AnimatePresence initial={false} custom={direction}>
               <motion.div
@@ -145,13 +177,12 @@ export default function PanelGallery({ isOpen, onClose }: PanelGalleryProps) {
                 className="absolute w-full h-full flex items-center justify-center"
               >
                 <div className="relative w-full h-full">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={images[currentIndex]}
                     alt={`Yönetim Paneli Görseli ${currentIndex + 1}`}
-                    fill
-                    className="object-contain"
-                    quality={100}
-                    priority
+                    className="w-full h-full object-contain select-none"
+                    draggable={false}
                   />
                 </div>
               </motion.div>
@@ -179,11 +210,11 @@ export default function PanelGallery({ isOpen, onClose }: PanelGalleryProps) {
                   idx === currentIndex ? 'border-primary scale-110 z-10' : 'border-transparent opacity-50 hover:opacity-100'
                 }`}
               >
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={img}
                   alt={`Thumbnail ${idx + 1}`}
-                  fill
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                 />
               </button>
             ))}

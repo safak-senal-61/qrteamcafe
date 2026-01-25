@@ -1,15 +1,13 @@
 import { TemplateProps } from './types';
-import { useRouter, useParams } from 'next/navigation';
-import { CategoryNav } from '@/components/menu/CategoryNav';
+import { useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
 import { CustomerAuthDialog } from '@/components/menu/CustomerAuthDialog';
-import { Badge } from '@/components/ui/badge';
-import { Search, Wifi, Instagram, Facebook, Twitter, Info, User } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Search, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -23,13 +21,11 @@ import { useTranslations } from 'next-intl';
 export function MinimalTemplate({
   cafe,
   categories,
-  products,
   chefProducts,
   popularProducts,
   filteredProducts,
   activeCategory,
   searchQuery,
-  scrolled,
   tableNumber,
   customer,
   activeOrders,
@@ -43,14 +39,10 @@ export function MinimalTemplate({
   handleCancelOrder,
   fetchActiveOrders,
   currentTableId,
-  copyWifi,
-  getSocialUrl,
   isDemoMode
 }: TemplateProps) {
   const t = useTranslations('Menu');
   const router = useRouter();
-  const params = useParams();
-  const locale = params.locale;
 
   return (
     <div className="min-h-screen bg-white pb-24 relative font-sans text-zinc-900 selection:bg-zinc-100 overflow-x-hidden">
@@ -63,12 +55,13 @@ export function MinimalTemplate({
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-20 h-20 rounded-full overflow-hidden border border-zinc-100 shadow-sm"
+            className="relative w-20 h-20 rounded-full overflow-hidden border border-zinc-100 shadow-sm"
           >
-             <img
+             <Image
                 src={cafe.logo || 'https://images.unsplash.com/photo-1595433707802-6b2626ef1c91?q=80&w=200&h=200&auto=format&fit=crop'}
                 alt={cafe.name}
-                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                fill
+                className="object-cover grayscale hover:grayscale-0 transition-all duration-500"
               />
           </motion.div>
 
@@ -85,7 +78,7 @@ export function MinimalTemplate({
           <div className="flex gap-4">
              {customer ? (
               <button 
-                onClick={() => router.push(`/${locale}/menu/${cafe.id}/profile`)}
+                onClick={() => router.push(`/menu/${cafe.id}/profile`)}
                 className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors flex items-center gap-2"
               >
                 <User className="w-4 h-4" />

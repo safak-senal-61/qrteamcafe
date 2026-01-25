@@ -1,15 +1,13 @@
 import { TemplateProps } from './types';
-import { useRouter, useParams } from 'next/navigation';
-import { CategoryNav } from '@/components/menu/CategoryNav';
+import { useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
 import { CustomerAuthDialog } from '@/components/menu/CustomerAuthDialog';
-import { Badge } from '@/components/ui/badge';
-import { Search, Wifi, Instagram, Facebook, Twitter, Info, User, Star, Crown } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Search, User, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -22,13 +20,11 @@ import { useTranslations } from 'next-intl';
 export function PremiumTemplate({
   cafe,
   categories,
-  products,
   chefProducts,
   popularProducts,
   filteredProducts,
   activeCategory,
   searchQuery,
-  scrolled,
   tableNumber,
   customer,
   activeOrders,
@@ -42,13 +38,10 @@ export function PremiumTemplate({
   handleCancelOrder,
   fetchActiveOrders,
   currentTableId,
-  copyWifi,
-  getSocialUrl
+  scrolled
 }: TemplateProps) {
   const t = useTranslations('Menu');
   const router = useRouter();
-  const params = useParams();
-  const locale = params.locale as string;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] pb-24 relative font-serif selection:bg-[#c6a355] selection:text-black overflow-x-hidden">
@@ -58,14 +51,19 @@ export function PremiumTemplate({
       {/* Hero Section */}
       <div className="relative h-[50vh] min-h-[400px] w-full overflow-hidden">
          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-[#0a0a0a] z-10" />
-         <motion.img
+         <motion.div
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
             transition={{ duration: 2 }}
-            src={cafe.coverImage || 'https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop'}
-            alt={cafe.name}
-            className="w-full h-full object-cover"
-         />
+            className="absolute inset-0 w-full h-full"
+         >
+            <Image
+              src={cafe.coverImage || 'https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop'}
+              alt={cafe.name}
+              fill
+              className="object-cover"
+            />
+         </motion.div>
          
          {/* Top Bar */}
          <div className="absolute top-0 left-0 right-0 z-50 p-6 flex justify-between items-start">
@@ -80,7 +78,7 @@ export function PremiumTemplate({
             <div className="flex gap-3">
                {customer ? (
                  <button 
-                   onClick={() => router.push(`/${locale}/menu/${cafe.id}/profile`)}
+                   onClick={() => router.push(`/menu/${cafe.id}/profile`)}
                    className="flex items-center gap-2 px-4 py-2 border border-[#c6a355]/50 bg-black/60 backdrop-blur-md text-[#c6a355] hover:bg-[#c6a355] hover:text-black transition-all duration-300 rounded-sm"
                  >
                    <User className="w-4 h-4" />
@@ -106,8 +104,8 @@ export function PremiumTemplate({
                transition={{ delay: 0.5, duration: 0.8 }}
             >
                {cafe.logo && (
-                 <div className="w-24 h-24 mx-auto mb-6 rounded-full border-2 border-[#c6a355]/50 p-1">
-                    <img src={cafe.logo} alt={cafe.name} className="w-full h-full rounded-full object-cover" />
+                 <div className="w-24 h-24 mx-auto mb-6 rounded-full border-2 border-[#c6a355]/50 p-1 relative">
+                    <Image src={cafe.logo} alt={cafe.name} fill className="rounded-full object-cover" />
                  </div>
                )}
                <h1 className="text-5xl md:text-7xl font-serif text-[#c6a355] mb-4 tracking-tight drop-shadow-2xl">
@@ -241,7 +239,7 @@ export function PremiumTemplate({
                          {/* Image with Gold Border effect */}
                          {product.imageUrl && (
                            <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-sm border border-[#c6a355]/20 group-hover:border-[#c6a355] transition-colors duration-500">
-                              <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                              <Image src={product.imageUrl} alt={product.name} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
                            </div>
                          )}
                          <div className="flex-1">

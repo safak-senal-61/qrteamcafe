@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, Query, Patch, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  Patch,
+  Param,
+} from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -31,7 +39,10 @@ export class ReviewsController {
   }
 
   @Patch(':id/visibility')
-  toggleVisibility(@Param('id') id: string, @Body('isVisible') isVisible: boolean) {
+  toggleVisibility(
+    @Param('id') id: string,
+    @Body('isVisible') isVisible: boolean,
+  ) {
     return this.reviewsService.toggleVisibility(id, isVisible);
   }
 }

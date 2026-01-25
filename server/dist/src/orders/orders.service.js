@@ -24,15 +24,18 @@ let OrdersService = class OrdersService {
     mapOrderWithImages(order) {
         if (!order)
             return order;
+        const mappedItems = order.items.map((item) => ({
+            ...item,
+            product: item.product
+                ? {
+                    ...item.product,
+                    imageUrl: (0, product_images_util_1.getProductImage)(item.product.name, item.product.category?.name, item.product.imageUrl),
+                }
+                : null,
+        }));
         return {
             ...order,
-            items: order.items.map((item) => ({
-                ...item,
-                product: item.product ? {
-                    ...item.product,
-                    imageUrl: (0, product_images_util_1.getProductImage)(item.product.name, item.product.category?.name, item.product.imageUrl)
-                } : null
-            }))
+            items: mappedItems,
         };
     }
     async create(cafeId, createOrderDto) {
@@ -66,7 +69,7 @@ let OrdersService = class OrdersService {
                     data: { stock: { decrement: item.quantity } },
                 });
             }
-            const totalAmount = createOrderDto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+            const totalAmount = createOrderDto.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
             const order = await prisma.order.create({
                 data: {
                     cafeId,
@@ -89,7 +92,7 @@ let OrdersService = class OrdersService {
                     items: {
                         include: {
                             product: {
-                                include: { category: true }
+                                include: { category: true },
                             },
                         },
                     },
@@ -109,7 +112,7 @@ let OrdersService = class OrdersService {
                 items: {
                     include: {
                         product: {
-                            include: { category: true }
+                            include: { category: true },
                         },
                     },
                 },
@@ -118,7 +121,7 @@ let OrdersService = class OrdersService {
                 createdAt: 'desc',
             },
         });
-        return orders.map(order => this.mapOrderWithImages(order));
+        return orders.map((order) => this.mapOrderWithImages(order));
     }
     async findAll(cafeId) {
         const orders = await this.prisma.order.findMany({
@@ -129,14 +132,14 @@ let OrdersService = class OrdersService {
                 items: {
                     include: {
                         product: {
-                            include: { category: true }
+                            include: { category: true },
                         },
                     },
                 },
             },
             orderBy: { createdAt: 'desc' },
         });
-        return orders.map(order => this.mapOrderWithImages(order));
+        return orders.map((order) => this.mapOrderWithImages(order));
     }
     async updateStatus(id, status) {
         return this.prisma.$transaction(async (prisma) => {
@@ -169,10 +172,10 @@ let OrdersService = class OrdersService {
                     items: {
                         include: {
                             product: {
-                                include: { category: true }
-                            }
-                        }
-                    }
+                                include: { category: true },
+                            },
+                        },
+                    },
                 },
             });
             const updatedOrderWithImages = this.mapOrderWithImages(updatedOrder);

@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TablesController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const tables_service_1 = require("./tables.service");
 const create_table_dto_1 = require("./dto/create-table.dto");
@@ -37,6 +38,7 @@ let TablesController = class TablesController {
 exports.TablesController = TablesController;
 __decorate([
     (0, common_1.Post)(),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Query)('cafeId')),
     __metadata("design:type", Function),
@@ -45,6 +47,7 @@ __decorate([
 ], TablesController.prototype, "create", null);
 __decorate([
     (0, common_1.Post)('move'),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, common_1.Query)('cafeId')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -53,6 +56,7 @@ __decorate([
 ], TablesController.prototype, "moveTable", null);
 __decorate([
     (0, common_1.Get)(),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __param(0, (0, common_1.Query)('cafeId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -60,6 +64,7 @@ __decorate([
 ], TablesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Delete)(':id'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

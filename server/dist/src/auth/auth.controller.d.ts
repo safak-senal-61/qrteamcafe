@@ -7,6 +7,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import type { Request } from 'express';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
+import type { RequestWithUser } from './interfaces';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
@@ -55,12 +56,12 @@ export declare class AuthController {
         message: string;
         token: string;
         user: {
-            id: any;
-            name: any;
-            email: any;
+            id: string;
+            name: string;
+            email: string;
             role: string;
-            cafeId: any;
-            isTwoFactorEnabled: any;
+            cafeId: string | undefined;
+            isTwoFactorEnabled: boolean;
         };
     }>;
     forgotPassword(dto: ForgotPasswordDto): Promise<{
@@ -72,7 +73,7 @@ export declare class AuthController {
     resetPassword(dto: ResetPasswordDto): Promise<{
         message: string;
     }>;
-    getProfile(req: any): Promise<{
+    getProfile(req: RequestWithUser): Promise<{
         role: string;
         id: string;
         name: string;
@@ -84,27 +85,27 @@ export declare class AuthController {
         id: string;
         email: string;
     }>;
-    generate2FA(req: any): Promise<{
+    generate2FA(req: RequestWithUser): Promise<{
         secret: string;
         qrCodeUrl: string;
     }>;
-    enable2FA(req: any, code: string): Promise<{
+    enable2FA(req: RequestWithUser, code: string): Promise<{
         message: string;
     }>;
-    disable2FA(req: any): Promise<{
+    disable2FA(req: RequestWithUser): Promise<{
         message: string;
     }>;
-    getSessions(req: any): Promise<{
+    getSessions(req: RequestWithUser): Promise<{
         id: string;
         createdAt: Date;
         device: string | null;
         ip: string | null;
         lastActive: Date;
     }[]>;
-    terminateSession(req: any, sessionId: string): Promise<{
+    terminateSession(req: RequestWithUser, sessionId: string): Promise<{
         message: string;
     }>;
-    terminateAllOtherSessions(req: any): Promise<{
+    terminateAllOtherSessions(req: RequestWithUser): Promise<{
         message: string;
     }>;
 }

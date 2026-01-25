@@ -27,8 +27,6 @@ export default function LanguageSwitcher() {
     { code: 'ar', label: 'العربية', flag: '🇸🇦' },
   ];
 
-  const currentLanguage = languages.find((lang) => lang.code === locale);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Star, CheckCircle2, UtensilsCrossed } from 'lucide-react';
+import { Star, 
+  CheckCircle2
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 import axios from 'axios';
@@ -110,9 +113,10 @@ export function CreateReviewDialog({ open, onOpenChange, orderId, items, existin
       }));
       toast.success('Değerlendirme gönderildi');
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      const message = error.response?.data?.message || 'Değerlendirme gönderilirken bir hata oluştu';
+      const apiError = error as { response?: { data?: { message?: string | string[] } } };
+      const message = apiError.response?.data?.message || 'Değerlendirme gönderilirken bir hata oluştu';
       toast.error(Array.isArray(message) ? message[0] : message);
     } finally {
       setLoading(prev => ({ ...prev, [item.id]: false }));
@@ -137,11 +141,12 @@ export function CreateReviewDialog({ open, onOpenChange, orderId, items, existin
             return (
               <div key={item.id} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="h-16 w-16 rounded-lg bg-gray-100 overflow-hidden shrink-0">
-                    <img 
+                  <div className="h-16 w-16 rounded-lg bg-gray-100 overflow-hidden shrink-0 relative">
+                    <Image 
                       src={item.product.imageUrl || ''} 
                       alt={item.product.name} 
-                      className="w-full h-full object-cover" 
+                      fill
+                      className="object-cover" 
                     />
                   </div>
                   <div>

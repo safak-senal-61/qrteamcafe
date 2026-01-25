@@ -1,20 +1,41 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { getProductImage } from '../products/product-images.util';
 import { MailService } from '../auth/mail.service';
+import { Prisma, Product, Category } from '@prisma/client';
+
+import { CreateCustomerDto } from './dto/create-customer.dto';
 
 @Injectable()
 export class CustomersService {
   constructor(
     private prisma: PrismaService,
-    private mailService: MailService
+    private mailService: MailService,
   ) {}
 
-  create(createCustomerDto: CreateCustomerDto) {
-    return 'This action adds a new customer';
+  async create(createCustomerDto: CreateCustomerDto) {
+    // Basic implementation - adjust based on requirements (hashing password etc if needed)
+    // Usually registration goes through AuthService, but if direct creation is needed:
+    const { password, ...rest } = createCustomerDto;
+
+    // Explicitly type data as Prisma.CustomerCreateInput (or a partial of it that includes passwordHash)
+    // Note: Prisma.CustomerCreateInput requires certain fields. Using a spread object requires care.
+    // For safety, we treat it as a record first, then assign passwordHash.
+    const data: Prisma.CustomerCreateInput = {
+      ...rest,
+      // Provide defaults or handle optional fields if needed.
+      // Assuming 'rest' matches the input shape except for passwordHash.
+    } as Prisma.CustomerCreateInput;
+
+    if (password) {
+      data.passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    return this.prisma.customer.create({
+      data,
+    });
   }
 
   findAll() {
@@ -29,28 +50,55 @@ export class CustomersService {
     if (!customer) return null;
 
     if (!customer.referralCode) {
-      let referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      let referralCode = Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase();
       try {
         const updated = await this.prisma.customer.update({
           where: { id },
           data: { referralCode },
         });
         // Return safe object
-        const { passwordHash, verificationCode, verificationCodeExpires, ...safeCustomer } = updated;
+
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const {
+          passwordHash: _ph,
+          verificationCode: _vc,
+          verificationCodeExpires: _vce,
+          ...safeCustomer
+        } = updated;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         return safeCustomer;
-      } catch (error) {
+      } catch {
         referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         const updated = await this.prisma.customer.update({
           where: { id },
           data: { referralCode },
         });
-        const { passwordHash, verificationCode, verificationCodeExpires, ...safeCustomer } = updated;
+
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const {
+          passwordHash: _ph,
+          verificationCode: _vc,
+          verificationCodeExpires: _vce,
+          ...safeCustomer
+        } = updated;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         return safeCustomer;
       }
     }
 
     // Return safe object
-    const { passwordHash, verificationCode, verificationCodeExpires, ...safeCustomer } = customer;
+
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    const {
+      passwordHash: _ph,
+      verificationCode: _vc,
+      verificationCodeExpires: _vce,
+      ...safeCustomer
+    } = customer;
+    /* eslint-enable @typescript-eslint/no-unused-vars */
     return safeCustomer;
   }
 
@@ -61,7 +109,10 @@ export class CustomersService {
     });
 
     const orders = await this.prisma.order.findMany({
-      where: { customerId: id, status: { in: ['COMPLETED', 'DELIVERED', 'PAID'] } },
+      where: {
+        customerId: id,
+        status: { in: ['COMPLETED', 'DELIVERED', 'PAID'] },
+      },
       include: {
         items: {
           include: {
@@ -76,10 +127,16 @@ export class CustomersService {
     });
 
     const totalOrders = orders.length;
-    const totalSpent = orders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
+    const totalSpent = orders.reduce(
+      (sum, order) => sum + Number(order.totalAmount),
+      0,
+    );
 
     // Calculate favorites
-    const productCounts: Record<string, { count: number; orderCount: number; name: string; image: string }> = {};
+    const productCounts: Record<
+      string,
+      { count: number; orderCount: number; name: string; image: string }
+    > = {};
     const categoryCounts: Record<string, { count: number; name: string }> = {};
 
     orders.forEach((order) => {
@@ -88,11 +145,15 @@ export class CustomersService {
       order.items.forEach((item) => {
         // Product Stats
         if (!productCounts[item.productId]) {
-          productCounts[item.productId] = { 
-            count: 0, 
+          productCounts[item.productId] = {
+            count: 0,
             orderCount: 0,
-            name: item.product.name, 
-            image: getProductImage(item.product.name, item.product.category?.name, item.product.imageUrl)
+            name: item.product.name,
+            image: getProductImage(
+              item.product.name,
+              item.product.category?.name,
+              item.product.imageUrl,
+            ),
           };
         }
         productCounts[item.productId].count += item.quantity;
@@ -105,9 +166,9 @@ export class CustomersService {
         // Category Stats
         const catId = item.product.categoryId;
         if (!categoryCounts[catId]) {
-          categoryCounts[catId] = { 
-            count: 0, 
-            name: item.product.category.name 
+          categoryCounts[catId] = {
+            count: 0,
+            name: item.product.category.name,
           };
         }
         categoryCounts[catId].count += item.quantity;
@@ -115,10 +176,13 @@ export class CustomersService {
     });
 
     // "2 siparişten sonra" -> orderCount > 2 (En az 3 farklı siparişte geçmeli)
-    const favoriteProduct = Object.values(productCounts)
-      .filter(p => p.orderCount > 2)
-      .sort((a, b) => b.count - a.count)[0] || null;
-    const favoriteCategory = Object.values(categoryCounts).sort((a, b) => b.count - a.count)[0] || null;
+    const favoriteProduct =
+      Object.values(productCounts)
+        .filter((p) => p.orderCount > 2)
+        .sort((a, b) => b.count - a.count)[0] || null;
+    const favoriteCategory =
+      Object.values(categoryCounts).sort((a, b) => b.count - a.count)[0] ||
+      null;
 
     return {
       totalOrders,
@@ -131,7 +195,7 @@ export class CustomersService {
 
   async getRecommendations(id: string, cafeId?: string) {
     // Base filter for products (always filter by available and cafeId if provided)
-    const baseFilter: any = { isAvailable: true };
+    const baseFilter: Prisma.ProductWhereInput = { isAvailable: true };
     if (cafeId) {
       baseFilter.cafeId = cafeId;
     }
@@ -141,16 +205,20 @@ export class CustomersService {
     const manualRecommendations = await this.prisma.product.findMany({
       where: {
         ...baseFilter,
-        isChefRecommended: true
+        isChefRecommended: true,
       },
       take: 5,
-      include: { category: true }
+      include: { category: true },
     });
 
     if (manualRecommendations.length > 0) {
-      return manualRecommendations.map(product => ({
+      return manualRecommendations.map((product) => ({
         ...product,
-        imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+        imageUrl: getProductImage(
+          product.name,
+          product.category?.name,
+          product.imageUrl,
+        ),
       }));
     }
 
@@ -158,92 +226,105 @@ export class CustomersService {
     const stats = await this.getStats(id);
     const favoriteCategoryName = stats.favoriteCategory?.name;
 
-    let recommendations: any[] = [];
+    type ProductWithCategory = Product & { category: Category | null };
+    let recommendations: ProductWithCategory[] = [];
 
     if (favoriteCategoryName) {
       // Get top rated products in favorite category
       recommendations = await this.prisma.product.findMany({
-        where: { 
+        where: {
           ...baseFilter,
           category: { name: favoriteCategoryName },
         },
         orderBy: { averageRating: 'desc' },
         take: 5,
-        include: { category: true }
+        include: { category: true },
       });
     }
 
     // If no favorite category or empty results, get top rated generally
     if (recommendations.length === 0) {
       recommendations = await this.prisma.product.findMany({
-        where: { 
+        where: {
           ...baseFilter,
-          averageRating: { gte: 4.0 }
+          averageRating: { gte: 4.0 },
         },
         orderBy: { averageRating: 'desc' },
         take: 5,
-        include: { category: true }
+        include: { category: true },
       });
     }
 
     // If still no recommendations, get random popular ones from the cafe
     if (recommendations.length === 0) {
-       recommendations = await this.prisma.product.findMany({
+      recommendations = await this.prisma.product.findMany({
         where: baseFilter,
         orderBy: { reviewCount: 'desc' },
         take: 5,
-        include: { category: true }
+        include: { category: true },
       });
     }
-    
-    return recommendations.map(product => ({
+
+    return recommendations.map((product) => ({
       ...product,
-      imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+      imageUrl: getProductImage(
+        product.name,
+        product.category?.name,
+        product.imageUrl,
+      ),
     }));
   }
 
   async update(id: string, updateCustomerDto: UpdateCustomerDto) {
-    const data: any = { ...updateCustomerDto };
-    const { email, ...otherData } = data;
-    
+    const { email, password, ...rest } = updateCustomerDto;
+    const updateData: Prisma.CustomerUpdateInput = { ...rest };
+
     // Handle Password
-    if (otherData.password) {
+    if (password) {
       const salt = await bcrypt.genSalt(10);
-      otherData.passwordHash = await bcrypt.hash(otherData.password, salt);
-      delete otherData.password;
+      updateData.passwordHash = await bcrypt.hash(password, salt);
     }
 
     // Handle Email Change
     let emailVerificationRequired = false;
     if (email) {
-      const currentCustomer = await this.prisma.customer.findUnique({ where: { id } });
-      
+      const currentCustomer = await this.prisma.customer.findUnique({
+        where: { id },
+      });
+
       if (currentCustomer && currentCustomer.email !== email) {
         // Check if new email is taken
-        const existing = await this.prisma.customer.findUnique({ where: { email } });
+        const existing = await this.prisma.customer.findUnique({
+          where: { email },
+        });
         if (existing) {
           throw new BadRequestException('Bu e-posta adresi zaten kullanımda.');
         }
 
         // Generate code
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationCode = Math.floor(
+          100000 + Math.random() * 900000,
+        ).toString();
         const verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
 
         // Save temp email and code
-        otherData.tempEmail = email;
-        otherData.verificationCode = verificationCode;
-        otherData.verificationCodeExpires = verificationCodeExpires;
-        
+        updateData.tempEmail = email;
+        updateData.verificationCode = verificationCode;
+        updateData.verificationCodeExpires = verificationCodeExpires;
+
         emailVerificationRequired = true;
-        
+
         // Send email
-        await this.mailService.sendEmailChangeVerificationEmail(email, verificationCode);
+        await this.mailService.sendEmailChangeVerificationEmail(
+          email,
+          verificationCode,
+        );
       }
     }
 
     const updatedCustomer = await this.prisma.customer.update({
       where: { id },
-      data: otherData,
+      data: updateData,
     });
 
     return {
@@ -255,10 +336,16 @@ export class CustomersService {
   async verifyEmailChange(id: string, code: string) {
     const customer = await this.prisma.customer.findUnique({ where: { id } });
     if (!customer || !customer.tempEmail) {
-      throw new BadRequestException('Bekleyen bir e-posta değişikliği bulunamadı.');
+      throw new BadRequestException(
+        'Bekleyen bir e-posta değişikliği bulunamadı.',
+      );
     }
 
-    if (customer.verificationCode !== code || !customer.verificationCodeExpires || new Date() > customer.verificationCodeExpires) {
+    if (
+      customer.verificationCode !== code ||
+      !customer.verificationCodeExpires ||
+      new Date() > customer.verificationCodeExpires
+    ) {
       throw new BadRequestException('Geçersiz veya süresi dolmuş kod.');
     }
 

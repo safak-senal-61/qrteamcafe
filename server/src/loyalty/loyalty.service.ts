@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -31,7 +35,8 @@ export class LoyaltyService {
     });
 
     if (!reward) throw new NotFoundException('Ödül bulunamadı');
-    if (!reward.isActive) throw new BadRequestException('Bu ödül şu anda aktif değil');
+    if (!reward.isActive)
+      throw new BadRequestException('Bu ödül şu anda aktif değil');
 
     if (customer.loyaltyPoints < reward.pointsCost) {
       throw new BadRequestException('Yetersiz puan');
@@ -74,7 +79,13 @@ export class LoyaltyService {
     });
   }
 
-  async createReward(data: { cafeId: string; title: string; description?: string; pointsCost: number; imageUrl?: string }) {
+  async createReward(data: {
+    cafeId: string;
+    title: string;
+    description?: string;
+    pointsCost: number;
+    imageUrl?: string;
+  }) {
     return this.prisma.reward.create({
       data: {
         ...data,

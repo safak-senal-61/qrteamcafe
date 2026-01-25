@@ -16,10 +16,7 @@ export default function SuperAdminLayout({
   const isAuthPage = pathname === '/admin/super/login' || pathname === '/admin/super/register';
 
   useEffect(() => {
-    if (isAuthPage) {
-      setIsAuthorized(true);
-      return;
-    }
+    if (isAuthPage) return;
 
     const checkAuth = () => {
       const userStr = localStorage.getItem('user');
@@ -35,7 +32,7 @@ export default function SuperAdminLayout({
           return;
         }
         setIsAuthorized(true);
-      } catch (error) {
+      } catch {
         localStorage.removeItem('user');
         setTimeout(() => router.push('/admin/super/login'), 100);
       }
@@ -44,7 +41,7 @@ export default function SuperAdminLayout({
     checkAuth();
   }, [pathname, isAuthPage, router]);
 
-  if (!isAuthorized) {
+  if (!isAuthorized && !isAuthPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />

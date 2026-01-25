@@ -1,6 +1,5 @@
 import { TemplateProps } from './types';
-import { useRouter, useParams } from 'next/navigation';
-import { CategoryNav } from '@/components/menu/CategoryNav';
+import { useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
@@ -10,6 +9,7 @@ import { Search, Wifi, Instagram, Facebook, Twitter, Info, User, Star } from 'lu
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +28,6 @@ export function ModernTemplate({
   filteredProducts,
   activeCategory,
   searchQuery,
-  scrolled,
   tableNumber,
   customer,
   activeOrders,
@@ -48,8 +47,6 @@ export function ModernTemplate({
 }: TemplateProps) {
   const t = useTranslations('Menu');
   const router = useRouter();
-  const params = useParams();
-  const locale = params.locale as string;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 pb-24 relative font-sans selection:bg-primary selection:text-primary-foreground overflow-x-hidden">
@@ -78,14 +75,20 @@ export function ModernTemplate({
           )}
         </div>
 
-        <motion.img
+        <motion.div
           initial={{ scale: 1.2 }}
           animate={{ scale: 1 }}
           transition={{ duration: 1.5, ease: "easeOut" }}
-          src={cafe.coverImage || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop'}
-          alt={cafe.name}
-          className="w-full h-full object-cover opacity-60"
-        />
+          className="absolute inset-0"
+        >
+          <Image
+            src={cafe.coverImage || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop'}
+            alt={cafe.name}
+            fill
+            className="object-cover opacity-60"
+            priority
+          />
+        </motion.div>
         
         <div className="absolute bottom-0 left-0 right-0 z-20 p-8 pt-32">
           <div className="container mx-auto">
@@ -96,8 +99,8 @@ export function ModernTemplate({
               className="flex flex-col items-center text-center space-y-4"
             >
                 {cafe.logo && (
-                    <div className="w-24 h-24 rounded-full border-2 border-white/20 shadow-2xl overflow-hidden mb-2">
-                        <img src={cafe.logo} alt={cafe.name} className="w-full h-full object-cover" />
+                    <div className="relative w-24 h-24 rounded-full border-2 border-white/20 shadow-2xl overflow-hidden mb-2">
+                        <Image src={cafe.logo} alt={cafe.name} fill className="object-cover" />
                     </div>
                 )}
               <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white drop-shadow-lg">{cafe.name}</h1>
@@ -182,8 +185,8 @@ export function ModernTemplate({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {chefProducts.map((product, index) => (
                 <div key={product.id} className="group relative overflow-hidden rounded-3xl bg-slate-900 border border-white/5 hover:border-primary/50 transition-all duration-500">
-                    <div className="aspect-video w-full overflow-hidden">
-                        <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className="relative aspect-video w-full overflow-hidden">
+                        <Image src={product.imageUrl || ''} alt={product.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90" />
                     <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -241,8 +244,8 @@ export function ModernTemplate({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {categoryProducts.map((product, index) => (
                   <div key={product.id} className="bg-slate-900 rounded-2xl p-4 border border-white/5 hover:bg-slate-800/50 transition-colors flex gap-4">
-                      <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0">
-                          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                      <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0">
+                          <Image src={product.imageUrl || ''} alt={product.name} fill className="object-cover" />
                       </div>
                       <div className="flex-1 flex flex-col justify-between">
                           <div>
@@ -329,8 +332,8 @@ export function ModernTemplate({
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex flex-col items-center gap-4 pt-4">
               {cafe.logo && (
-                <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-primary/20 shadow-[0_0_30px_rgba(var(--primary),0.3)]">
-                   <img src={cafe.logo} alt={cafe.name} className="h-full w-full object-cover" />
+                <div className="relative h-24 w-24 rounded-full overflow-hidden border-4 border-primary/20 shadow-[0_0_30px_rgba(var(--primary),0.3)]">
+                   <Image src={cafe.logo} alt={cafe.name} fill className="object-cover" />
                 </div>
               )}
               <span>{t('welcome')}</span>

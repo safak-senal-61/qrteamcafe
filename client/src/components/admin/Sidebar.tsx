@@ -1,11 +1,11 @@
 import { Link, usePathname, useRouter } from '@/navigation';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { API_URL } from '@/lib/api';
 import {
   LayoutDashboard,
   UtensilsCrossed,
-  List,
   QrCode,
   Settings,
   LogOut,
@@ -148,17 +148,16 @@ export function Sidebar() {
       <div className="flex flex-col px-2 py-4 mb-6">
         <div className="flex items-center gap-3">
           <div 
-            className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border"
+            className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border"
             suppressHydrationWarning
           >
             {mounted && cafeData.logoUrl ? (
-              <img 
+              <Image 
                 src={cafeData.logoUrl} 
                 alt="Logo" 
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none'; // Hide broken image
-                }}
+                fill
+                className="object-cover"
+                unoptimized
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-primary text-primary-foreground">

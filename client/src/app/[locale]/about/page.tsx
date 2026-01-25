@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, Variants } from 'framer-motion';
-import { Users, Target, Heart, Coffee, Lightbulb, Shield, Globe, Award, Sparkles, ArrowRight } from 'lucide-react';
+import { Users, Target, Heart, Coffee, Lightbulb, Shield, Globe, Award, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';

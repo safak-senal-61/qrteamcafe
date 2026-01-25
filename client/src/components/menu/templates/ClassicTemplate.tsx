@@ -1,5 +1,4 @@
 import { TemplateProps } from './types';
-import { useParams } from 'next/navigation';
 import { useRouter } from '@/navigation';
 import { CategoryNav } from '@/components/menu/CategoryNav';
 import { ProductCard } from '@/components/menu/ProductCard';
@@ -11,6 +10,7 @@ import { Search, Wifi, Instagram, Facebook, Twitter, Info, User } from 'lucide-r
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -49,8 +49,6 @@ export function ClassicTemplate({
 }: TemplateProps) {
   const t = useTranslations('Menu');
   const router = useRouter();
-  const params = useParams();
-  const locale = params.locale as string;
 
   return (
     <div className="min-h-screen bg-background pb-24 relative font-sans overflow-x-hidden">
@@ -83,26 +81,32 @@ export function ClassicTemplate({
           )}
         </div>
 
-        <motion.img
+        <motion.div
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
-          src={cafe.coverImage || 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=2078&auto=format&fit=crop'}
-          alt={cafe.name}
-          className="w-full h-full object-cover"
-        />
+          className="absolute inset-0 w-full h-full"
+        >
+          <Image
+            src={cafe.coverImage || 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=2078&auto=format&fit=crop'}
+            alt={cafe.name}
+            fill
+            className="object-cover"
+          />
+        </motion.div>
         <div className="absolute bottom-0 left-0 right-0 z-20 p-6 bg-gradient-to-t from-background to-transparent pt-24">
           <div className="container mx-auto flex items-end space-x-4">
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="h-24 w-24 rounded-2xl border-4 border-background overflow-hidden bg-white shadow-2xl"
+              className="h-24 w-24 rounded-2xl border-4 border-background overflow-hidden bg-white shadow-2xl relative"
             >
-              <img
+              <Image
                 src={cafe.logo || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=200&h=200&auto=format&fit=crop'}
                 alt={cafe.name}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             </motion.div>
             <motion.div
@@ -339,8 +343,8 @@ export function ClassicTemplate({
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex flex-col items-center gap-4 pt-4">
               {cafe.logo && (
-                <div className="h-20 w-20 rounded-full overflow-hidden border-4 border-primary/20">
-                   <img src={cafe.logo} alt={cafe.name} className="h-full w-full object-cover" />
+                <div className="h-20 w-20 rounded-full overflow-hidden border-4 border-primary/20 relative">
+                   <Image src={cafe.logo} alt={cafe.name} fill className="object-cover" />
                 </div>
               )}
               <span>{t('welcome')}</span>

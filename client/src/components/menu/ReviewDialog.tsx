@@ -58,7 +58,7 @@ export function ReviewDialog({ isOpen, onClose, orderItems, orderId }: ReviewDia
 
   const handleSubmit = async () => {
     // Filter out items that have no rating
-    const itemsToReview = Object.entries(reviews).filter(([_, data]) => data.rating > 0);
+    const itemsToReview = Object.entries(reviews).filter(([, data]) => data.rating > 0);
 
     if (itemsToReview.length === 0) {
       toast.error('Lütfen en az bir ürünü puanlayın.');

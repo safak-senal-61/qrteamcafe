@@ -24,7 +24,6 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (isAuthPage || isSuperAdmin) {
-      setIsAuthorized(true);
       return;
     }
 
@@ -55,8 +54,12 @@ export default function AdminLayout({
 
   // Close mobile menu on route change
   useEffect(() => {
-    setIsMobileOpen(false);
+    setTimeout(() => setIsMobileOpen(false), 0);
   }, [pathname]);
+
+  if (isAuthPage || isSuperAdmin) {
+    return <>{children}</>;
+  }
 
   if (!isAuthorized) {
     return (
@@ -64,10 +67,6 @@ export default function AdminLayout({
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (isAuthPage || isSuperAdmin) {
-    return <>{children}</>;
   }
 
   return (

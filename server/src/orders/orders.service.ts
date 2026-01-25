@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { EventsGateway } from '../events/events.gateway';
 import { getProductImage } from '../products/product-images.util';
+import { OrderItem, Product, Category } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
@@ -11,17 +12,32 @@ export class OrdersService {
     private eventsGateway: EventsGateway,
   ) {}
 
-  private mapOrderWithImages(order: any) {
+  private mapOrderWithImages<
+    T extends {
+      items: (OrderItem & {
+        product: (Product & { category: Category | null }) | null;
+      })[];
+    },
+  >(order: T) {
     if (!order) return order;
+
+    const mappedItems = order.items.map((item) => ({
+      ...item,
+      product: item.product
+        ? {
+            ...item.product,
+            imageUrl: getProductImage(
+              item.product.name,
+              item.product.category?.name,
+              item.product.imageUrl,
+            ),
+          }
+        : null,
+    }));
+
     return {
       ...order,
-      items: order.items.map((item: any) => ({
-        ...item,
-        product: item.product ? {
-          ...item.product,
-          imageUrl: getProductImage(item.product.name, item.product.category?.name, item.product.imageUrl)
-        } : null
-      }))
+      items: mappedItems,
     };
   }
 
@@ -55,7 +71,9 @@ export class OrdersService {
         }
 
         if ((product.stock || 0) < item.quantity) {
-          throw new BadRequestException(`${product.name} için yeterli stok yok. Mevcut: ${product.stock}`);
+          throw new BadRequestException(
+            `${product.name} için yeterli stok yok. Mevcut: ${product.stock}`,
+          );
         }
 
         await prisma.product.update({
@@ -65,7 +83,10 @@ export class OrdersService {
       }
 
       // Calculate total amount
-      const totalAmount = createOrderDto.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+      const totalAmount = createOrderDto.items.reduce(
+        (sum, item) => sum + item.unitPrice * item.quantity,
+        0,
+      );
 
       // 2. Siparişi oluştur
       const order = await prisma.order.create({
@@ -76,15 +97,13 @@ export class OrdersService {
           totalAmount: totalAmount,
           status: 'PENDING',
           items: {
-            create: createOrderDto.items.map(
-              (item) => ({
-                productId: item.productId,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                totalPrice: item.unitPrice * item.quantity,
-                note: item.note,
-              }),
-            ),
+            create: createOrderDto.items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              totalPrice: item.unitPrice * item.quantity,
+              note: item.note,
+            })),
           },
         },
         include: {
@@ -92,7 +111,7 @@ export class OrdersService {
           items: {
             include: {
               product: {
-                include: { category: true }
+                include: { category: true },
               },
             },
           },
@@ -121,7 +140,7 @@ export class OrdersService {
         items: {
           include: {
             product: {
-              include: { category: true }
+              include: { category: true },
             },
           },
         },
@@ -131,7 +150,7 @@ export class OrdersService {
       },
     });
 
-    return orders.map(order => this.mapOrderWithImages(order));
+    return orders.map((order) => this.mapOrderWithImages(order));
   }
 
   async findAll(cafeId: string) {
@@ -143,7 +162,7 @@ export class OrdersService {
         items: {
           include: {
             product: {
-              include: { category: true }
+              include: { category: true },
             },
           },
         },
@@ -151,7 +170,7 @@ export class OrdersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return orders.map(order => this.mapOrderWithImages(order));
+    return orders.map((order) => this.mapOrderWithImages(order));
   }
 
   async updateStatus(id: string, status: string) {
@@ -165,7 +184,9 @@ export class OrdersService {
 
       // İptal edilmek isteniyorsa, sadece PENDING ise iptal edilebilir
       if (status === 'CANCELLED' && order.status !== 'PENDING') {
-        throw new BadRequestException('Sadece onay bekleyen siparişler iptal edilebilir.');
+        throw new BadRequestException(
+          'Sadece onay bekleyen siparişler iptal edilebilir.',
+        );
       }
 
       // PENDING -> PREPARING geçişinde stok düş (ARTIK GEREKSİZ, OLUŞTURURKEN DÜŞTÜK)
@@ -180,7 +201,8 @@ export class OrdersService {
       }
 
       // Update deliveredAt if status is DELIVERED
-      const updateData: any = { status };
+      // Use explicit type to avoid unsafe assignment warning
+      const updateData: { status: string; deliveredAt?: Date } = { status };
       if (status === 'DELIVERED' && !order.deliveredAt) {
         updateData.deliveredAt = new Date();
       }
@@ -188,21 +210,24 @@ export class OrdersService {
       const updatedOrder = await prisma.order.update({
         where: { id },
         data: updateData,
-        include: { 
+        include: {
           table: true,
           items: {
             include: {
               product: {
-                include: { category: true }
-              }
-            }
-          }
+                include: { category: true },
+              },
+            },
+          },
         },
       });
 
       // Durum güncellemesini socket ile bildir
       const updatedOrderWithImages = this.mapOrderWithImages(updatedOrder);
-      this.eventsGateway.notifyOrderStatusUpdate(updatedOrderWithImages.cafeId, updatedOrderWithImages);
+      this.eventsGateway.notifyOrderStatusUpdate(
+        updatedOrderWithImages.cafeId,
+        updatedOrderWithImages,
+      );
 
       return updatedOrderWithImages;
     });

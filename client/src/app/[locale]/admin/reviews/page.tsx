@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Star, Loader2, Save, MessageCircle, Eye, EyeOff } from 'lucide-react';
+import { Star, Loader2, MessageCircle } from 'lucide-react';
 import Image from 'next/image';
 import {
   Dialog,
@@ -333,7 +333,7 @@ export default function AdminReviewsPage() {
               {/* Comment */}
               {review.comment && (
                 <div className="text-sm bg-muted/30 p-3 rounded-md">
-                  "{review.comment}"
+                  &quot;{review.comment}&quot;
                 </div>
               )}
 
@@ -413,7 +413,7 @@ export default function AdminReviewsPage() {
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Müşteri Yorumu:</p>
               <div className="bg-secondary/20 p-3 rounded-md text-sm italic">
-                "{replyingReview?.comment || 'Yorum yok'}"
+                &quot;{replyingReview?.comment || 'Yorum yok'}&quot;
               </div>
             </div>
             <div className="space-y-2">

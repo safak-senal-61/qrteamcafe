@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateProductDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 class CreateProductDto {
@@ -23,6 +24,9 @@ class CreateProductDto {
     originalPrice;
     isChefRecommended;
     requiresPreparation;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { categoryId: { required: true, type: () => String, format: "uuid" }, name: { required: true, type: () => String }, description: { required: false, type: () => String }, price: { required: true, type: () => Number, minimum: 0 }, imageUrl: { required: false, type: () => String }, isAvailable: { required: false, type: () => Boolean }, stock: { required: false, type: () => Number, minimum: 0 }, originalPrice: { required: false, type: () => Number, minimum: 0 }, isChefRecommended: { required: false, type: () => Boolean }, requiresPreparation: { required: false, type: () => Boolean } };
+    }
 }
 exports.CreateProductDto = CreateProductDto;
 __decorate([

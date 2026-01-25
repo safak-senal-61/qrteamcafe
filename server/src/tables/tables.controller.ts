@@ -27,7 +27,11 @@ export class TablesController {
     @Query('cafeId') cafeId: string,
     @Body() body: { fromTableId: string; toTableId: string },
   ) {
-    return this.tablesService.moveTable(cafeId, body.fromTableId, body.toTableId);
+    return this.tablesService.moveTable(
+      cafeId,
+      body.fromTableId,
+      body.toTableId,
+    );
   }
 
   @Get()

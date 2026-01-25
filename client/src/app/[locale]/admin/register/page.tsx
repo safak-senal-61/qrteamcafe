@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Link, useRouter } from '@/navigation';
+import { Link } from '@/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,10 +10,18 @@ import { Coffee, User, Mail, Phone, Lock, Store, ArrowRight, Loader2, CheckCircl
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
-import Cropper from 'react-easy-crop';
+import Cropper, { Area } from 'react-easy-crop';
 import getCroppedImg from '@/lib/imageUtils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
+
+interface CroppedAreaPixels {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 export default function RegisterPage() {
   const t = useTranslations('Auth');
@@ -30,7 +38,7 @@ export default function RegisterPage() {
   // Cropper State
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CroppedAreaPixels | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -59,7 +67,7 @@ export default function RegisterPage() {
     }
   };
 
-  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+  const onCropComplete = (croppedArea: Area, croppedAreaPixels: CroppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
 
@@ -225,7 +233,15 @@ export default function RegisterPage() {
                     onClick={() => fileInputRef.current?.click()}
                   >
                     {logoPreview ? (
-                      <img src={logoPreview} alt="Logo Preview" className="h-full w-full object-cover" />
+                      <div className="relative w-full h-full">
+                        <Image 
+                          src={logoPreview} 
+                          alt="Logo Preview" 
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
                     ) : (
                       <Upload className="h-6 w-6 text-muted-foreground" />
                     )}

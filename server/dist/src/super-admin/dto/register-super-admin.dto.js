@@ -10,12 +10,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RegisterSuperAdminDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class RegisterSuperAdminDto {
     name;
     email;
     password;
     registerKey;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { name: { required: true, type: () => String }, email: { required: true, type: () => String, format: "email" }, password: { required: true, type: () => String, minLength: 6 }, registerKey: { required: true, type: () => String } };
+    }
 }
 exports.RegisterSuperAdminDto = RegisterSuperAdminDto;
 __decorate([

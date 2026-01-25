@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SuperAdminController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const super_admin_service_1 = require("./super-admin.service");
 const register_super_admin_dto_1 = require("./dto/register-super-admin.dto");
@@ -49,6 +50,7 @@ let SuperAdminController = class SuperAdminController {
 exports.SuperAdminController = SuperAdminController;
 __decorate([
     (0, common_1.Post)('register'),
+    openapi.ApiResponse({ status: 201 }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [register_super_admin_dto_1.RegisterSuperAdminDto]),
@@ -56,30 +58,35 @@ __decorate([
 ], SuperAdminController.prototype, "register", null);
 __decorate([
     (0, common_1.Get)('pending-cafes'),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SuperAdminController.prototype, "getPendingCafes", null);
 __decorate([
     (0, common_1.Get)('stats'),
+    openapi.ApiResponse({ status: 200 }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SuperAdminController.prototype, "getStats", null);
 __decorate([
     (0, common_1.Get)('cafes'),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SuperAdminController.prototype, "getAllCafes", null);
 __decorate([
     (0, common_1.Get)('settings'),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SuperAdminController.prototype, "getSettings", null);
 __decorate([
     (0, common_1.Patch)('settings'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -87,6 +94,7 @@ __decorate([
 ], SuperAdminController.prototype, "updateSetting", null);
 __decorate([
     (0, common_1.Patch)('cafes/:id/approve'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -94,6 +102,7 @@ __decorate([
 ], SuperAdminController.prototype, "approveCafe", null);
 __decorate([
     (0, common_1.Patch)('cafes/:id/reject'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

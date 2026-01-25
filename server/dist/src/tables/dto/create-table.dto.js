@@ -10,10 +10,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateTableDto = void 0;
+const openapi = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreateTableDto {
     tableNumber;
     isOccupied;
+    static _OPENAPI_METADATA_FACTORY() {
+        return { tableNumber: { required: true, type: () => Number }, isOccupied: { required: false, type: () => Boolean } };
+    }
 }
 exports.CreateTableDto = CreateTableDto;
 __decorate([

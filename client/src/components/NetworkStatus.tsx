@@ -5,14 +5,15 @@ import { toast } from 'sonner';
 import { Wifi, WifiOff } from 'lucide-react';
 
 export default function NetworkStatus() {
+  // We use this state to trigger re-renders when online status changes
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
     // Initial check (only runs on client)
-    if (typeof window !== 'undefined') {
-      setIsOnline(navigator.onLine);
-    }
-
+    // We don't set state here synchronously to avoid hydration mismatch or render issues
+    // navigator.onLine is available on client side
+    
     const handleOnline = () => {
       setIsOnline(true);
       toast.dismiss('offline-toast');
@@ -33,6 +34,11 @@ export default function NetworkStatus() {
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    
+    // Check initial status after mount to be safe, but typically event listeners handle changes
+    if (typeof window !== 'undefined' && !navigator.onLine) {
+       handleOffline();
+    }
 
     return () => {
       window.removeEventListener('online', handleOnline);

@@ -1,24 +1,48 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Receipt, ChefHat, CheckCircle2, XCircle, Armchair, ArrowRightLeft, Filter } from 'lucide-react';
+import { Loader2, Receipt, ChefHat, CheckCircle2, XCircle, Armchair, ArrowRightLeft } from 'lucide-react';
 import { API_URL } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
+interface OrderItem {
+  id: string;
+  quantity: number;
+  productId: string;
+  totalPrice: number | string;
+  product: {
+    name: string;
+  };
+}
+
+interface Order {
+  id: string;
+  tableId: string;
+  createdAt: string;
+  status: string;
+  totalAmount: number | string;
+  items: OrderItem[];
+}
+
+interface Table {
+  id: string;
+  tableNumber: string;
+}
+
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<any[]>([]);
-  const [tables, setTables] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTable, setSelectedTable] = useState<any | null>(null);
-  const [printTable, setPrintTable] = useState<any | null>(null);
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [printTable, setPrintTable] = useState<Table | null>(null);
   const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
   
   // Filter State
@@ -26,12 +50,12 @@ export default function OrdersPage() {
 
   // Move Table State
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
-  const [moveSourceTable, setMoveSourceTable] = useState<any | null>(null);
+  const [moveSourceTable, setMoveSourceTable] = useState<Table | null>(null);
   const [moveTargetTableId, setMoveTargetTableId] = useState<string>('');
   
   const [cafeId, setCafeId] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!cafeId) return;
     try {
       const [ordersRes, tablesRes] = await Promise.all([
@@ -49,7 +73,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [cafeId]);
 
   const handleMoveTable = async () => {
     if (!moveSourceTable || !moveTargetTableId || !cafeId) return;
@@ -74,7 +98,8 @@ export default function OrdersPage() {
         const err = await res.json();
         toast.error(err.message || 'Masa taşınamadı.');
       }
-    } catch (error) {
+    } catch (_error) {
+      console.error(_error);
       toast.error('Bir hata oluştu.');
     }
   };
@@ -93,7 +118,7 @@ export default function OrdersPage() {
     // Şimdilik polling ile 10 saniyede bir güncelleme
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
-  }, [cafeId]);
+  }, [cafeId, fetchData]);
 
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
@@ -110,6 +135,7 @@ export default function OrdersPage() {
         toast.error('Güncelleme başarısız.');
       }
     } catch (error) {
+      console.error(error);
       toast.error('Hata oluştu.');
     }
   };
@@ -119,7 +145,7 @@ export default function OrdersPage() {
     const summary: { [key: string]: { name: string; quantity: number; total: number } } = {};
 
     tableOrders.forEach(order => {
-      order.items.forEach((item: any) => {
+      order.items.forEach((item: OrderItem) => {
         if (!summary[item.productId]) {
           summary[item.productId] = { 
             name: item.product.name, 
@@ -167,7 +193,7 @@ export default function OrdersPage() {
         const err = await res.json();
         toast.error(err.message || 'Ödeme işlemi başarısız.');
       }
-    } catch (error) {
+    } catch {
       toast.error('Hata oluştu.');
     }
   };
@@ -369,7 +395,7 @@ export default function OrdersPage() {
                             {getStatusBadge(order.status)}
                           </div>
                           <div className="space-y-1">
-                            {order.items.map((item: any) => (
+                            {order.items.map((item: OrderItem) => (
                               <div key={item.id} className="text-xs flex justify-between text-muted-foreground">
                                 <span>{item.quantity}x {item.product.name}</span>
                                 <span>{Number(item.totalPrice).toFixed(2)}</span>
@@ -451,8 +477,8 @@ export default function OrdersPage() {
                     <TableCell>Masa {getTableNumber(order.tableId)}</TableCell>
                     <TableCell>{new Date(order.createdAt).toLocaleString('tr-TR')}</TableCell>
                     <TableCell>
-                      <div className="text-sm text-muted-foreground max-w-[300px] truncate" title={order.items.map((i: any) => `${i.quantity}x ${i.product.name}`).join(', ')}>
-                        {order.items.map((i: any) => `${i.quantity}x ${i.product.name}`).join(', ')}
+                      <div className="text-sm text-muted-foreground max-w-[300px] truncate" title={order.items.map((i: OrderItem) => `${i.quantity}x ${i.product.name}`).join(', ')}>
+                        {order.items.map((i: OrderItem) => `${i.quantity}x ${i.product.name}`).join(', ')}
                       </div>
                     </TableCell>
                     <TableCell>{Number(order.totalAmount).toFixed(2)} ₺</TableCell>
@@ -499,9 +525,9 @@ export default function OrdersPage() {
                <span className="text-primary">{selectedTable ? calculateTableTotal(selectedTable.id).toFixed(2) : 0} ₺</span>
              </div>
              <Separator className="my-4" />
-             <p className="text-sm text-muted-foreground">
-               Onayladığınızda tüm aktif siparişler "Ödendi" olarak işaretlenecek ve masa boşaltılacaktır.
-             </p>
+             <DialogDescription>
+               Onayladığınızda tüm aktif siparişler &quot;Ödendi&quot; olarak işaretlenecek ve masa boşaltılacaktır.
+             </DialogDescription>
           </div>
 
           <DialogFooter>

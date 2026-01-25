@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Shield, KeyRound, Loader2, Smartphone, Laptop, Trash2, QrCode, CheckCircle2 } from 'lucide-react';
+import { Shield, KeyRound, Loader2, Smartphone, Laptop, Trash2 } from 'lucide-react';
 import { API_URL } from '@/lib/api';
 import {
   Dialog,
@@ -17,7 +18,6 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Badge } from '@/components/ui/badge';
 
 interface Session {
   id: string;
@@ -48,15 +48,20 @@ export default function SecuritySettings() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
 
-  useEffect(() => {
-    fetchSessions();
-    check2FAStatus();
+  const checkLocal2FAStatus = useCallback(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+        try {
+            const user = JSON.parse(userStr);
+            if (user.isTwoFactorEnabled) {
+                setIs2FAEnabled(true);
+            }
+        } catch {}
+    }
   }, []);
 
-  const getToken = () => localStorage.getItem('token');
-
-  const check2FAStatus = async () => {
-    const token = getToken();
+  const check2FAStatus = useCallback(async () => {
+    const token = localStorage.getItem('token');
     if (!token) return;
 
     try {
@@ -79,23 +84,11 @@ export default function SecuritySettings() {
       console.error('Check 2FA status error:', error);
       checkLocal2FAStatus();
     }
-  };
+  }, [checkLocal2FAStatus]);
 
-  const checkLocal2FAStatus = () => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-        try {
-            const user = JSON.parse(userStr);
-            if (user.isTwoFactorEnabled) {
-                setIs2FAEnabled(true);
-            }
-        } catch (e) {}
-    }
-  };
-
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     setLoadingSessions(true);
-    const token = getToken();
+    const token = localStorage.getItem('token');
     if (!token) {
         setLoadingSessions(false);
         return;
@@ -114,11 +107,16 @@ export default function SecuritySettings() {
     } finally {
       setLoadingSessions(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSessions();
+    check2FAStatus();
+  }, [fetchSessions, check2FAStatus]);
 
   const handleGenerate2FA = async () => {
     setIs2FALoading(true);
-    const token = getToken();
+    const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_URL}/auth/2fa/generate`, {
         method: 'POST',
@@ -131,7 +129,7 @@ export default function SecuritySettings() {
       } else {
         toast.error('2FA oluşturulamadı.');
       }
-    } catch (error) {
+    } catch {
       toast.error('Bir hata oluştu.');
     } finally {
       setIs2FALoading(false);
@@ -144,7 +142,7 @@ export default function SecuritySettings() {
         return;
     }
     setIs2FALoading(true);
-    const token = getToken();
+    const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_URL}/auth/2fa/enable`, {
         method: 'POST',
@@ -172,7 +170,7 @@ export default function SecuritySettings() {
       } else {
         toast.error(data.message || 'Etkinleştirilemedi.');
       }
-    } catch (error) {
+    } catch {
       toast.error('Bir hata oluştu.');
     } finally {
       setIs2FALoading(false);
@@ -183,7 +181,7 @@ export default function SecuritySettings() {
     if (!confirm('2 Faktörlü doğrulamayı devre dışı bırakmak istediğinize emin misiniz?')) return;
     
     setIs2FALoading(true);
-    const token = getToken();
+    const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_URL}/auth/2fa/disable`, {
         method: 'POST',
@@ -204,7 +202,7 @@ export default function SecuritySettings() {
       } else {
         toast.error('İşlem başarısız.');
       }
-    } catch (error) {
+    } catch {
       toast.error('Bir hata oluştu.');
     } finally {
       setIs2FALoading(false);
@@ -214,7 +212,7 @@ export default function SecuritySettings() {
   const handleTerminateSession = async (sessionId: string) => {
     if (!confirm('Bu oturumu sonlandırmak istediğinize emin misiniz?')) return;
     
-    const token = getToken();
+    const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_URL}/auth/sessions/${sessionId}`, {
         method: 'DELETE',
@@ -227,7 +225,7 @@ export default function SecuritySettings() {
       } else {
         toast.error('Oturum sonlandırılamadı.');
       }
-    } catch (error) {
+    } catch {
       toast.error('Bir hata oluştu.');
     }
   };
@@ -235,7 +233,7 @@ export default function SecuritySettings() {
   const handleTerminateAllOther = async () => {
     if (!confirm('Diğer tüm cihazlardaki oturumları kapatmak istediğinize emin misiniz?')) return;
     
-    const token = getToken();
+    const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_URL}/auth/sessions`, {
         method: 'DELETE',
@@ -248,7 +246,7 @@ export default function SecuritySettings() {
       } else {
         toast.error('İşlem başarısız.');
       }
-    } catch (error) {
+    } catch {
       toast.error('Bir hata oluştu.');
     }
   };
@@ -422,7 +420,14 @@ export default function SecuritySettings() {
                                 <div className="flex flex-col items-center justify-center py-4 space-y-4">
                                     {qrCodeUrl && (
                                         <div className="p-4 bg-white rounded-lg shadow-sm border">
-                                            <img src={qrCodeUrl} alt="2FA QR Code" className="w-48 h-48" />
+                                            <Image 
+                                                src={qrCodeUrl} 
+                                                alt="2FA QR Code" 
+                                                width={192} 
+                                                height={192} 
+                                                className="w-48 h-48"
+                                                unoptimized
+                                            />
                                         </div>
                                     )}
                                     <div className="w-full max-w-xs space-y-2">

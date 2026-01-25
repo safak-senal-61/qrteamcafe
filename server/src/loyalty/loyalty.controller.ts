@@ -1,9 +1,23 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  Delete,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
 import { LoyaltyService } from './loyalty.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import type { RequestWithUser } from '../auth/interfaces';
+
+import { CreateRewardDto } from './dto/create-reward.dto';
 
 @Controller('loyalty')
 export class LoyaltyController {
@@ -11,7 +25,7 @@ export class LoyaltyController {
 
   @UseGuards(JwtAuthGuard)
   @Get('history')
-  getHistory(@Request() req: any) {
+  getHistory(@Request() req: RequestWithUser) {
     return this.loyaltyService.getHistory(req.user.id);
   }
 
@@ -26,7 +40,7 @@ export class LoyaltyController {
   }
 
   @Post('rewards')
-  createReward(@Body() body: any) {
+  createReward(@Body() body: CreateRewardDto) {
     return this.loyaltyService.createReward(body);
   }
 
@@ -41,7 +55,8 @@ export class LoyaltyController {
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
           const ext = extname(file.originalname);
           callback(null, `${uniqueSuffix}${ext}`);
         },
@@ -56,7 +71,10 @@ export class LoyaltyController {
 
   @UseGuards(JwtAuthGuard)
   @Post('redeem')
-  redeemReward(@Request() req: any, @Body('rewardId') rewardId: string) {
+  redeemReward(
+    @Request() req: RequestWithUser,
+    @Body('rewardId') rewardId: string,
+  ) {
     return this.loyaltyService.redeemReward(req.user.id, rewardId);
   }
 }

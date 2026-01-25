@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
-import { Link, useRouter } from '@/navigation';
+import { useRouter } from '@/navigation';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -201,7 +201,7 @@ export default function SuperAdminDashboard() {
     return true;
   });
 
-  const StatCard = ({ title, value, icon: Icon, color, description }: any) => (
+  const StatCard = ({ title, value, icon: Icon, color, description }: { title: string; value: number; icon: React.ElementType; color: string; description: string }) => (
     <Card className="border-none shadow-md bg-white dark:bg-slate-900/50 backdrop-blur-sm hover:shadow-lg transition-all">
       <CardContent className="p-6">
         <div className="flex items-center justify-between space-y-0 pb-2">

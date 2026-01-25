@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { motion, Variants } from 'framer-motion';
-import { FileText, User, Share2, Database, ShieldAlert, Mail, Info, FileCheck } from 'lucide-react';
+import { User, Share2, Database, Info, ShieldAlert, FileCheck, Mail } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';

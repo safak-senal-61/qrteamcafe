@@ -13,7 +13,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter as DialogFooterUI,
 } from "@/components/ui/dialog";
 import { Coffee, Lock, Mail, ArrowRight, Loader2, KeyRound } from 'lucide-react';
@@ -36,7 +35,7 @@ export default function AdminLoginPage() {
         } else {
           router.push('/admin/dashboard');
         }
-      } catch (e) {
+      } catch {
         localStorage.removeItem('user');
       }
     }
@@ -128,7 +127,7 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      const body: any = { ...formData };
+      const body: { [key: string]: string } = { ...formData };
       if (is2FARequired) {
         body.twoFactorCode = twoFactorCode;
       }

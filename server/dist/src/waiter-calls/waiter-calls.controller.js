@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WaiterCallsController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const waiter_calls_service_1 = require("./waiter-calls.service");
 const create_waiter_call_dto_1 = require("./dto/create-waiter-call.dto");
@@ -37,6 +38,7 @@ let WaiterCallsController = class WaiterCallsController {
 exports.WaiterCallsController = WaiterCallsController;
 __decorate([
     (0, common_1.Post)(),
+    openapi.ApiResponse({ status: 201, type: Object }),
     __param(0, (0, common_1.Query)('cafeId')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -45,6 +47,7 @@ __decorate([
 ], WaiterCallsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
     __param(0, (0, common_1.Query)('cafeId')),
     __param(1, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
@@ -53,6 +56,7 @@ __decorate([
 ], WaiterCallsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Patch)(':id/complete'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -60,6 +64,7 @@ __decorate([
 ], WaiterCallsController.prototype, "complete", null);
 __decorate([
     (0, common_1.Delete)(':id'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

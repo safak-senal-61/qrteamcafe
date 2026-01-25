@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -16,12 +20,16 @@ export class ProductsService {
       },
       include: {
         category: true,
-      }
+      },
     });
 
     return {
       ...product,
-      imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+      imageUrl: getProductImage(
+        product.name,
+        product.category?.name,
+        product.imageUrl,
+      ),
     };
   }
 
@@ -34,9 +42,13 @@ export class ProductsService {
       orderBy: { sortOrder: 'asc' },
     });
 
-    return products.map(product => ({
+    return products.map((product) => ({
       ...product,
-      imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+      imageUrl: getProductImage(
+        product.name,
+        product.category?.name,
+        product.imageUrl,
+      ),
     }));
   }
 
@@ -58,10 +70,14 @@ export class ProductsService {
       include: { category: true },
     });
     if (!product) throw new NotFoundException('Ürün bulunamadı');
-    
+
     return {
       ...product,
-      imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+      imageUrl: getProductImage(
+        product.name,
+        product.category?.name,
+        product.imageUrl,
+      ),
     };
   }
 
@@ -73,24 +89,36 @@ export class ProductsService {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new NotFoundException('Ürün bulunamadı');
 
-    const newPrice = updateProductDto.price !== undefined ? updateProductDto.price : product.price;
-    const newOriginalPrice = updateProductDto.originalPrice !== undefined ? updateProductDto.originalPrice : product.originalPrice;
+    const newPrice =
+      updateProductDto.price !== undefined
+        ? updateProductDto.price
+        : product.price;
+    const newOriginalPrice =
+      updateProductDto.originalPrice !== undefined
+        ? updateProductDto.originalPrice
+        : product.originalPrice;
 
     if (newOriginalPrice !== null && newOriginalPrice !== undefined) {
       if (newOriginalPrice < newPrice) {
-        throw new BadRequestException('İndirimsiz fiyat, satış fiyatından küçük olamaz.');
+        throw new BadRequestException(
+          'İndirimsiz fiyat, satış fiyatından küçük olamaz.',
+        );
       }
     }
 
     const updatedProduct = await this.prisma.product.update({
       where: { id },
       data: updateProductDto,
-      include: { category: true }
+      include: { category: true },
     });
 
     return {
       ...updatedProduct,
-      imageUrl: getProductImage(updatedProduct.name, updatedProduct.category?.name, updatedProduct.imageUrl)
+      imageUrl: getProductImage(
+        updatedProduct.name,
+        updatedProduct.category?.name,
+        updatedProduct.imageUrl,
+      ),
     };
   }
 
@@ -100,9 +128,9 @@ export class ProductsService {
       where: { id },
       data: {
         stock: {
-          increment: quantity
-        }
-      }
+          increment: quantity,
+        },
+      },
     });
   }
 
@@ -119,10 +147,10 @@ export class ProductsService {
       where: { productId },
       select: { orderId: true },
       distinct: ['orderId'],
-      take: 50 // Analyze last 50 orders for performance
+      take: 50, // Analyze last 50 orders for performance
     });
-    
-    const orderIds = ordersWithProduct.map(o => o.orderId);
+
+    const orderIds = ordersWithProduct.map((o) => o.orderId);
     if (orderIds.length === 0) return [];
 
     // 2. Find other items in these orders
@@ -130,29 +158,33 @@ export class ProductsService {
       by: ['productId'],
       where: {
         orderId: { in: orderIds },
-        productId: { not: productId }
+        productId: { not: productId },
       },
       _count: {
-        productId: true
+        productId: true,
       },
       orderBy: {
         _count: {
-          productId: 'desc'
-        }
+          productId: 'desc',
+        },
       },
-      take: limit
+      take: limit,
     });
 
     // 3. Get product details
-    const recommendedProductIds = relatedItems.map(item => item.productId);
+    const recommendedProductIds = relatedItems.map((item) => item.productId);
     const products = await this.prisma.product.findMany({
       where: { id: { in: recommendedProductIds }, isAvailable: true },
-      include: { category: true }
+      include: { category: true },
     });
 
-    return products.map(product => ({
+    return products.map((product) => ({
       ...product,
-      imageUrl: getProductImage(product.name, product.category?.name, product.imageUrl)
+      imageUrl: getProductImage(
+        product.name,
+        product.category?.name,
+        product.imageUrl,
+      ),
     }));
   }
 
@@ -160,7 +192,7 @@ export class ProductsService {
     await this.findOne(id);
     return this.prisma.product.update({
       where: { id },
-      data: { isChefRecommended }
+      data: { isChefRecommended },
     });
   }
 }

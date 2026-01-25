@@ -10,11 +10,14 @@ export declare class EventsGateway implements OnGatewayConnection, OnGatewayDisc
     handleJoinTable(client: Socket, payload: {
         cafeId: string;
         tableId: string;
-    }): void;
+    }): Promise<void>;
     handleJoinAdmin(client: Socket, payload: {
         cafeId: string;
-    }): void;
+    }): Promise<void>;
     private emitActiveTablesUpdate;
     notifyNewOrder(cafeId: string, order: any): void;
-    notifyOrderStatusUpdate(cafeId: string, order: any): void;
+    notifyOrderStatusUpdate(cafeId: string, order: {
+        tableId?: string | null;
+        [key: string]: any;
+    }): void;
 }

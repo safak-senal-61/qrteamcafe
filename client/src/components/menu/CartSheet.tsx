@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useCustomerStore } from '@/store/customer-store';
 import { useCartStore } from '@/store/cart-store';
-import { API_URL, api } from '@/lib/api';
+import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { CreateReviewDialog } from './CreateReviewDialog';
 import { 
@@ -35,12 +35,39 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface OrderItem {
+  id: string;
+  product: {
+    id: string;
+    name: string;
+    imageUrl: string | null;
+    requiresPreparation?: boolean;
+  };
+  quantity: number;
+  unitPrice: number | string;
+}
+
+interface Review {
+  id: string;
+  productId: string;
+  rating: number;
+  comment?: string;
+}
+
+interface Order {
+  id: string;
+  status: string;
+  totalAmount: number | string;
+  items: OrderItem[];
+  reviews?: Review[];
+}
+
 interface CartSheetProps {
   cafeId?: string;
   tableId?: string;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
-  activeOrders?: any[];
+  activeOrders?: Order[];
   onOrderSuccess?: () => void;
   onCancelOrder?: (orderId: string) => void;
 }
@@ -64,7 +91,7 @@ export function CartSheet({
   const [activeTab, setActiveTab] = useState('cart');
   
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-  const [selectedOrderForReview, setSelectedOrderForReview] = useState<any>(null);
+  const [selectedOrderForReview, setSelectedOrderForReview] = useState<Order | null>(null);
   
   const { items, removeItem, updateQuantity, clearCart, getTotalPrice, getTotalItems } = useCartStore();
   const { customer, setAuthDialogOpen, isGuest } = useCustomerStore();
@@ -111,7 +138,7 @@ export function CartSheet({
         customerId: customer?.id,
       };
 
-      const response = await api.post(`/orders?cafeId=${cafeId}`, orderData);
+      await api.post(`/orders?cafeId=${cafeId}`, orderData);
 
       toast.success('Siparişiniz başarıyla alındı!');
       clearCart();
@@ -122,9 +149,10 @@ export function CartSheet({
       
       // Switch to orders tab
       setActiveTab('orders');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Order error:', error);
-      toast.error(error.response?.data?.message || 'Sipariş oluşturulurken bir hata oluştu');
+      const apiError = error as { response?: { data?: { message?: string } } };
+      toast.error(apiError.response?.data?.message || 'Sipariş oluşturulurken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -337,7 +365,7 @@ export function CartSheet({
                             order.status === 'CANCELLED' ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-500'
                          }>
                             {(() => {
-                              const hasPrepItems = order.items?.some((item: any) => item.product?.requiresPreparation !== false) ?? true;
+                              const hasPrepItems = order.items?.some((item) => item.product?.requiresPreparation !== false) ?? true;
                               
                               if (order.status === 'PENDING') return <><Clock className="w-3 h-3 mr-1" /> Bekliyor</>;
                               if (order.status === 'PREPARING') return hasPrepItems ? <><ChefHat className="w-3 h-3 mr-1" /> Hazırlanıyor</> : <><CheckCircle2 className="w-3 h-3 mr-1" /> Sipariş Alındı</>;
@@ -350,7 +378,7 @@ export function CartSheet({
                        </div>
                        
                        <div className="space-y-2 mb-4 pl-3">
-                         {order.items?.map((item: any, idx: number) => (
+                         {order.items?.map((item, idx) => (
                            <div key={idx} className="flex justify-between text-sm">
                              <span className="text-muted-foreground">
                                {item.quantity}x {item.product?.name || 'Ürün'}

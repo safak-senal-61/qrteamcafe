@@ -27,6 +27,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     // Bağlantı logu eklenebilir
+    console.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
@@ -36,8 +37,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // İstemci bir masadan ayrıldıysa
         // Kullanıcı sayfayı yenilediğinde veya kısa süreli kopmalarda hemen düşmemesi için
         // 10 saniyelik bir bekleme süresi (grace period) ekliyoruz.
-        console.log(`Client ${client.id} disconnected from table ${info.tableId}. Waiting 10s before removal.`);
-        
+        console.log(
+          `Client ${client.id} disconnected from table ${info.tableId}. Waiting 10s before removal.`,
+        );
+
         // Socket'i map'ten hemen siliyoruz ki checkAndRemoveTable doğru çalışsın
         this.clientMap.delete(client.id);
 
@@ -70,7 +73,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     if (!isTableStillActive) {
-      console.log(`Table ${tableId} in cafe ${cafeId} is empty. Removing from active tables.`);
+      console.log(
+        `Table ${tableId} in cafe ${cafeId} is empty. Removing from active tables.`,
+      );
       const tables = this.activeTables.get(cafeId);
       if (tables) {
         tables.delete(tableId);
@@ -83,12 +88,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.emitActiveTablesUpdate(cafeId);
       }
     } else {
-      console.log(`Table ${tableId} in cafe ${cafeId} is still active. Keeping.`);
+      console.log(
+        `Table ${tableId} in cafe ${cafeId} is still active. Keeping.`,
+      );
     }
   }
 
   @SubscribeMessage('joinTable')
-  handleJoinTable(
+  async handleJoinTable(
     client: Socket,
     payload: { cafeId: string; tableId: string },
   ) {
@@ -98,9 +105,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.clientMap.set(client.id, { cafeId, tableId, role: 'client' });
 
     // Cafe odasına katıl (client'a özel mesaj atmak gerekirse diye)
-    client.join(`cafe_${cafeId}`);
+    await client.join(`cafe_${cafeId}`);
     // Masa odasına katıl (Sipariş güncellemeleri için)
-    client.join(`table_${tableId}`);
+    await client.join(`table_${tableId}`);
 
     // Aktif masalara ekle
     if (!this.activeTables.has(cafeId)) {
@@ -113,10 +120,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('joinAdmin')
-  handleJoinAdmin(client: Socket, payload: { cafeId: string }) {
+  async handleJoinAdmin(client: Socket, payload: { cafeId: string }) {
     const { cafeId } = payload;
     this.clientMap.set(client.id, { cafeId, role: 'admin' });
-    client.join(`cafe_${cafeId}_admin`);
+    await client.join(`cafe_${cafeId}_admin`);
 
     // Admin bağlanınca hemen mevcut durumu gönder
     this.emitActiveTablesUpdate(cafeId);
@@ -133,7 +140,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(`cafe_${cafeId}_admin`).emit('newOrder', order);
   }
 
-  notifyOrderStatusUpdate(cafeId: string, order: any) {
+  notifyOrderStatusUpdate(
+    cafeId: string,
+    order: { tableId?: string | null; [key: string]: any },
+  ) {
     // İlgili masaya bildir
     if (order.tableId) {
       this.server.to(`table_${order.tableId}`).emit('orderStatusUpdate', order);

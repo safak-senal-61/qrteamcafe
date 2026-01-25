@@ -58,7 +58,9 @@ let CafesService = class CafesService {
                 authorizedPerson: data.authorizedPerson,
                 serviceType: data.serviceType,
                 workingHours: data.workingHours,
-                preparationTime: data.preparationTime ? Number(data.preparationTime) : undefined,
+                preparationTime: data.preparationTime
+                    ? Number(data.preparationTime)
+                    : undefined,
                 paymentMethods: data.paymentMethods,
                 logoUrl: data.logoUrl,
                 googleMapsUrl: data.googleMapsUrl,
@@ -86,7 +88,7 @@ let CafesService = class CafesService {
         today.setHours(0, 0, 0, 0);
         const cafeSettings = await this.prisma.cafe.findUnique({
             where: { id: cafeId },
-            select: { isSoundEnabled: true }
+            select: { isSoundEnabled: true },
         });
         const [totalOrders, dailyRevenue, activeTables, totalProducts] = await Promise.all([
             this.prisma.order.count({ where: { cafeId } }),

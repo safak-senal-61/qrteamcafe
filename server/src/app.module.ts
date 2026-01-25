@@ -11,7 +11,6 @@ import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
-import { EventsGateway } from './events/events.gateway';
 import { EventsModule } from './events/events.module';
 import { WaiterCallsModule } from './waiter-calls/waiter-calls.module';
 import { ReviewsModule } from './reviews/reviews.module';
@@ -21,10 +20,12 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 minute
-      limit: 10, // 10 requests
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 10, // 10 requests
+      },
+    ]),
     ConfigModule.forRoot({
       isGlobal: true,
     }),

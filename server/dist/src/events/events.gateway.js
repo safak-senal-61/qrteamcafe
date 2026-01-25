@@ -17,6 +17,7 @@ let EventsGateway = class EventsGateway {
     activeTables = new Map();
     clientMap = new Map();
     handleConnection(client) {
+        console.log(`Client connected: ${client.id}`);
     }
     handleDisconnect(client) {
         const info = this.clientMap.get(client.id);
@@ -61,21 +62,21 @@ let EventsGateway = class EventsGateway {
             console.log(`Table ${tableId} in cafe ${cafeId} is still active. Keeping.`);
         }
     }
-    handleJoinTable(client, payload) {
+    async handleJoinTable(client, payload) {
         const { cafeId, tableId } = payload;
         this.clientMap.set(client.id, { cafeId, tableId, role: 'client' });
-        client.join(`cafe_${cafeId}`);
-        client.join(`table_${tableId}`);
+        await client.join(`cafe_${cafeId}`);
+        await client.join(`table_${tableId}`);
         if (!this.activeTables.has(cafeId)) {
             this.activeTables.set(cafeId, new Set());
         }
         this.activeTables.get(cafeId)?.add(tableId);
         this.emitActiveTablesUpdate(cafeId);
     }
-    handleJoinAdmin(client, payload) {
+    async handleJoinAdmin(client, payload) {
         const { cafeId } = payload;
         this.clientMap.set(client.id, { cafeId, role: 'admin' });
-        client.join(`cafe_${cafeId}_admin`);
+        await client.join(`cafe_${cafeId}_admin`);
         this.emitActiveTablesUpdate(cafeId);
     }
     emitActiveTablesUpdate(cafeId) {
@@ -102,13 +103,13 @@ __decorate([
     (0, websockets_1.SubscribeMessage)('joinTable'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], EventsGateway.prototype, "handleJoinTable", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('joinAdmin'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], EventsGateway.prototype, "handleJoinAdmin", null);
 exports.EventsGateway = EventsGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({

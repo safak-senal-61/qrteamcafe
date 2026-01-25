@@ -82,7 +82,10 @@ export class ProductsController {
   }
 
   @Patch(':id/chef-recommendation')
-  toggleChefRecommendation(@Param('id') id: string, @Body('isChefRecommended') isChefRecommended: boolean) {
+  toggleChefRecommendation(
+    @Param('id') id: string,
+    @Body('isChefRecommended') isChefRecommended: boolean,
+  ) {
     return this.productsService.toggleChefRecommendation(id, isChefRecommended);
   }
 

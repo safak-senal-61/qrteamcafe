@@ -6,6 +6,6 @@ import { PrismaModule } from '../prisma/prisma.module';
 @Module({
   imports: [PrismaModule],
   controllers: [LoyaltyController],
-  providers: [LoyaltyService]
+  providers: [LoyaltyService],
 })
 export class LoyaltyModule {}

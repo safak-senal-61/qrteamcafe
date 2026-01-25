@@ -1,15 +1,14 @@
 import { TemplateProps } from './types';
 import { useRouter, useParams } from 'next/navigation';
-import { CategoryNav } from '@/components/menu/CategoryNav';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';
 import { CustomerAuthDialog } from '@/components/menu/CustomerAuthDialog';
-import { Badge } from '@/components/ui/badge';
-import { Search, Wifi, Instagram, Facebook, Twitter, Info, User, UtensilsCrossed, ChefHat } from 'lucide-react';
+import { Search, Wifi, Instagram, Info, User, UtensilsCrossed, ChefHat } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +28,6 @@ export function BistroTemplate({
   filteredProducts,
   activeCategory,
   searchQuery,
-  scrolled,
   tableNumber,
   customer,
   activeOrders,
@@ -41,8 +39,6 @@ export function BistroTemplate({
   setWelcomeOpen,
   setIsCartOpen,
   handleCancelOrder,
-  fetchActiveOrders,
-  currentTableId,
   copyWifi,
   getSocialUrl
 }: TemplateProps) {
@@ -81,25 +77,31 @@ export function BistroTemplate({
           )}
         </div>
 
-        <motion.img
+        <motion.div
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 20, repeat: Infinity, repeatType: "reverse" }}
-          src={cafe.coverImage || 'https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1974&auto=format&fit=crop'}
-          alt={cafe.name}
-          className="w-full h-full object-cover sepia-[.2]"
-        />
+          className="absolute inset-0 w-full h-full"
+        >
+          <Image
+            src={cafe.coverImage || 'https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1974&auto=format&fit=crop'}
+            alt={cafe.name}
+            fill
+            className="object-cover sepia-[.2]"
+          />
+        </motion.div>
         
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center p-6">
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-32 h-32 rounded-full border-4 border-[#f8f5e6] shadow-2xl overflow-hidden mb-6 bg-[#f8f5e6]"
+            className="w-32 h-32 rounded-full border-4 border-[#f8f5e6] shadow-2xl overflow-hidden mb-6 bg-[#f8f5e6] relative"
           >
-            <img
+            <Image
               src={cafe.logo || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=200&auto=format&fit=crop'}
               alt={cafe.name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
           </motion.div>
           <motion.h1 
@@ -118,7 +120,7 @@ export function BistroTemplate({
               transition={{ delay: 0.3 }}
               className="text-[#f8f5e6]/90 text-lg italic max-w-xl"
             >
-              "{cafe.description}"
+              &quot;{cafe.description}&quot;
             </motion.p>
           )}
         </div>

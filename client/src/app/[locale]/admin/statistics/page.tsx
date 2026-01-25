@@ -38,19 +38,44 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
+interface PopularProduct {
+  id: string;
+  name: string;
+  _count: {
+    orderItems: number;
+  };
+}
+
+interface Order {
+  id: string;
+  status: string;
+  totalAmount: number;
+  createdAt: string;
+  table?: {
+    name: string;
+  };
+  items: unknown[];
+}
+
 interface DashboardStats {
   totalOrders: number;
   dailyRevenue: number;
   activeTables: number;
   totalProducts: number;
-  recentOrders: any[];
-  popularProducts: any[];
+  recentOrders: Order[];
+  popularProducts: PopularProduct[];
+}
+
+interface ProductWithCategory {
+  id: string;
+  name: string;
+  categoryId: string;
 }
 
 interface Category {
   id: string;
   name: string;
-  products: any[];
+  products: ProductWithCategory[];
   productCount?: number;
 }
 
@@ -140,7 +165,7 @@ export default function StatisticsPage() {
         const err = await res.json();
         toast.error(err.message || 'Stok güncellenemedi.');
       }
-    } catch (e) {
+    } catch {
       toast.error('Bağlantı hatası.');
     }
   };
@@ -167,7 +192,7 @@ export default function StatisticsPage() {
   });
   
   const maxProductCount = Math.max(...categoryCounts.map(c => c.productCount || 0), 1);
-  const maxPopularity = Math.max(...stats.popularProducts.map((p: any) => p._count?.orderItems || 0), 1);
+  const maxPopularity = Math.max(...stats.popularProducts.map((p: PopularProduct) => p._count?.orderItems || 0), 1);
 
   // Filter products for stock table
   const filteredProducts = products.filter(p => 
@@ -264,7 +289,7 @@ export default function StatisticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {stats.popularProducts.map((product: any, i) => {
+                  {stats.popularProducts.map((product: PopularProduct, i) => {
                     const count = product._count?.orderItems || 0;
                     const percentage = (count / maxPopularity) * 100;
                     

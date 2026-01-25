@@ -49,12 +49,12 @@ export declare class AuthService {
         message: string;
         token: string;
         user: {
-            id: any;
-            name: any;
-            email: any;
+            id: string;
+            name: string;
+            email: string;
             role: string;
-            cafeId: any;
-            isTwoFactorEnabled: any;
+            cafeId: string | undefined;
+            isTwoFactorEnabled: boolean;
         };
     }>;
     forgotPassword(dto: ForgotPasswordDto): Promise<{

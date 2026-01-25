@@ -11,9 +11,7 @@ import {
   Image as ImageIcon,
   Loader2,
   MoreVertical,
-  Check,
   X,
-  Save,
   Star,
   Package,
   List
@@ -25,7 +23,6 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
@@ -33,7 +30,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
@@ -44,6 +40,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import Image from 'next/image';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -62,10 +59,34 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CATEGORY_SUGGESTIONS, getProductSuggestions } from '@/constants/menu-suggestions';
 
+interface Category {
+  id: string;
+  name: string;
+  sortOrder?: number;
+  _count?: {
+    products: number;
+  };
+}
+
+interface Product {
+  id: string;
+  name: string;
+  categoryId: string;
+  price: number;
+  originalPrice?: number | null;
+  stock: number;
+  description?: string;
+  imageUrl?: string | null;
+  isAvailable: boolean;
+  isChefRecommended: boolean;
+  requiresPreparation: boolean;
+  sortOrder?: number;
+}
+
 export default function MenuPage() {
-  const [categories, setCategories] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]); // All products
-  const [viewProducts, setViewProducts] = useState<any[]>([]); // Displayed products
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]); // All products
+  const [viewProducts, setViewProducts] = useState<Product[]>([]); // Displayed products
   const [loading, setLoading] = useState(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,8 +96,8 @@ export default function MenuPage() {
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   
   // Edit States
-  const [editingCategory, setEditingCategory] = useState<any>(null);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   // Form States
   const [categoryForm, setCategoryForm] = useState({ name: '' });
@@ -94,10 +115,45 @@ export default function MenuPage() {
   });
   const [uploading, setUploading] = useState(false);
 
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return;
+      const user = JSON.parse(userStr);
+      const cafeId = user.cafeId;
+
+      const [catsRes, prodsRes] = await Promise.all([
+        fetch(`${API_URL}/categories?cafeId=${cafeId}`),
+        fetch(`${API_URL}/products?cafeId=${cafeId}`)
+      ]);
+
+      if (catsRes.ok && prodsRes.ok) {
+        const cats = await catsRes.json();
+        const prods = await prodsRes.json();
+        
+        // Sort categories by sortOrder
+        cats.sort((a: Category, b: Category) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        
+        setCategories(cats);
+        setProducts(prods);
+
+        // Select first category by default if none selected
+        if (!selectedCategoryId && cats.length > 0) {
+          setSelectedCategoryId(cats[0].id);
+        }
+      }
+    } catch {
+      toast.error('Veriler yüklenirken hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCategoryId]);
+
   // Initial Fetch
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // Filter products when category or search changes
   useEffect(() => {
@@ -118,63 +174,10 @@ export default function MenuPage() {
     setViewProducts(filtered);
   }, [products, selectedCategoryId, searchTerm]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const userStr = localStorage.getItem('user');
-      if (!userStr) return;
-      const user = JSON.parse(userStr);
-      const cafeId = user.cafeId;
-
-      const [catsRes, prodsRes] = await Promise.all([
-        fetch(`${API_URL}/categories?cafeId=${cafeId}`),
-        fetch(`${API_URL}/products?cafeId=${cafeId}`)
-      ]);
-
-      if (catsRes.ok && prodsRes.ok) {
-        const cats = await catsRes.json();
-        const prods = await prodsRes.json();
-        
-        // Sort categories by sortOrder
-        cats.sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
-        
-        setCategories(cats);
-        setProducts(prods);
-
-        // Select first category by default if none selected
-        if (!selectedCategoryId && cats.length > 0) {
-          setSelectedCategoryId(cats[0].id);
-        }
-      }
-    } catch (error) {
-      toast.error('Veriler yüklenirken hata oluştu.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // --- Category Actions ---
 
-  const handleCategoryReorder = (newOrder: any[]) => {
+  const handleCategoryReorder = (newOrder: Category[]) => {
     setCategories(newOrder);
-  };
-
-  const saveCategoryOrder = async () => {
-    try {
-      const items = categories.map((cat, index) => ({
-        id: cat.id,
-        sortOrder: index
-      }));
-      
-      await fetch(`${API_URL}/categories/reorder`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(items)
-      });
-      // Silent success or optional toast
-    } catch (error) {
-      toast.error('Sıralama kaydedilemedi.');
-    }
   };
 
   // Trigger save when drag ends (using a timeout to debounce/wait for drop)
@@ -183,6 +186,24 @@ export default function MenuPage() {
   // Or just provide a "Save Order" button? No, user wants "less manual".
   // Let's use a simple debounce effect on `categories`.
   useEffect(() => {
+    const saveCategoryOrder = async () => {
+      try {
+        const items = categories.map((cat, index) => ({
+          id: cat.id,
+          sortOrder: index
+        }));
+        
+        await fetch(`${API_URL}/categories/reorder`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(items)
+        });
+        // Silent success or optional toast
+      } catch {
+        toast.error('Sıralama kaydedilemedi.');
+      }
+    };
+
     const timer = setTimeout(() => {
       if (categories.length > 0) saveCategoryOrder();
     }, 1000);
@@ -220,7 +241,7 @@ export default function MenuPage() {
         const data = await res.json();
         toast.error(data.message || 'İşlem başarısız.');
       }
-    } catch (error) {
+    } catch {
       toast.error('İşlem başarısız.');
     }
   };
@@ -234,14 +255,15 @@ export default function MenuPage() {
         if (selectedCategoryId === id) setSelectedCategoryId(null);
         fetchData();
       }
-    } catch (error) {
+    } catch (_error) {
+      console.error(_error);
       toast.error('Silme işlemi başarısız.');
     }
   };
 
   // --- Product Actions ---
 
-  const handleProductReorder = (newOrder: any[]) => {
+  const handleProductReorder = (newOrder: Product[]) => {
     // Optimistically update sortOrder in the objects
     const updatedOrder = newOrder.map((item, index) => ({
       ...item,
@@ -332,7 +354,7 @@ export default function MenuPage() {
         resetProductForm();
         fetchData();
       }
-    } catch (error) {
+    } catch {
       toast.error('İşlem başarısız.');
     }
   };
@@ -345,14 +367,15 @@ export default function MenuPage() {
         toast.success('Ürün silindi.');
         fetchData();
       }
-    } catch (error) {
+    } catch (_error) {
+      console.error(_error);
       toast.error('Silme işlemi başarısız.');
     }
   };
 
-  const handleToggleRecommended = async (product: any) => {
+  const handleToggleRecommended = async (product: Product) => {
     try {
-      const updatedProducts = products.map(p => 
+      const updatedProducts = products.map(p =>  
         p.id === product.id ? { ...p, isChefRecommended: !p.isChefRecommended } : p
       );
       setProducts(updatedProducts);
@@ -363,13 +386,13 @@ export default function MenuPage() {
         body: JSON.stringify({ isChefRecommended: !product.isChefRecommended })
       });
       toast.success(product.isChefRecommended ? 'Önerilenlerden çıkarıldı' : 'Önerilenlere eklendi');
-    } catch (error) {
+    } catch {
       toast.error('Güncelleme başarısız');
       fetchData();
     }
   };
 
-  const handleToggleAvailability = async (product: any) => {
+  const handleToggleAvailability = async (product: Product) => {
     try {
       // Optimistic update
       const updatedProducts = products.map(p => 
@@ -383,7 +406,8 @@ export default function MenuPage() {
         body: JSON.stringify({ isAvailable: !product.isAvailable })
       });
       toast.success('Durum güncellendi');
-    } catch (error) {
+    } catch (_error) {
+      console.error(_error);
       toast.error('Güncelleme başarısız');
       fetchData(); // Revert
     }
@@ -404,7 +428,8 @@ export default function MenuPage() {
       });
       const data = await res.json();
       setProductForm(prev => ({ ...prev, imageUrl: data.url }));
-    } catch (error) {
+    } catch (_error) {
+      console.error(_error);
       toast.error('Resim yüklenemedi');
     } finally {
       setUploading(false);
@@ -426,13 +451,13 @@ export default function MenuPage() {
     });
   };
 
-  const openProductDialog = (product?: any) => {
+  const openProductDialog = (product?: Product) => {
     if (product) {
       setEditingProduct(product);
       setProductForm({
         name: product.name,
         categoryId: product.categoryId,
-        price: product.price,
+        price: product.price.toString(),
         originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
         stock: product.stock !== undefined ? product.stock.toString() : '0',
         description: product.description || '',
@@ -456,8 +481,8 @@ export default function MenuPage() {
     );
   }
 
-  const CategoryList = ({ isMobile = false }) => (
-    <div className="flex flex-col gap-4 h-full">
+  const CategoryList = ({ isMobile }: { isMobile?: boolean }) => (
+    <div className={cn("flex flex-col gap-4 h-full", isMobile && "h-auto")}>
       <div className="flex items-center justify-between shrink-0">
         <h3 className="font-semibold text-lg">Kategoriler</h3>
         <Button size="sm" variant="outline" onClick={() => {
@@ -617,7 +642,13 @@ export default function MenuPage() {
                         <div className="flex items-center gap-4 w-full sm:w-auto">
                           <div className="h-16 w-16 sm:h-12 sm:w-12 rounded-md bg-secondary shrink-0 overflow-hidden relative">
                             {product.imageUrl ? (
-                              <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+                              <Image 
+                                src={product.imageUrl} 
+                                alt={product.name} 
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
                             ) : (
                               <ImageIcon className="h-6 w-6 sm:h-5 sm:w-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-muted-foreground" />
                             )}
@@ -886,9 +917,17 @@ export default function MenuPage() {
                   <div className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center gap-2 relative h-40 bg-muted/5 hover:bg-muted/10 transition-colors">
                     {productForm.imageUrl ? (
                       <>
-                        <img src={productForm.imageUrl} alt="Preview" className="h-full w-full object-contain" />
+                        <div className="relative h-full w-full">
+                          <Image 
+                            src={productForm.imageUrl} 
+                            alt="Preview" 
+                            fill
+                            className="object-contain"
+                            unoptimized
+                          />
+                        </div>
                         <Button 
-                          type="button" 
+                          type="button"  
                           variant="destructive" 
                           size="icon" 
                           className="absolute top-2 right-2 h-6 w-6"

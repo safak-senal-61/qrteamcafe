@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { QrCode, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -11,12 +11,12 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12 md:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           <div className="sm:col-span-2 md:col-span-1 space-y-4">
-            <div className="flex items-center gap-2">
+            <Link href="/" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="bg-primary/10 p-2 rounded-lg">
                 <QrCode className="h-6 w-6 text-primary" />
               </div>
               <span className="font-bold text-xl">QR Team Cafe</span>
-            </div>
+            </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
               {t('description')}
             </p>
@@ -35,6 +35,7 @@ export default function Footer() {
           <div className="space-y-4">
             <h4 className="font-semibold text-foreground">{t('company')}</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/" className="hover:text-primary transition-colors">{nav('home')}</Link></li>
               <li><Link href="/about" className="hover:text-primary transition-colors">{nav('about')}</Link></li>
               <li><Link href="/contact" className="hover:text-primary transition-colors">{nav('contact')}</Link></li>
             </ul>

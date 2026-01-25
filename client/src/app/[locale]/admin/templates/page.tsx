@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
-import { Loader2, Check, LayoutTemplate, Palette, MonitorSmartphone } from 'lucide-react';
+import { Loader2, Check, Palette, MonitorSmartphone } from 'lucide-react';
+import Image from 'next/image';
 
 const TEMPLATES = [
   {
@@ -16,10 +17,12 @@ const TEMPLATES = [
     color: 'bg-slate-100',
     preview: (
       <div className="w-full h-32 relative overflow-hidden rounded-md border shadow-sm group">
-         <img 
+         <Image 
            src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=600&auto=format&fit=crop" 
            alt="Classic" 
-           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+           fill
+           className="object-cover transition-transform duration-500 group-hover:scale-110"
+           unoptimized
          />
          <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] flex items-center justify-center">
             <div className="bg-white p-2 rounded shadow-sm w-3/4 h-3/4 flex flex-col gap-2 opacity-90">
@@ -40,10 +43,12 @@ const TEMPLATES = [
     color: 'bg-slate-950 text-white',
     preview: (
       <div className="w-full h-32 relative overflow-hidden rounded-md border border-slate-800 shadow-sm group bg-slate-950">
-         <img 
+         <Image 
            src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=600&auto=format&fit=crop" 
            alt="Modern" 
-           className="absolute inset-0 w-full h-full object-cover opacity-50 transition-transform duration-500 group-hover:scale-110"
+           fill
+           className="object-cover opacity-50 transition-transform duration-500 group-hover:scale-110"
+           unoptimized
          />
          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent flex items-end p-3">
              <div className="w-full">
@@ -113,11 +118,13 @@ const TEMPLATES = [
     preview: (
       <div className="w-full h-32 relative overflow-hidden rounded-md border border-stone-300 shadow-sm group bg-[#f8f5e6]">
          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] opacity-10"></div>
-         <div className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden">
-             <img 
+         <div className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden relative">
+             <Image 
                src="https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=600&auto=format&fit=crop" 
                alt="Bistro" 
-               className="w-full h-full object-cover sepia-[.3]" 
+               fill
+               className="object-cover sepia-[.3]" 
+               unoptimized
              />
              <div className="absolute inset-0 flex items-center justify-center">
                  <div className="bg-[#f8f5e6] p-2 rounded-full border border-stone-800 shadow-sm">
@@ -183,6 +190,7 @@ export default function TemplatesPage() {
         toast.error('Şablon güncellenemedi.');
       }
     } catch (error) {
+      console.error(error);
       toast.error('Bir hata oluştu.');
     } finally {
       setSaving(false);

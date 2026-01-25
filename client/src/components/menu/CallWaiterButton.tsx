@@ -70,7 +70,7 @@ export function CallWaiterButton({ options }: CallWaiterButtonProps) {
       if (!tablesRes.ok) throw new Error('Masa bilgisi alınamadı');
       
       const tables = await tablesRes.json();
-      const currentTable = tables.find((t: any) => t.tableNumber === parseInt(tableNumber));
+      const currentTable = tables.find((t: { id: string; tableNumber: number }) => t.tableNumber === parseInt(tableNumber));
       
       if (!currentTable) {
         toast.error('Geçersiz masa numarası.');

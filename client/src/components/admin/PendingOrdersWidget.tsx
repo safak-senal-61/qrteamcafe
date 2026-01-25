@@ -44,7 +44,7 @@ export function PendingOrdersWidget() {
         if (res.ok) {
           const allOrders = await res.json();
           // Filter only PENDING orders
-          const pending = allOrders.filter((o: any) => o.status === 'PENDING');
+          const pending = allOrders.filter((o: PendingOrder) => o.status === 'PENDING');
           setPendingOrders(pending);
         }
       } catch (error) {
@@ -61,7 +61,7 @@ export function PendingOrdersWidget() {
       socketRef.current?.emit('joinAdmin', { cafeId });
     });
 
-    socketRef.current.on('newOrder', (newOrder: any) => {
+    socketRef.current.on('newOrder', (newOrder: PendingOrder) => {
       // Play sound
       if (audioRef.current) {
         audioRef.current.play().catch(e => console.log('Audio play failed', e));
@@ -76,7 +76,7 @@ export function PendingOrdersWidget() {
       });
     });
 
-    socketRef.current.on('orderStatusUpdate', (updatedOrder: any) => {
+    socketRef.current.on('orderStatusUpdate', (updatedOrder: PendingOrder) => {
       setPendingOrders(prev => {
         // If status is no longer PENDING, remove it
         if (updatedOrder.status !== 'PENDING') {
@@ -133,36 +133,29 @@ export function PendingOrdersWidget() {
               </div>
               <div className="p-2 space-y-2">
                 {pendingOrders.map(order => (
-                  <div 
-                    key={order.id} 
-                    className="p-3 rounded-lg border bg-card hover:bg-accent cursor-pointer transition-colors"
-                    onClick={() => {
-                      router.push('/admin/orders');
-                      setIsOpen(false);
-                    }}
+                  <motion.div
+                    key={order.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="p-3 bg-muted/50 rounded-lg flex items-center justify-between group"
+                    onClick={() => router.push(`/${window.location.pathname.split('/')[1]}/admin/orders`)}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                         <img 
-                           src="https://cdn-icons-png.flaticon.com/512/3081/3081840.png" 
-                           alt="Order" 
-                           className="h-8 w-8 object-contain"
-                         />
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Receipt className="h-5 w-5 text-primary" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="font-bold">Masa {order.table?.tableNumber}</span>
-                          <span className="text-sm font-mono">{Number(order.totalAmount).toFixed(2)} ₺</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(order.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                        <div className="mt-2 text-xs text-blue-600 font-medium flex items-center gap-1">
-                          Detaylar için tıkla →
-                        </div>
+                      <div>
+                        <p className="font-medium text-sm">Masa {order.table.tableNumber}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(order.totalAmount)}
+                        </p>
                       </div>
                     </div>
-                  </div>
+                    <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200 animate-pulse">
+                      Yeni
+                    </Badge>
+                  </motion.div>
                 ))}
               </div>
             </Card>

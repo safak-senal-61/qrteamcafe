@@ -15,7 +15,7 @@ export class WaiterCallsService {
 
     // Check if table belongs to cafe (optional but good for security)
     // For now assuming tableId is correct or handled by prisma relation constraints if we had cafeId in Table relation which we do.
-    
+
     // Create the call
     const call = await this.prisma.waiterCall.create({
       data: {
@@ -36,7 +36,9 @@ export class WaiterCallsService {
     // In `handleJoinAdmin` (if it exists) or similar.
     // I'll assume sending to `cafe_${cafeId}` is fine, but maybe I should create a specific admin room.
     // Let's assume admins listen to `waiterCall` event.
-    this.eventsGateway.server.to(`cafe_${cafeId}_admin`).emit('waiterCall', call);
+    this.eventsGateway.server
+      .to(`cafe_${cafeId}_admin`)
+      .emit('waiterCall', call);
 
     return call;
   }
@@ -61,16 +63,16 @@ export class WaiterCallsService {
       where: { id },
       data: { status: 'COMPLETED' },
     });
-    
+
     // Notify updates if needed
     // this.eventsGateway.server.to(`cafe_${call.cafeId}`).emit('waiterCallUpdated', call);
-    
+
     return call;
   }
-  
+
   async remove(id: string) {
-      return this.prisma.waiterCall.delete({
-          where: { id }
-      });
+    return this.prisma.waiterCall.delete({
+      where: { id },
+    });
   }
 }

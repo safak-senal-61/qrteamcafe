@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Image from 'next/image';
 import { useCustomerStore } from '@/store/customer-store';
+import { type Product as CartProduct } from '@/store/cart-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -11,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, User, ShoppingBag, Clock, MapPin, ChevronRight, Loader2, Star, TrendingUp, Trophy, Heart, Award, Utensils, ArrowLeft, Mail, Phone, Lock, Trash2, Shield, Key, AlertTriangle, Settings, CheckCircle2, ChevronDown, ChevronUp, Calendar, Filter, Sparkles, Camera } from 'lucide-react';
+import { LogOut, User, ShoppingBag, Clock, ChevronRight, Loader2, Star, TrendingUp, Trophy, Heart, ArrowLeft, Mail, Phone, Lock, Trash2, Shield, Key, AlertTriangle, Settings, CheckCircle2, ChevronDown, Filter, Sparkles, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 import axios from 'axios';
@@ -257,7 +259,15 @@ const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order)
   );
 };
 
-const Section = ({ title, icon: Icon, children, defaultOpen = true, className }: any) => {
+interface SectionProps {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  className?: string;
+}
+
+const Section = ({ title, icon: Icon, children, defaultOpen = true, className }: SectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <div className={cn("bg-white rounded-3xl p-6 shadow-sm border border-gray-100 h-fit transition-all duration-200 hover:shadow-md", className)}>
@@ -306,7 +316,6 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<CustomerStats | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
-  const [loadingStats, setLoadingStats] = useState(false);
   
   // Order Filtering
   const [dateFilter, setDateFilter] = useState('all');
@@ -330,22 +339,8 @@ export default function ProfilePage() {
   const [selectedOrderForReview, setSelectedOrderForReview] = useState<Order | null>(null);
   
   // Product Detail Dialog
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<CartProduct | null>(null);
   const [productDetailOpen, setProductDetailOpen] = useState(false);
-
-  useEffect(() => {
-    if (!customer) {
-      router.push(`/${locale}/menu/${cafeId}`);
-      return;
-    }
-
-    setName(customer.name || '');
-    setPhone(customer.phone || '');
-    setEmail(customer.email || '');
-    fetchOrders();
-    fetchStats();
-    fetchRecommendations();
-  }, [customer, cafeId, locale, router]);
 
   const handleOpenReview = (order: Order) => {
     setSelectedOrderForReview(order);
@@ -353,31 +348,30 @@ export default function ProfilePage() {
   };
 
   const handleProductClick = (product: Product) => {
-    const mappedProduct = {
-      ...product,
+    const cartProduct: CartProduct = {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
       image: product.imageUrl || '',
       category: product.categoryId,
-      stock: 100, 
-      originalPrice: undefined
+      stock: 999 // Default stock
     };
-    setSelectedProduct(mappedProduct);
+    setSelectedProduct(cartProduct);
     setProductDetailOpen(true);
   };
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!customer?.id) return;
-    setLoadingStats(true);
     try {
       const response = await axios.get(`${API_URL}/customers/${customer.id}/stats`);
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
-    } finally {
-      setLoadingStats(false);
     }
-  };
+  }, [customer?.id]);
 
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = useCallback(async () => {
     if (!customer?.id) return;
     try {
       const response = await axios.get(`${API_URL}/customers/${customer.id}/recommendations`, {
@@ -387,9 +381,9 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error fetching recommendations:', error);
     }
-  };
+  }, [customer?.id, cafeId]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     if (!token) return;
     setLoadingOrders(true);
     try {
@@ -403,7 +397,21 @@ export default function ProfilePage() {
     } finally {
       setLoadingOrders(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!customer) {
+      router.push(`/${locale}/menu/${cafeId}`);
+      return;
+    }
+
+    setName(customer.name || '');
+    setPhone(customer.phone || '');
+    setEmail(customer.email || '');
+    fetchOrders();
+    fetchStats();
+    fetchRecommendations();
+  }, [customer, cafeId, locale, router, fetchOrders, fetchStats, fetchRecommendations]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -421,12 +429,12 @@ export default function ProfilePage() {
 
     setLoadingUpdate(true);
     try {
-      const updateData: any = { name, phone, email };
+      const updateData: { name: string; phone: string; email: string; password?: string } = { name, phone, email };
       if (newPassword) {
         updateData.password = newPassword;
       }
 
-      const response = await axios.patch(
+      const response = await axios.patch<{ emailVerificationRequired: boolean }>(
         `${API_URL}/customers/${customer.id}`,
         updateData,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -443,9 +451,13 @@ export default function ProfilePage() {
       
       setNewPassword('');
       setConfirmPassword('');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error(error.response?.data?.message || 'Profil güncellenemedi');
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Profil güncellenemedi');
+      } else {
+        toast.error('Profil güncellenemedi');
+      }
     } finally {
       setLoadingUpdate(false);
     }
@@ -466,9 +478,13 @@ export default function ProfilePage() {
       setCustomer({ ...customer, email }, token);
       setIsVerifyingEmail(false);
       setVerificationCode('');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error verifying email:', error);
-      toast.error(error.response?.data?.message || 'Doğrulama başarısız');
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Doğrulama başarısız');
+      } else {
+        toast.error('Doğrulama başarısız');
+      }
     } finally {
       setVerifying(false);
     }
@@ -631,10 +647,12 @@ export default function ProfilePage() {
              <div className="relative group shrink-0">
                 <div className="h-24 w-24 md:h-28 md:w-28 rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl flex items-center justify-center text-3xl md:text-4xl font-bold border-4 border-white/20 shadow-2xl text-white overflow-hidden relative z-10">
                    {customer.avatarUrl ? (
-                      <img 
+                      <Image 
                         src={`${API_URL}${customer.avatarUrl}`} 
                         alt="Profile" 
-                        className="w-full h-full object-cover" 
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 96px, 112px"
                       />
                    ) : (
                       customer.name?.charAt(0) || customer.email.charAt(0).toUpperCase()
@@ -856,7 +874,13 @@ export default function ProfilePage() {
                            className="w-48 shrink-0 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
                         >
                           <div className="aspect-square rounded-xl bg-gray-100 relative overflow-hidden mb-3">
-                            <img src={product.imageUrl || '/placeholder-food.jpg'} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            <Image 
+                              src={product.imageUrl || '/placeholder-food.jpg'} 
+                              alt={product.name} 
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform duration-500" 
+                              unoptimized
+                            />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                             <div className="absolute bottom-2 right-2 bg-white rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                                <ChevronRight className="w-4 h-4 text-emerald-600" />

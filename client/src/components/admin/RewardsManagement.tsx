@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Gift, Upload, X } from 'lucide-react';
+import Image from 'next/image';
 import { API_URL } from '@/lib/api';
+
+interface Cafe {
+  id: string;
+  name: string;
+  status: string;
+}
 
 interface Reward {
   id: string;
@@ -19,7 +26,7 @@ interface Reward {
 }
 
 interface RewardsManagementProps {
-  cafes: any[];
+  cafes: Cafe[];
 }
 
 export function RewardsManagement({ cafes }: RewardsManagementProps) {
@@ -36,15 +43,7 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
   const [imageUrl, setImageUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (selectedCafeId) {
-      fetchRewards();
-    } else {
-      setRewards([]);
-    }
-  }, [selectedCafeId]);
-
-  const fetchRewards = async () => {
+  const fetchRewards = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/loyalty/admin/rewards/${selectedCafeId}`);
@@ -52,12 +51,20 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
         const data = await res.json();
         setRewards(data);
       }
-    } catch (error) {
+    } catch {
       toast.error('Ödüller yüklenemedi');
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCafeId]);
+
+  useEffect(() => {
+    if (selectedCafeId) {
+      fetchRewards();
+    } else {
+      setRewards([]);
+    }
+  }, [selectedCafeId, fetchRewards]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -90,6 +97,7 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
         toast.error('Görsel yüklenemedi');
       }
     } catch (error) {
+      console.error('Upload error:', error);
       toast.error('Yükleme hatası');
     } finally {
       setUploadingImage(false);
@@ -126,6 +134,7 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
         toast.error('Ekleme başarısız');
       }
     } catch (error) {
+      console.error('Create error:', error);
       toast.error('Bir hata oluştu');
     } finally {
       setCreating(false);
@@ -144,6 +153,7 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
         fetchRewards();
       }
     } catch (error) {
+      console.error('Delete error:', error);
       toast.error('Silme başarısız');
     }
   };
@@ -194,11 +204,17 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
                     <div className="flex items-center gap-4">
                       {imageUrl ? (
                         <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
-                          <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                          <Image 
+                            src={imageUrl} 
+                            alt="Preview" 
+                            fill
+                            className="object-cover" 
+                            unoptimized
+                          />
                           <button
                             type="button"
                             onClick={() => setImageUrl('')}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 z-10"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -259,13 +275,21 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-4">
-                     {reward.imageUrl ? (
-                       <img src={reward.imageUrl} alt={reward.title} className="w-16 h-16 object-cover rounded-lg bg-gray-100" />
-                     ) : (
-                       <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                         <Gift className="w-8 h-8" />
-                       </div>
-                     )}
+                     <div className="relative h-16 w-16 overflow-hidden rounded-md border bg-muted">
+                       {reward.imageUrl ? (
+                         <Image
+                           src={reward.imageUrl}
+                           alt={reward.title}
+                           fill
+                           className="object-cover"
+                           unoptimized
+                         />
+                       ) : (
+                         <div className="flex h-full items-center justify-center bg-muted text-muted-foreground">
+                           <Gift className="h-6 w-6 opacity-50" />
+                         </div>
+                       )}
+                     </div>
                      <div className="flex-1 min-w-0">
                        <div className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{reward.pointsCost} Puan</div>
                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">{reward.description}</p>

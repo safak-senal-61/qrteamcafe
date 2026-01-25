@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -40,13 +39,31 @@ function TableDuration({ startTime }: { startTime: string }) {
   return <span className="text-xs text-muted-foreground font-mono mt-1">{duration}</span>;
 }
 
+interface WaiterCall {
+  id: string;
+  tableId: string;
+  type?: string;
+  createdAt: string;
+  table?: {
+    tableNumber: number;
+  };
+}
+
+interface Table {
+  id: string;
+  tableNumber: number;
+  isOccupied: boolean;
+  lastOccupiedAt?: string;
+  waiterCalls?: WaiterCall[];
+}
+
 export default function TablesPage() {
-  const [tables, setTables] = useState<any[]>([]);
+  const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tableNumber, setTableNumber] = useState('');
   const [cafeId, setCafeId] = useState<string | null>(null);
-  const [qrTable, setQrTable] = useState<any | null>(null);
+  const [qrTable, setQrTable] = useState<Table | null>(null);
   
   const socketRef = useRef<Socket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -58,6 +75,7 @@ export default function TablesPage() {
         setTables(await res.json());
       }
     } catch (error) {
+      console.error(error);
       toast.error('Masalar yüklenemedi.');
     } finally {
       setLoading(false);
@@ -80,7 +98,7 @@ export default function TablesPage() {
         socketRef.current?.emit('joinAdmin', { cafeId: user.cafeId });
       });
 
-      socketRef.current.on('waiterCall', (newCall: any) => {
+      socketRef.current.on('waiterCall', (newCall: WaiterCall) => {
         // Play sound
         if (audioRef.current) {
           audioRef.current.play().catch(e => console.log('Audio play failed', e));
@@ -126,6 +144,7 @@ export default function TablesPage() {
         toast.error(error.message || 'İşlem başarısız.');
       }
     } catch (error) {
+      console.error(error);
       toast.error('Hata oluştu.');
     }
   };
@@ -140,6 +159,7 @@ export default function TablesPage() {
         if (cafeId) fetchTables(cafeId);
       }
     } catch (error) {
+      console.error(error);
       toast.error('Silme işlemi başarısız.');
     }
   };
@@ -155,10 +175,11 @@ export default function TablesPage() {
         // Update local state
         setTables(prevTables => prevTables.map(table => ({
             ...table,
-            waiterCalls: table.waiterCalls?.filter((c: any) => c.id !== callId)
+            waiterCalls: table.waiterCalls?.filter((c) => c.id !== callId)
         })));
       }
     } catch (error) {
+      console.error(error);
       toast.error('İşlem başarısız.');
     }
   };
@@ -281,7 +302,7 @@ export default function TablesPage() {
                       <Button 
                         size="sm" 
                         className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-amber-200 shadow-md rounded-xl"
-                        onClick={(e) => handleCompleteCall(e, table.waiterCalls[0].id)}
+                        onClick={(e) => table.waiterCalls?.[0]?.id && handleCompleteCall(e, table.waiterCalls[0].id)}
                       >
                         Tamamla
                       </Button>

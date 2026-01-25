@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { API_URL } from '@/lib/api';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '@/lib/imageUtils';
@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { Loader2, Save, Store, User, Settings2, Upload, Palette, Wifi, Share2, BellRing, Power, Shield } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SecuritySettings from './components/SecuritySettings';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,13 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog';
+
+interface CroppedAreaPixels {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -34,10 +42,10 @@ export default function SettingsPage() {
   // Cropper State
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CroppedAreaPixels | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [cropTarget, setCropTarget] = useState<'logo' | 'cover'>('logo');
 
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -105,7 +113,7 @@ export default function SettingsPage() {
     return JSON.parse(userStr).cafeId;
   };
 
-  const fetchCafe = async () => {
+  const fetchCafe = useCallback(async () => {
     const cafeId = getCafeId();
     if (!cafeId) return;
 
@@ -121,17 +129,17 @@ export default function SettingsPage() {
         const data = await res.json();
         
         // Helper to parse JSON or array fields safely
-        const parseList = (field: any) => {
-            try {
-                if (!field) return [];
-                if (Array.isArray(field)) return field;
-                if (typeof field === 'string') {
-                     if (field.startsWith('[')) return JSON.parse(field);
-                     return field.split(',').filter(Boolean);
-                }
-                return [];
-            } catch { return []; }
-        };
+        const parseList = (field: string | string[] | undefined | null) => {
+    try {
+        if (!field) return [];
+        if (Array.isArray(field)) return field;
+        if (typeof field === 'string') {
+             if (field.startsWith('[')) return JSON.parse(field);
+             return field.split(',').filter(Boolean);
+        }
+        return [];
+    } catch { return []; }
+  };
 
         setFormData({
           name: data.name || '',
@@ -170,16 +178,16 @@ export default function SettingsPage() {
           createdAt: data.createdAt,
         });
       }
-    } catch (error) {
+    } catch {
       toast.error('İşletme bilgileri yüklenemedi.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCafe();
-  }, []);
+  }, [fetchCafe]);
 
   const handleCheckboxChange = (
     field: 'paymentMethods' | 'waiterCallOptions', 
@@ -200,7 +208,7 @@ export default function SettingsPage() {
         toast.error('Lütfen geçerli bir resim dosyası seçin.');
         return;
       }
-      setSelectedFile(file);
+      // setSelectedFile(file);
       setCropTarget(target);
       const reader = new FileReader();
       reader.addEventListener('load', () => {
@@ -267,7 +275,8 @@ export default function SettingsPage() {
       } else {
         toast.error('Logo yüklenirken hata oluştu.');
       }
-    } catch (error) {
+    } catch (_error) {
+      console.error(_error);
       toast.error('Sunucu hatası.');
     } finally {
       setUploadingLogo(false);
@@ -300,7 +309,7 @@ export default function SettingsPage() {
       } else {
         toast.error('Kapak fotoğrafı yüklenirken hata oluştu.');
       }
-    } catch (error) {
+    } catch {
       toast.error('Sunucu hatası.');
     } finally {
       setUploadingCover(false);
@@ -316,6 +325,7 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       // Exclude read-only fields like createdAt
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { createdAt, ...rest } = formData;
       
       const payload = {
@@ -336,7 +346,8 @@ export default function SettingsPage() {
       } else {
         toast.error('Güncelleme başarısız.');
       }
-    } catch (error) {
+    } catch (_error) {
+      console.error(_error);
       toast.error('Hata oluştu.');
     } finally {
       setSaving(false);
@@ -460,7 +471,15 @@ export default function SettingsPage() {
                     <div className="flex flex-col gap-3">
                       <div className="h-32 w-32 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/50 overflow-hidden relative">
                         {formData.logoUrl ? (
-                          <img src={formData.logoUrl} alt="Logo" className="h-full w-full object-contain p-1" />
+                          <div className="relative h-full w-full">
+                            <Image 
+                              src={formData.logoUrl} 
+                              alt="Logo" 
+                              fill
+                              className="object-contain p-1"
+                              unoptimized
+                            />
+                          </div>
                         ) : (
                           <Store className="h-8 w-8 text-muted-foreground/50" />
                         )}
@@ -481,7 +500,15 @@ export default function SettingsPage() {
                     <div className="flex flex-col gap-3">
                       <div className="h-32 w-full rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/50 overflow-hidden relative">
                         {formData.coverImageUrl ? (
-                          <img src={formData.coverImageUrl} alt="Cover" className="h-full w-full object-cover" />
+                          <div className="relative h-full w-full">
+                            <Image 
+                              src={formData.coverImageUrl} 
+                              alt="Cover" 
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
                         ) : (
                           <div className="flex flex-col items-center text-muted-foreground/50">
                             <Store className="h-8 w-8 mb-1" />
@@ -598,7 +625,7 @@ export default function SettingsPage() {
                   <div className="space-y-0.5">
                     <Label className="text-base flex items-center gap-2"><Power className="w-4 h-4 text-red-500" /> Bakım Modu</Label>
                     <p className="text-sm text-muted-foreground">
-                      Aktif edildiğinde menü "Hizmet Dışı" olarak görünür.
+                      Aktif edildiğinde menü &quot;Hizmet Dışı&quot; olarak görünür.
                     </p>
                   </div>
                   <Switch

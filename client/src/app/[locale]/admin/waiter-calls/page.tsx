@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Bell, Check, Clock, Trash2, Loader2 } from 'lucide-react';
+import { Bell, Check, Clock, Loader2 } from 'lucide-react';
 import { API_URL, SOCKET_URL } from '@/lib/api';
 import { toast } from 'sonner';
 import { io, Socket } from 'socket.io-client';
@@ -96,6 +96,7 @@ export default function WaiterCallsPage() {
         toast.success('Çağrı tamamlandı.');
       }
     } catch (error) {
+      console.error(error);
       toast.error('İşlem başarısız.');
     }
   };

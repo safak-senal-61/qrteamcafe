@@ -81,11 +81,34 @@ export interface Customer {
   avatarUrl?: string;
 }
 
+export interface Review {
+  id: string;
+  productId: string;
+  rating: number;
+  comment?: string;
+}
+
+export interface OrderItem {
+  id: string;
+  product: {
+    id: string;
+    name: string;
+    imageUrl: string | null;
+    requiresPreparation?: boolean;
+  };
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  note?: string;
+}
+
 export interface Order {
   id: string;
   status: string;
   totalAmount: number;
   createdAt: string;
+  tableId?: string;
   table?: { name: string };
-  items: any[]; // Keeping any for items for now to minimize changes, or define OrderItem
+  items: OrderItem[];
+  reviews?: Review[];
 }

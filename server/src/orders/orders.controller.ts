@@ -1,7 +1,18 @@
-import { Controller, Get, Post, Patch, Body, Query, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Query,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { RequestWithUser } from '../auth/interfaces';
 
 @Controller('orders')
 export class OrdersController {
@@ -9,7 +20,7 @@ export class OrdersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('my-orders')
-  findMyOrders(@Request() req: any) {
+  findMyOrders(@Request() req: RequestWithUser) {
     return this.ordersService.findAllByCustomer(req.user.id);
   }
 

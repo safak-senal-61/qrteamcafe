@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Req, Get, Delete, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  Get,
+  Delete,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterCafeDto } from './dto/register-cafe.dto';
 import { LoginDto } from './dto/login.dto';
@@ -11,6 +20,7 @@ import type { Request } from 'express';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { RegisterCustomerDto } from './dto/register-customer.dto';
+import type { RequestWithUser } from './interfaces';
 
 @UseGuards(ThrottlerGuard)
 @Controller('auth')
@@ -81,7 +91,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
-  async getProfile(@Req() req: any) {
+  async getProfile(@Req() req: RequestWithUser) {
     return this.authService.getProfile(req.user.id);
   }
 
@@ -89,37 +99,43 @@ export class AuthController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post('2fa/generate')
-  async generate2FA(@Req() req: any) {
+  async generate2FA(@Req() req: RequestWithUser) {
     return this.authService.generate2FASecret(req.user.id);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post('2fa/enable')
-  async enable2FA(@Req() req: any, @Body('code') code: string) {
+  async enable2FA(@Req() req: RequestWithUser, @Body('code') code: string) {
     return this.authService.enable2FA(req.user.id, code);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post('2fa/disable')
-  async disable2FA(@Req() req: any) {
+  async disable2FA(@Req() req: RequestWithUser) {
     return this.authService.disable2FA(req.user.id);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('sessions')
-  async getSessions(@Req() req: any) {
+  async getSessions(@Req() req: RequestWithUser) {
     return this.authService.getSessions(req.user.id);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Delete('sessions/:id')
-  async terminateSession(@Req() req: any, @Param('id') sessionId: string) {
+  async terminateSession(
+    @Req() req: RequestWithUser,
+    @Param('id') sessionId: string,
+  ) {
     return this.authService.terminateSession(req.user.id, sessionId);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Delete('sessions')
-  async terminateAllOtherSessions(@Req() req: any) {
-    return this.authService.terminateAllOtherSessions(req.user.id, req.user.sessionId);
+  async terminateAllOtherSessions(@Req() req: RequestWithUser) {
+    return this.authService.terminateAllOtherSessions(
+      req.user.id,
+      req.user.sessionId,
+    );
   }
 }

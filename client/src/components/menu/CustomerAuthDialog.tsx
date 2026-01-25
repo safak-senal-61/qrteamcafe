@@ -9,13 +9,10 @@ import {
   Loader2, 
   UtensilsCrossed, 
   UserCircle2, 
-  UserPlus2, 
   ArrowRight, 
   ChevronLeft,
-  ChefHat,
   Coffee,
   MailCheck,
-  KeyRound
 } from 'lucide-react';
 import { useCustomerStore } from '@/store/customer-store';
 import { api } from '@/lib/api';
@@ -23,7 +20,6 @@ import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
@@ -240,14 +236,17 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
       toast.success('Giriş başarılı! Hoş geldiniz.');
       setAuthDialogOpen(false);
       loginForm.reset();
-    } catch (error: any) {
-      if (error.response?.data?.code === 'NOT_VERIFIED') {
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { code?: string; message?: string; email?: string } } };
+      if (apiError.response?.data?.code === 'NOT_VERIFIED') {
         toast.error('Hesabınız henüz doğrulanmamış. Lütfen doğrulama kodunu giriniz.');
-        setVerificationEmail(error.response.data.email);
-        verifyForm.setValue('email', error.response.data.email);
+        if (apiError.response.data.email) {
+          setVerificationEmail(apiError.response.data.email);
+          verifyForm.setValue('email', apiError.response.data.email);
+        }
         setView('verification');
       } else {
-        toast.error(error.response?.data?.message || 'Giriş yapılamadı');
+        toast.error(apiError.response?.data?.message || 'Giriş yapılamadı');
       }
     } finally {
       setLoading(false);
@@ -270,8 +269,9 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
         setAuthDialogOpen(false);
         registerForm.reset();
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Kayıt yapılamadı');
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string } } };
+      toast.error(apiError.response?.data?.message || 'Kayıt yapılamadı');
     } finally {
       setLoading(false);
     }
@@ -285,8 +285,9 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
       toast.success('Hesap doğrulandı! Hoş geldiniz.');
       setAuthDialogOpen(false);
       verifyForm.reset();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Doğrulama başarısız');
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string } } };
+      toast.error(apiError.response?.data?.message || 'Doğrulama başarısız');
     } finally {
       setLoading(false);
     }
@@ -299,8 +300,9 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
       toast.success('Şifre sıfırlama kodu e-postanıza gönderildi.');
       resetPasswordForm.setValue('email', data.email);
       setView('reset-password');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'İşlem başarısız');
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string } } };
+      toast.error(apiError.response?.data?.message || 'İşlem başarısız');
     } finally {
       setLoading(false);
     }
@@ -313,8 +315,9 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
       toast.success('Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz.');
       setView('login');
       resetPasswordForm.reset();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'İşlem başarısız');
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string } } };
+      toast.error(apiError.response?.data?.message || 'İşlem başarısız');
     } finally {
       setLoading(false);
     }
@@ -457,7 +460,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                       <FormField
                         control={loginForm.control}
                         name="email"
-                        render={({ field }: { field: any }) => (
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel className={styles.labelColor}>E-posta</FormLabel>
                             <FormControl>
@@ -479,7 +482,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                       <FormField
                         control={loginForm.control}
                         name="password"
-                        render={({ field }: { field: any }) => (
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel className={styles.labelColor}>Şifre</FormLabel>
                             <FormControl>
@@ -556,7 +559,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                       <FormField
                         control={forgotPasswordForm.control}
                         name="email"
-                        render={({ field }: { field: any }) => (
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel className={styles.labelColor}>E-posta</FormLabel>
                             <FormControl>
@@ -603,7 +606,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                       <FormField
                         control={resetPasswordForm.control}
                         name="email"
-                        render={({ field }: { field: any }) => (
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel className={styles.labelColor}>E-posta</FormLabel>
                             <FormControl>
@@ -624,7 +627,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                       <FormField
                         control={resetPasswordForm.control}
                         name="code"
-                        render={({ field }: { field: any }) => (
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel className={styles.labelColor}>Doğrulama Kodu</FormLabel>
                             <FormControl>
@@ -647,7 +650,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                       <FormField
                         control={resetPasswordForm.control}
                         name="newPassword"
-                        render={({ field }: { field: any }) => (
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel className={styles.labelColor}>Yeni Şifre</FormLabel>
                             <FormControl>
@@ -695,7 +698,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                       <FormField
                         control={registerForm.control}
                         name="name"
-                        render={({ field }: { field: any }) => (
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel className={styles.labelColor}>Ad Soyad</FormLabel>
                             <FormControl>

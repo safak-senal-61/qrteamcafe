@@ -1,19 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useCustomerStore } from '@/store/customer-store';
 import { Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 
 import { ClassicTemplate } from '@/components/menu/templates/ClassicTemplate';
 import { ModernTemplate } from '@/components/menu/templates/ModernTemplate';
 import { MinimalTemplate } from '@/components/menu/templates/MinimalTemplate';
 import { PremiumTemplate } from '@/components/menu/templates/PremiumTemplate';
 import { BistroTemplate } from '@/components/menu/templates/BistroTemplate';
-import { TemplateProps, Cafe, Category, Product } from '@/components/menu/templates/types';
+import { TemplateProps, Cafe, Category, Product, Order } from '@/components/menu/templates/types';
+
+interface Table {
+  id: string;
+  tableNumber: number;
+}
 
 // Helper functions
 const getPriorityKeywords = (currentHour: number) => {
@@ -72,7 +77,7 @@ export default function MenuPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [scrolled, setScrolled] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeOrders, setActiveOrders] = useState<any[]>([]);
+  const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [currentTableId, setCurrentTableId] = useState<string | null>(null);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
@@ -92,7 +97,7 @@ export default function MenuPage() {
 
   useEffect(() => {
     // Socket connection
-    let socket: any;
+    let socket: Socket | undefined;
 
     if (cafeId && currentTableId) {
       socket = io(API_URL, {
@@ -102,14 +107,14 @@ export default function MenuPage() {
 
       socket.on('connect', () => {
         console.log('Connected to websocket, joining table:', currentTableId);
-        socket.emit('joinTable', { cafeId, tableId: currentTableId });
+        socket?.emit('joinTable', { cafeId, tableId: currentTableId });
       });
 
-      socket.on('orderStatusUpdate', (updatedOrder: any) => {
+      socket.on('orderStatusUpdate', (updatedOrder: Order) => {
           console.log('Order status update received:', updatedOrder);
           setActiveOrders(prev => prev.map(o => o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o));
           
-          const hasPrepItems = updatedOrder.items?.some((item: any) => item.product?.requiresPreparation !== false) ?? true;
+          const hasPrepItems = updatedOrder.items?.some((item) => item.product?.requiresPreparation !== false) ?? true;
           let statusText = '';
           
           switch(updatedOrder.status) {
@@ -138,21 +143,23 @@ export default function MenuPage() {
     };
   }, [cafeId, currentTableId]);
 
-  const fetchActiveOrders = async () => {
+  const fetchActiveOrders = useCallback(async () => {
       if (!cafeId || !tableNumber) return;
       try {
           const tablesRes = await fetch(`${API_URL}/tables?cafeId=${cafeId}`);
           if (tablesRes.ok) {
-              const tables = await tablesRes.json();
-              const currentTable = tables.find((t: any) => t.tableNumber === parseInt(tableNumber));
+              const tables: Table[] = await tablesRes.json();
+              
+              const currentTable = tables.find((t) => t.tableNumber === parseInt(tableNumber));
               
               if (currentTable) {
                   setCurrentTableId(currentTable.id);
                   const ordersRes = await fetch(`${API_URL}/orders?cafeId=${cafeId}`);
                   if (ordersRes.ok) {
-                      const allOrders = await ordersRes.json();
+                      const allOrders: Order[] = await ordersRes.json();
                       // Sadece bu masaya ait ve ödenmemiş siparişleri al
-                      const tableOrders = allOrders.filter((o: any) => o.tableId === currentTable.id && o.status !== 'PAID');
+                      
+                      const tableOrders = allOrders.filter((o) => o.tableId === currentTable.id && o.status !== 'PAID');
                       setActiveOrders(tableOrders);
                   }
               }
@@ -160,7 +167,7 @@ export default function MenuPage() {
       } catch (error) {
           console.error("Siparişler çekilemedi", error);
       }
-  };
+  }, [cafeId, tableNumber]);
 
   useEffect(() => {
     if (!customer && !isGuest) {
@@ -209,7 +216,7 @@ export default function MenuPage() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [cafeId]);
+  }, [cafeId, fetchActiveOrders]);
 
   const handleCategorySelect = (id: string) => {
     setActiveCategory(id);

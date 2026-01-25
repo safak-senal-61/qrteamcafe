@@ -4,6 +4,7 @@ import '../globals.css';
 import { Toaster } from 'sonner';
 import Footer from '@/components/footer';
 import NetworkStatus from '@/components/NetworkStatus';
+import BackToHomeButton from '@/components/BackToHomeButton';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
@@ -35,6 +36,7 @@ export default async function LocaleLayout({
       <body className={inter.className} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <NetworkStatus />
+          <BackToHomeButton />
           {children}
           <Footer />
           <Toaster position="top-right" richColors />

@@ -16,7 +16,8 @@ export class RegisterCafeDto {
   @IsNotEmpty({ message: 'Şifre boş bırakılamaz.' })
   @MinLength(8, { message: 'Şifre en az 8 karakter olmalıdır.' })
   @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-    message: 'Şifre en az 1 büyük harf, 1 küçük harf ve 1 rakam veya özel karakter içermelidir.',
+    message:
+      'Şifre en az 1 büyük harf, 1 küçük harf ve 1 rakam veya özel karakter içermelidir.',
   })
   password: string;
 }

@@ -8,7 +8,10 @@ export class CafesService {
 
   async findOne(idOrSlug: string) {
     // Check if it's a valid UUID
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        idOrSlug,
+      );
 
     let cafe;
     if (isUuid) {
@@ -49,7 +52,9 @@ export class CafesService {
         authorizedPerson: data.authorizedPerson,
         serviceType: data.serviceType,
         workingHours: data.workingHours,
-        preparationTime: data.preparationTime ? Number(data.preparationTime) : undefined,
+        preparationTime: data.preparationTime
+          ? Number(data.preparationTime)
+          : undefined,
         paymentMethods: data.paymentMethods,
         logoUrl: data.logoUrl,
         googleMapsUrl: data.googleMapsUrl,
@@ -80,7 +85,7 @@ export class CafesService {
 
     const cafeSettings = await this.prisma.cafe.findUnique({
       where: { id: cafeId },
-      select: { isSoundEnabled: true }
+      select: { isSoundEnabled: true },
     });
 
     const [totalOrders, dailyRevenue, activeTables, totalProducts] =

@@ -26,11 +26,11 @@ let ProductsService = class ProductsService {
             },
             include: {
                 category: true,
-            }
+            },
         });
         return {
             ...product,
-            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl)
+            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl),
         };
     }
     async findAll(cafeId) {
@@ -41,9 +41,9 @@ let ProductsService = class ProductsService {
             },
             orderBy: { sortOrder: 'asc' },
         });
-        return products.map(product => ({
+        return products.map((product) => ({
             ...product,
-            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl)
+            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl),
         }));
     }
     async reorder(items) {
@@ -61,7 +61,7 @@ let ProductsService = class ProductsService {
             throw new common_1.NotFoundException('Ürün bulunamadı');
         return {
             ...product,
-            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl)
+            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl),
         };
     }
     async update(id, updateProductDto) {
@@ -69,8 +69,12 @@ let ProductsService = class ProductsService {
         const product = await this.prisma.product.findUnique({ where: { id } });
         if (!product)
             throw new common_1.NotFoundException('Ürün bulunamadı');
-        const newPrice = updateProductDto.price !== undefined ? updateProductDto.price : product.price;
-        const newOriginalPrice = updateProductDto.originalPrice !== undefined ? updateProductDto.originalPrice : product.originalPrice;
+        const newPrice = updateProductDto.price !== undefined
+            ? updateProductDto.price
+            : product.price;
+        const newOriginalPrice = updateProductDto.originalPrice !== undefined
+            ? updateProductDto.originalPrice
+            : product.originalPrice;
         if (newOriginalPrice !== null && newOriginalPrice !== undefined) {
             if (newOriginalPrice < newPrice) {
                 throw new common_1.BadRequestException('İndirimsiz fiyat, satış fiyatından küçük olamaz.');
@@ -79,11 +83,11 @@ let ProductsService = class ProductsService {
         const updatedProduct = await this.prisma.product.update({
             where: { id },
             data: updateProductDto,
-            include: { category: true }
+            include: { category: true },
         });
         return {
             ...updatedProduct,
-            imageUrl: (0, product_images_util_1.getProductImage)(updatedProduct.name, updatedProduct.category?.name, updatedProduct.imageUrl)
+            imageUrl: (0, product_images_util_1.getProductImage)(updatedProduct.name, updatedProduct.category?.name, updatedProduct.imageUrl),
         };
     }
     async updateStock(id, quantity) {
@@ -92,9 +96,9 @@ let ProductsService = class ProductsService {
             where: { id },
             data: {
                 stock: {
-                    increment: quantity
-                }
-            }
+                    increment: quantity,
+                },
+            },
         });
     }
     async remove(id) {
@@ -108,42 +112,42 @@ let ProductsService = class ProductsService {
             where: { productId },
             select: { orderId: true },
             distinct: ['orderId'],
-            take: 50
+            take: 50,
         });
-        const orderIds = ordersWithProduct.map(o => o.orderId);
+        const orderIds = ordersWithProduct.map((o) => o.orderId);
         if (orderIds.length === 0)
             return [];
         const relatedItems = await this.prisma.orderItem.groupBy({
             by: ['productId'],
             where: {
                 orderId: { in: orderIds },
-                productId: { not: productId }
+                productId: { not: productId },
             },
             _count: {
-                productId: true
+                productId: true,
             },
             orderBy: {
                 _count: {
-                    productId: 'desc'
-                }
+                    productId: 'desc',
+                },
             },
-            take: limit
+            take: limit,
         });
-        const recommendedProductIds = relatedItems.map(item => item.productId);
+        const recommendedProductIds = relatedItems.map((item) => item.productId);
         const products = await this.prisma.product.findMany({
             where: { id: { in: recommendedProductIds }, isAvailable: true },
-            include: { category: true }
+            include: { category: true },
         });
-        return products.map(product => ({
+        return products.map((product) => ({
             ...product,
-            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl)
+            imageUrl: (0, product_images_util_1.getProductImage)(product.name, product.category?.name, product.imageUrl),
         }));
     }
     async toggleChefRecommendation(id, isChefRecommended) {
         await this.findOne(id);
         return this.prisma.product.update({
             where: { id },
-            data: { isChefRecommended }
+            data: { isChefRecommended },
         });
     }
 };

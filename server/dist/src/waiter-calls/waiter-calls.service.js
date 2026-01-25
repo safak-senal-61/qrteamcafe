@@ -33,7 +33,9 @@ let WaiterCallsService = class WaiterCallsService {
                 table: true,
             },
         });
-        this.eventsGateway.server.to(`cafe_${cafeId}_admin`).emit('waiterCall', call);
+        this.eventsGateway.server
+            .to(`cafe_${cafeId}_admin`)
+            .emit('waiterCall', call);
         return call;
     }
     async findAll(cafeId, status) {
@@ -59,7 +61,7 @@ let WaiterCallsService = class WaiterCallsService {
     }
     async remove(id) {
         return this.prisma.waiterCall.delete({
-            where: { id }
+            where: { id },
         });
     }
 };

@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CafesController = void 0;
+const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const cafes_service_1 = require("./cafes.service");
 const platform_express_1 = require("@nestjs/platform-express");
@@ -54,6 +55,7 @@ let CafesController = class CafesController {
 exports.CafesController = CafesController;
 __decorate([
     (0, common_1.Get)('slug/:slug'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('slug')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -61,6 +63,7 @@ __decorate([
 ], CafesController.prototype, "findBySlug", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -68,6 +71,7 @@ __decorate([
 ], CafesController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Get)(':id/dashboard-stats'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -94,6 +98,7 @@ __decorate([
             fileSize: 5 * 1024 * 1024,
         },
     })),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
@@ -121,6 +126,7 @@ __decorate([
             fileSize: 10 * 1024 * 1024,
         },
     })),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
@@ -129,6 +135,7 @@ __decorate([
 ], CafesController.prototype, "uploadCoverImage", null);
 __decorate([
     (0, common_1.Patch)(':id'),
+    openapi.ApiResponse({ status: 200 }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

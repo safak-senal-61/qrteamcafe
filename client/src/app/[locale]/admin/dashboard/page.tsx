@@ -14,7 +14,6 @@ import {
   UtensilsCrossed,
   DollarSign,
   Users,
-  TrendingUp,
   ArrowUpRight,
   Loader2,
   Package,
@@ -27,17 +26,52 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Link, useRouter } from '@/navigation';
 import { API_URL } from '@/lib/api';
+import Image from 'next/image';
+import { Socket } from 'socket.io-client';
 
 // Sayfanın dinamik olmasını zorla (Cache sorunlarını önlemek için)
 export const dynamic = 'force-dynamic';
+
+interface OrderItem {
+  id: string;
+  quantity: number;
+  product: {
+    name: string;
+  };
+}
+
+interface DashboardOrder {
+  id: string;
+  table?: {
+    tableNumber: string;
+  };
+  items?: OrderItem[];
+  totalAmount: number | string;
+  createdAt: string;
+}
+
+interface PopularProduct {
+  id: string;
+  name: string;
+  imageUrl?: string | null;
+  _count?: {
+    orderItems: number;
+  };
+}
+
+interface WaiterCall {
+  table?: {
+    tableNumber: string;
+  };
+}
 
 interface DashboardStats {
   totalOrders: number;
   dailyRevenue: number;
   activeTables: number;
   totalProducts: number;
-  recentOrders: any[];
-  popularProducts: any[];
+  recentOrders: DashboardOrder[];
+  popularProducts: PopularProduct[];
   isSoundEnabled: boolean;
 }
 
@@ -156,7 +190,7 @@ export default function DashboardPage() {
       setNewOrderCount(parseInt(savedCount));
     }
 
-    let socket: any;
+    let socket: Socket | undefined;
 
     if (cafeId) {
       console.log('Connecting to websocket with cafeId:', cafeId);
@@ -168,7 +202,7 @@ export default function DashboardPage() {
       socket.on('connect', () => {
         console.log('Admin connected to websocket');
         setIsConnected(true);
-        socket.emit('joinAdmin', { cafeId });
+        socket?.emit('joinAdmin', { cafeId });
       });
 
       socket.on('disconnect', () => {
@@ -187,7 +221,7 @@ export default function DashboardPage() {
         });
       });
 
-      socket.on('newOrder', (order: any) => {
+      socket.on('newOrder', (order: DashboardOrder) => {
         console.log('New order received:', order);
         
         // Ses çalma işlemi - DB ayarını ve LocalStorage'ı kontrol et
@@ -232,7 +266,7 @@ export default function DashboardPage() {
       });
 
       // Garson Çağırma Bildirimi
-      socket.on('waiterCall', (call: any) => {
+      socket.on('waiterCall', (call: WaiterCall) => {
         console.log('Waiter call received:', call);
         
         // Ses çalma işlemi - DB ayarını ve LocalStorage'ı kontrol et
@@ -262,7 +296,7 @@ export default function DashboardPage() {
         socket.disconnect();
       }
     };
-  }, [cafeId, audio]); // soundEnabled bağımlılığı kaldırıldı, ref kullanılıyor
+  }, [cafeId, audio, router]); // soundEnabled bağımlılığı kaldırıldı, ref kullanılıyor
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -471,7 +505,7 @@ export default function DashboardPage() {
                 {stats.recentOrders.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-8">Henüz sipariş yok.</p>
                 ) : (
-                  stats.recentOrders.map((order: any) => (
+                  stats.recentOrders.map((order) => (
                     <div key={order.id} className="flex items-center p-3 rounded-xl hover:bg-secondary/50 transition-colors border border-transparent hover:border-border/50 group">
                       <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm border-2 border-white shadow-sm">
                         M{order.table?.tableNumber || '?'}
@@ -511,11 +545,17 @@ export default function DashboardPage() {
               {stats.popularProducts.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Veri yok.</p>
               ) : (
-                stats.popularProducts.map((product: any) => (
+                stats.popularProducts.map((product) => (
                   <div key={product.id} className="flex items-center">
-                    <div className="h-12 w-12 rounded-lg bg-secondary flex items-center justify-center overflow-hidden">
+                    <div className="h-12 w-12 rounded-lg bg-secondary flex items-center justify-center overflow-hidden relative">
                        {product.imageUrl ? (
-                         <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+                         <Image 
+                           src={product.imageUrl} 
+                           alt={product.name} 
+                           fill
+                           className="object-cover"
+                           unoptimized
+                         />
                        ) : (
                          <span className="text-2xl">🍔</span>
                        )}

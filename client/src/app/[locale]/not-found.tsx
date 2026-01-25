@@ -5,7 +5,7 @@ import { Link } from '@/navigation';
 import { Button } from '@/components/ui/button';
 import LottieAnimation from '@/components/ui/LottieAnimation';
 import { motion } from 'framer-motion';
-import { Home, ArrowLeft } from 'lucide-react';
+import { Home } from 'lucide-react';
 
 export default function NotFound() {
   const t = useTranslations('NotFound');

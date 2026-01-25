@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from '@/navigation';
 import { io, Socket } from 'socket.io-client';
 import { API_URL, SOCKET_URL } from '@/lib/api';
@@ -59,7 +60,7 @@ export function WaiterCallWidget() {
       socketRef.current?.emit('joinAdmin', { cafeId });
     });
 
-    socketRef.current.on('waiterCall', (newCall: any) => {
+    socketRef.current.on('waiterCall', (newCall: WaiterCall) => {
       // Play sound
       if (audioRef.current) {
         audioRef.current.play().catch(e => console.log('Audio play failed', e));
@@ -83,7 +84,7 @@ export function WaiterCallWidget() {
     return () => {
       socketRef.current?.disconnect();
     };
-  }, []);
+  }, [router]);
 
   const handleComplete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -152,11 +153,14 @@ export function WaiterCallWidget() {
                   >
                     <div className="flex items-start gap-3">
                        {/* Nice Photo/Icon as requested */}
-                       <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                         <img 
+                       <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                         <Image 
                            src="https://cdn-icons-png.flaticon.com/512/3448/3448650.png" 
                            alt="Waiter" 
-                           className="h-8 w-8 object-contain"
+                           width={32}
+                           height={32}
+                           className="object-contain"
+                           unoptimized
                          />
                        </div>
                        <div className="flex-1">

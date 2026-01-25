@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -11,7 +15,7 @@ export class ReviewsService {
     // Check order delivery time if orderId is present
     if (createReviewDto.orderId) {
       const order = await this.prisma.order.findUnique({
-        where: { id: createReviewDto.orderId }
+        where: { id: createReviewDto.orderId },
       });
 
       if (order) {
@@ -29,7 +33,9 @@ export class ReviewsService {
         */
         // If not delivered yet (and not one of the final states), block review
         if (!['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status)) {
-           throw new BadRequestException('Sipariş teslim edilmeden yorum yapılamaz.');
+          throw new BadRequestException(
+            'Sipariş teslim edilmeden yorum yapılamaz.',
+          );
         }
       }
     }
@@ -37,7 +43,7 @@ export class ReviewsService {
     // Get product to find cafeId and check autoApproveReviews setting
     const product = await this.prisma.product.findUnique({
       where: { id: createReviewDto.productId },
-      include: { cafe: true }
+      include: { cafe: true },
     });
 
     if (!product) {
@@ -68,9 +74,9 @@ export class ReviewsService {
     if (!productId) return;
 
     const aggregate = await this.prisma.review.aggregate({
-      where: { 
+      where: {
         productId,
-        isVisible: true // Only count visible reviews
+        isVisible: true, // Only count visible reviews
       },
       _avg: { rating: true },
       _count: { rating: true },
@@ -83,48 +89,48 @@ export class ReviewsService {
         reviewCount: aggregate._count.rating || 0,
       },
     });
-  } 
-  
-  async findAllByProduct(productId: string) { 
-    return this.prisma.review.findMany({ 
-      where: { 
-        productId, 
-        isVisible: true 
-      }, 
-      orderBy: { createdAt: 'desc' }, 
-      take: 20 
-    }); 
-  } 
+  }
 
-  async findAll() { 
-    return this.prisma.review.findMany({ 
-      include: { 
-        product: { 
-          select: { name: true, imageUrl: true } 
-        } 
-      }, 
-      orderBy: { createdAt: 'desc' } 
-    }); 
-  } 
+  async findAllByProduct(productId: string) {
+    return this.prisma.review.findMany({
+      where: {
+        productId,
+        isVisible: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+  }
 
-  async updateAdminScore(id: string, score: number) { 
-    return this.prisma.review.update({ 
-      where: { id }, 
-      data: { adminScore: score } 
-    }); 
-  } 
+  async findAll() {
+    return this.prisma.review.findMany({
+      include: {
+        product: {
+          select: { name: true, imageUrl: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 
-  async updateAdminReply(id: string, reply: string) { 
-    return this.prisma.review.update({ 
-      where: { id }, 
-      data: { adminReply: reply } 
-    }); 
-  } 
+  async updateAdminScore(id: string, score: number) {
+    return this.prisma.review.update({
+      where: { id },
+      data: { adminScore: score },
+    });
+  }
+
+  async updateAdminReply(id: string, reply: string) {
+    return this.prisma.review.update({
+      where: { id },
+      data: { adminReply: reply },
+    });
+  }
 
   async toggleVisibility(id: string, isVisible: boolean) {
     const review = await this.prisma.review.update({
       where: { id },
-      data: { isVisible }
+      data: { isVisible },
     });
 
     if (review.productId) {
@@ -132,5 +138,5 @@ export class ReviewsService {
     }
 
     return review;
-  } 
+  }
 }

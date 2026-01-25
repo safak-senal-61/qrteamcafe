@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Patch, Query, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Query,
+  Delete,
+} from '@nestjs/common';
 import { WaiterCallsService } from './waiter-calls.service';
 import { CreateWaiterCallDto } from './dto/create-waiter-call.dto';
 
@@ -7,12 +16,18 @@ export class WaiterCallsController {
   constructor(private readonly waiterCallsService: WaiterCallsService) {}
 
   @Post()
-  create(@Query('cafeId') cafeId: string, @Body() createWaiterCallDto: CreateWaiterCallDto) {
+  create(
+    @Query('cafeId') cafeId: string,
+    @Body() createWaiterCallDto: CreateWaiterCallDto,
+  ) {
     return this.waiterCallsService.create(cafeId, createWaiterCallDto);
   }
 
   @Get()
-  findAll(@Query('cafeId') cafeId: string, @Query('status') status?: 'PENDING' | 'COMPLETED') {
+  findAll(
+    @Query('cafeId') cafeId: string,
+    @Query('status') status?: 'PENDING' | 'COMPLETED',
+  ) {
     return this.waiterCallsService.findAll(cafeId, status);
   }
 
