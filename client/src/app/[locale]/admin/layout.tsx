@@ -22,6 +22,8 @@ export default function AdminLayout({
   const isAuthPage = pathname === '/admin/login' || pathname === '/admin/register';
   const isSuperAdmin = pathname.startsWith('/admin/super');
 
+  console.log('AdminLayout pathname:', pathname, 'isAuthPage:', isAuthPage);
+
   useEffect(() => {
     if (isAuthPage || isSuperAdmin) {
       return;

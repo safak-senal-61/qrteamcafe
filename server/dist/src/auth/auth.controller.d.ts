@@ -23,7 +23,7 @@ export declare class AuthController {
             email: string | null;
             name: string | null;
             phone: string | null;
-            referralCode: string | null;
+            referralCode: any;
         };
     }>;
     loginCustomer(dto: LoginDto): Promise<{
@@ -33,7 +33,7 @@ export declare class AuthController {
             email: string | null;
             name: string | null;
             phone: string | null;
-            referralCode: string;
+            referralCode: any;
         };
     }>;
     forgotPasswordCustomer(dto: ForgotPasswordDto): Promise<{

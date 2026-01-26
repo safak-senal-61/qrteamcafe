@@ -25,7 +25,7 @@ export declare class AuthService {
             email: string | null;
             name: string | null;
             phone: string | null;
-            referralCode: string | null;
+            referralCode: any;
         };
     }>;
     loginCustomer(dto: LoginDto): Promise<{
@@ -35,7 +35,7 @@ export declare class AuthService {
             email: string | null;
             name: string | null;
             phone: string | null;
-            referralCode: string;
+            referralCode: any;
         };
     }>;
     changePassword(dto: ChangePasswordDto): Promise<{
