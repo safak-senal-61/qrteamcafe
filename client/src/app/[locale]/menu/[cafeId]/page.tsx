@@ -146,18 +146,43 @@ export default function MenuPage() {
   // Resolve Table ID independently
   useEffect(() => {
     const resolveTable = async () => {
-      if (!cafeId || !tableNumber) return;
+      // Try to recover from storage if param is missing
+      const storageKey = `cafe_${cafeId}_tableId`;
+      
+      if (!tableNumber) {
+        const savedTableId = localStorage.getItem(storageKey);
+        if (savedTableId) {
+            console.log('Restoring tableId from storage:', savedTableId);
+            setCurrentTableId(savedTableId);
+        }
+        return;
+      }
+
       try {
+        console.log('Fetching tables for cafe:', cafeId);
         const tablesRes = await fetch(`${API_URL}/tables?cafeId=${cafeId}`);
         if (tablesRes.ok) {
           const tables: Table[] = await tablesRes.json();
-          const currentTable = tables.find((t) => t.tableNumber === parseInt(tableNumber));
+          console.log('Tables fetched:', tables);
+          
+          // Use loose comparison for tableNumber (string vs number)
+          // eslint-disable-next-line eqeqeq
+          const currentTable = tables.find((t) => t.tableNumber == parseInt(tableNumber));
+          
           if (currentTable) {
+            console.log('Table resolved:', currentTable);
             setCurrentTableId(currentTable.id);
+            localStorage.setItem(storageKey, currentTable.id);
+          } else {
+            console.warn('Table not found for number:', tableNumber);
+            toast.error(`Masa ${tableNumber} bulunamadı.`);
           }
+        } else {
+            console.error('Failed to fetch tables:', tablesRes.status);
         }
       } catch (error) {
         console.error("Masa bilgisi alınamadı", error);
+        toast.error('Masa bilgisi alınırken hata oluştu.');
       }
     };
     resolveTable();
@@ -342,6 +367,7 @@ export default function MenuPage() {
 
   const templateProps: TemplateProps = {
     cafe,
+    cafeId, // Explicitly pass cafeId from params
     categories,
     products,
     chefProducts,

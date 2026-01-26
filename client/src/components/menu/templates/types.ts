@@ -43,6 +43,7 @@ export interface Product {
 
 export interface TemplateProps {
   cafe: Cafe;
+  cafeId?: string; // Explicitly passed ID fallback
   categories: Category[];
   products: Product[];
   chefProducts: Product[];

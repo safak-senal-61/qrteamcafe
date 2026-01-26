@@ -20,6 +20,7 @@ import { useTranslations } from 'next-intl';
 
 export function MinimalTemplate({
   cafe,
+  cafeId,
   categories,
   chefProducts,
   popularProducts,
@@ -254,7 +255,7 @@ export function MinimalTemplate({
       
       {!isDemoMode && (
         <CartSheet 
-          cafeId={cafe.id}
+          cafeId={cafeId || cafe.id}
           tableId={currentTableId || undefined}
           onOrderSuccess={() => {
             setIsCartOpen(true);

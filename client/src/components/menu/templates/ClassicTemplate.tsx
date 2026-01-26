@@ -23,6 +23,7 @@ import { useTranslations } from 'next-intl';
 
 export function ClassicTemplate({
   cafe,
+  cafeId,
   categories,
   chefProducts,
   popularProducts,
@@ -324,7 +325,7 @@ export function ClassicTemplate({
 
       {!isDemoMode && (
         <CartSheet 
-          cafeId={cafe.id}
+          cafeId={cafeId || cafe.id}
           tableId={currentTableId || undefined}
           onOrderSuccess={() => {
             setIsCartOpen(true);

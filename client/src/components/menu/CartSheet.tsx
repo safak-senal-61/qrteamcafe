@@ -120,15 +120,29 @@ export function CartSheet({
       return;
     }
 
-    if (!cafeId || !tableId) {
+    // Fallback: Try to get tableId from localStorage if prop is missing
+    let activeTableId = tableId;
+    if (!activeTableId && cafeId) {
+        const storageKey = `cafe_${cafeId}_tableId`;
+        if (typeof window !== 'undefined') {
+            const storedTableId = localStorage.getItem(storageKey);
+            if (storedTableId) {
+                activeTableId = storedTableId;
+                console.log('Recovered tableId from storage in CartSheet:', activeTableId);
+            }
+        }
+    }
+
+    if (!cafeId || !activeTableId) {
       toast.error('Masa veya kafe bilgisi eksik. Lütfen QR kodu tekrar okutunuz.');
+      console.error('Missing info:', { cafeId, tableIdProp: tableId, activeTableId });
       return;
     }
 
     setLoading(true);
     try {
       const orderData = {
-        tableId,
+        tableId: activeTableId,
         items: items.map((item) => ({
           productId: item.id,
           quantity: item.quantity,

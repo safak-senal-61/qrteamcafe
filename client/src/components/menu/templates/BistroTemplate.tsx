@@ -21,6 +21,7 @@ import { useTranslations } from 'next-intl';
 
 export function BistroTemplate({
   cafe,
+  cafeId,
   categories,
   products,
   chefProducts,
@@ -39,6 +40,8 @@ export function BistroTemplate({
   setWelcomeOpen,
   setIsCartOpen,
   handleCancelOrder,
+  fetchActiveOrders,
+  currentTableId,
   copyWifi,
   getSocialUrl
 }: TemplateProps) {
@@ -289,6 +292,12 @@ export function BistroTemplate({
       </div>
 
       <CartSheet 
+        cafeId={cafeId || cafe.id}
+        tableId={currentTableId || undefined}
+        onOrderSuccess={() => {
+            setIsCartOpen(true);
+            fetchActiveOrders();
+        }}
         isOpen={isCartOpen} 
         onOpenChange={setIsCartOpen}
         activeOrders={activeOrders}
