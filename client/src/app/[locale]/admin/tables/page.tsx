@@ -259,7 +259,7 @@ export default function TablesPage() {
                   <div className={cn(
                     "absolute top-3 right-3 w-3 h-3 rounded-full shadow-sm",
                     hasActiveCall ? "bg-amber-500 animate-ping" : 
-                    isOccupied ? "bg-red-500" : "bg-emerald-400"
+                    isOccupied ? "bg-red-500" : "bg-primary"
                   )} />
                   
                   {/* Delete Button (Hover only) */}
@@ -310,7 +310,7 @@ export default function TablesPage() {
                       <div className="flex flex-col items-center gap-1.5 w-full">
                         <span className={cn(
                           "text-xs font-semibold px-3 py-1 rounded-full w-full text-center transition-colors",
-                          isOccupied ? "bg-red-100 text-red-600" : "bg-emerald-50 text-emerald-600"
+                          isOccupied ? "bg-red-100 text-red-600" : "bg-primary/10 text-primary"
                         )}>
                           {isOccupied ? 'Dolu' : 'Boş'}
                         </span>

@@ -76,6 +76,7 @@ export function MinimalTemplate({
           </div>
 
           {/* User & Actions */}
+          {!isDemoMode && (
           <div className="flex gap-4">
              {customer ? (
               <button 
@@ -95,6 +96,7 @@ export function MinimalTemplate({
               </button>
              )}
           </div>
+          )}
         </div>
       </div>
 
@@ -209,6 +211,7 @@ export function MinimalTemplate({
                       showRating={cafe?.showProductRatings} 
                       variant="list" 
                       className="border-b border-zinc-100 pb-4 rounded-none bg-transparent hover:bg-transparent shadow-none hover:shadow-none p-0"
+                      isReadOnly={isDemoMode}
                     />
                  </div>
                ))}
@@ -237,6 +240,7 @@ export function MinimalTemplate({
                     showRating={cafe?.showProductRatings} 
                     variant="list"
                     className="border-b border-zinc-100 pb-4 rounded-none bg-transparent hover:bg-transparent shadow-none hover:shadow-none p-0"
+                    isReadOnly={isDemoMode}
                   />
                 ))}
               </div>

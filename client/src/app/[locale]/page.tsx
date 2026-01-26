@@ -70,7 +70,7 @@ export default function Home() {
       text: t('benefits.faster'),
     },
     {
-      icon: <Wallet className="h-6 w-6 text-green-500" />,
+      icon: <Wallet className="h-6 w-6 text-primary" />,
       text: t('benefits.increase'),
     },
     {

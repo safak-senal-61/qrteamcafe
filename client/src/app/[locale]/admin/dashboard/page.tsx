@@ -315,6 +315,10 @@ export default function DashboardPage() {
           // DB'den gelen değeri state'e ata
           const isEnabled = data.isSoundEnabled !== false;
           setSoundEnabled(isEnabled);
+          
+          console.log('Received Stats:', data);
+          console.log('Popular Products:', data.popularProducts);
+
           // Ref ve LocalStorage'ı da senkronize et
           soundEnabledRef.current = isEnabled;
           localStorage.setItem('soundEnabled', String(isEnabled));
@@ -444,7 +448,7 @@ export default function DashboardPage() {
             </Button>
           </Link>
           {cafeId && (
-            <Link href={`/menu/${cafeId}`} target="_blank">
+            <Link href={`/menu/${cafeId}?demo=true`} target="_blank">
               <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Menü Önizleme

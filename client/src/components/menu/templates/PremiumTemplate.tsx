@@ -39,7 +39,8 @@ export function PremiumTemplate({
   handleCancelOrder,
   fetchActiveOrders,
   currentTableId,
-  scrolled
+  scrolled,
+  isDemoMode
 }: TemplateProps) {
   const t = useTranslations('Menu');
   const router = useRouter();
@@ -76,25 +77,27 @@ export function PremiumTemplate({
               )}
             </div>
             
-            <div className="flex gap-3">
-               {customer ? (
-                 <button 
-                   onClick={() => router.push(`/menu/${cafe.id}/profile`)}
-                   className="flex items-center gap-2 px-4 py-2 border border-[#c6a355]/50 bg-black/60 backdrop-blur-md text-[#c6a355] hover:bg-[#c6a355] hover:text-black transition-all duration-300 rounded-sm"
-                 >
-                   <User className="w-4 h-4" />
-                   <span className="text-xs uppercase tracking-wider">{customer.name}</span>
-                 </button>
-               ) : (
-                 <button 
-                   onClick={() => setAuthDialogOpen(true)}
-                   className="flex items-center gap-2 px-4 py-2 border border-[#c6a355]/50 bg-black/60 backdrop-blur-md text-[#c6a355] hover:bg-[#c6a355] hover:text-black transition-all duration-300 rounded-sm"
-                 >
-                   <User className="w-4 h-4" />
-                   <span className="text-xs uppercase tracking-wider">{t('login')}</span>
-                 </button>
-               )}
-            </div>
+            {!isDemoMode && (
+              <div className="flex gap-3">
+                 {customer ? (
+                   <button 
+                     onClick={() => router.push(`/menu/${cafe.id}/profile`)}
+                     className="flex items-center gap-2 px-4 py-2 border border-[#c6a355]/50 bg-black/60 backdrop-blur-md text-[#c6a355] hover:bg-[#c6a355] hover:text-black transition-all duration-300 rounded-sm"
+                   >
+                     <User className="w-4 h-4" />
+                     <span className="text-xs uppercase tracking-wider">{customer.name}</span>
+                   </button>
+                 ) : (
+                   <button 
+                     onClick={() => setAuthDialogOpen(true)}
+                     className="flex items-center gap-2 px-4 py-2 border border-[#c6a355]/50 bg-black/60 backdrop-blur-md text-[#c6a355] hover:bg-[#c6a355] hover:text-black transition-all duration-300 rounded-sm"
+                   >
+                     <User className="w-4 h-4" />
+                     <span className="text-xs uppercase tracking-wider">{t('login')}</span>
+                   </button>
+                 )}
+              </div>
+            )}
          </div>
 
          {/* Center Content */}
@@ -260,6 +263,7 @@ export function PremiumTemplate({
                                   variant="compact"
                                   hideImage={true} // We showed image manually
                                   className="p-0 border-none bg-transparent shadow-none"
+                                  isReadOnly={isDemoMode}
                                 />
                             </div>
                          </div>
@@ -271,8 +275,9 @@ export function PremiumTemplate({
          })}
       </div>
 
-      <CallWaiterButton options={cafe.waiterCallOptions} />
+      {!isDemoMode && <CallWaiterButton options={cafe.waiterCallOptions} />}
       
+      {!isDemoMode && (
       <CartSheet 
         cafeId={cafeId || cafe.id}
         tableId={currentTableId || undefined}
@@ -285,6 +290,7 @@ export function PremiumTemplate({
         isOpen={isCartOpen}
         onOpenChange={setIsCartOpen}
       />
+      )}
 
       <CustomerAuthDialog variant="premium" />
       

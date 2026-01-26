@@ -193,6 +193,10 @@ model Product {
   orderItems OrderItem[]
   reviews    Review[]
 
+  // Self-relation for recommendations
+  recommendations   Product[] @relation("ProductRecommendations")
+  recommendedBy     Product[] @relation("ProductRecommendations")
+
   @@map("products")
 }
 

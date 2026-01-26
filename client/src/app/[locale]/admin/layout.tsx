@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { usePathname, useRouter } from '@/navigation';
 import { Sidebar } from '@/components/admin/Sidebar';
 import { Loader2, Menu } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Button } from '@/components/ui/button';
 import { PendingOrdersWidget } from '@/components/admin/PendingOrdersWidget';
 import { WaiterCallWidget } from '@/components/admin/WaiterCallWidget';
+import { API_URL } from '@/lib/api';
 
 export default function AdminLayout({
   children,
@@ -23,6 +24,55 @@ export default function AdminLayout({
   const isSuperAdmin = pathname.startsWith('/admin/super');
 
   console.log('AdminLayout pathname:', pathname, 'isAuthPage:', isAuthPage);
+
+  const applyTheme = useCallback((cafe: any) => {
+    if (cafe?.themeConfig) {
+      try {
+        const config = JSON.parse(cafe.themeConfig);
+        if (config.theme === 'bordo-gold') {
+          document.documentElement.setAttribute('data-theme', 'bordo-gold');
+          document.documentElement.style.removeProperty('--primary');
+          document.documentElement.style.removeProperty('--ring');
+          return;
+        }
+      } catch (e) {
+        console.error('Theme config parse error', e);
+      }
+    }
+    
+    // Default or Custom handling
+    document.documentElement.removeAttribute('data-theme');
+    if (cafe?.brandColor) {
+      document.documentElement.style.setProperty('--primary', cafe.brandColor);
+      document.documentElement.style.setProperty('--ring', cafe.brandColor);
+    }
+  }, []);
+
+  const fetchTheme = useCallback(async () => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return;
+    try {
+      const user = JSON.parse(userStr);
+      if (user.cafeId) {
+        const res = await fetch(`${API_URL}/cafes/${user.cafeId}`);
+        if (res.ok) {
+          const cafe = await res.json();
+          applyTheme(cafe);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch theme', e);
+    }
+  }, [applyTheme]);
+
+  useEffect(() => {
+    if (isAuthPage) return;
+    fetchTheme();
+    
+    const handleUpdate = () => fetchTheme();
+    window.addEventListener('cafe-info-updated', handleUpdate);
+    return () => window.removeEventListener('cafe-info-updated', handleUpdate);
+  }, [isAuthPage, fetchTheme]);
 
   useEffect(() => {
     if (isAuthPage || isSuperAdmin) {

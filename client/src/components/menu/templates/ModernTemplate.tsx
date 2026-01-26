@@ -56,6 +56,7 @@ export function ModernTemplate({
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent z-10" />
         
         {/* Profile/Login Button */}
+        {!isDemoMode && (
         <div className="absolute top-6 right-6 z-50 flex gap-3">
           {customer ? (
             <div 
@@ -75,6 +76,7 @@ export function ModernTemplate({
             </div>
           )}
         </div>
+        )}
 
         <motion.div
           initial={{ scale: 1.2 }}

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Receipt, ChefHat, CheckCircle2, XCircle, Armchair, ArrowRightLeft } from 'lucide-react';
+import { Loader2, Receipt, ChefHat, CheckCircle2, XCircle, Armchair, ArrowRightLeft, MessageSquare } from 'lucide-react';
 import { API_URL } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,6 +21,8 @@ interface OrderItem {
   product: {
     name: string;
   };
+  note?: string;
+  options?: string;
 }
 
 interface Order {
@@ -29,6 +31,7 @@ interface Order {
   createdAt: string;
   status: string;
   totalAmount: number | string;
+  note?: string;
   items: OrderItem[];
 }
 
@@ -44,6 +47,8 @@ export default function OrdersPage() {
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [printTable, setPrintTable] = useState<Table | null>(null);
   const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   
   // Filter State
   const [dateFilter, setDateFilter] = useState('active');
@@ -352,8 +357,8 @@ export default function OrdersPage() {
                 className={cn(
                   "cursor-pointer whitespace-nowrap px-3 py-1.5 transition-all hover:scale-105 active:scale-95",
                   dateFilter === filter.id 
-                    ? "bg-emerald-600 hover:bg-emerald-700 border-emerald-600 shadow-sm" 
-                    : "hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 border-gray-200 text-gray-600 bg-white"
+                    ? "bg-primary hover:bg-primary/90 border-primary shadow-sm text-primary-foreground" 
+                    : "hover:bg-primary/10 hover:text-primary hover:border-primary/20 border-gray-200 text-gray-600 bg-white"
                 )}
                 onClick={() => setDateFilter(filter.id)}
               >
@@ -389,32 +394,58 @@ export default function OrdersPage() {
                   <div className="space-y-4">
                     <ScrollArea className="h-[200px] w-full rounded-md border p-2 bg-secondary/10">
                       {activeOrders.map((order) => (
-                        <div key={order.id} className="mb-3 last:mb-0 border-b last:border-0 pb-2 last:pb-0">
+                        <div 
+                          key={order.id} 
+                          className="mb-3 last:mb-0 border-b last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-background/80 p-2 rounded-md transition-colors border border-transparent hover:border-primary/20"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setIsDetailsDialogOpen(true);
+                          }}
+                        >
                           <div className="flex justify-between items-start mb-1">
                             <span className="font-medium text-sm">#{order.id.slice(-4)}</span>
                             {getStatusBadge(order.status)}
                           </div>
-                          <div className="space-y-1">
+                          
+                          {/* Order Note - Visible on Card */}
+                          {order.note && (
+                            <div className="text-xs bg-amber-100 text-amber-800 p-1.5 rounded mb-2 font-medium border border-amber-200 flex items-start gap-1">
+                              <MessageSquare className="w-3 h-3 mt-0.5 shrink-0" />
+                              <span className="break-words">{order.note}</span>
+                            </div>
+                          )}
+
+                          <div className="space-y-2">
                             {order.items.map((item: OrderItem) => (
-                              <div key={item.id} className="text-xs flex justify-between text-muted-foreground">
-                                <span>{item.quantity}x {item.product.name}</span>
-                                <span>{Number(item.totalPrice).toFixed(2)}</span>
+                              <div key={item.id} className="text-xs flex flex-col gap-1 text-muted-foreground">
+                                <div className="flex justify-between">
+                                  <span>{item.quantity}x {item.product.name}</span>
+                                  <span>{Number(item.totalPrice).toFixed(2)}</span>
+                                </div>
+                                
+                                {/* Item Note - Visible on Card */}
+                                {item.note && (
+                                  <div className="flex items-start gap-1 text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded w-fit max-w-full">
+                                    <MessageSquare className="w-3 h-3 mt-0.5 shrink-0" />
+                                    <span className="break-words">{item.note}</span>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
-                          <div className="flex gap-1 mt-2 justify-end">
+                          <div className="flex gap-1 mt-2 justify-end" onClick={(e) => e.stopPropagation()}>
                             {order.status === 'PENDING' && (
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-blue-600" onClick={() => updateOrderStatus(order.id, 'PREPARING')} title="Hazırlanıyor">
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => updateOrderStatus(order.id, 'PREPARING')} title="Hazırlanıyor">
                                 <ChefHat className="h-4 w-4" />
                               </Button>
                             )}
                             {order.status === 'PREPARING' && (
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-green-600" onClick={() => updateOrderStatus(order.id, 'DELIVERED')} title="Teslim Et">
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10" onClick={() => updateOrderStatus(order.id, 'DELIVERED')} title="Teslim Et">
                                 <CheckCircle2 className="h-4 w-4" />
                               </Button>
                             )}
                             {(order.status === 'PENDING' || order.status === 'PREPARING') && (
-                              <Button size="icon" variant="ghost" className="h-6 w-6 text-red-600" onClick={() => updateOrderStatus(order.id, 'CANCELLED')} title="İptal Et">
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => updateOrderStatus(order.id, 'CANCELLED')} title="İptal Et">
                                 <XCircle className="h-4 w-4" />
                               </Button>
                             )}
@@ -537,6 +568,96 @@ export default function OrdersPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5" />
+              Sipariş Detayı #{selectedOrder?.id.slice(-4)}
+            </DialogTitle>
+            <DialogDescription>
+              Masa {selectedOrder && getTableNumber(selectedOrder.tableId)} - {new Date(selectedOrder?.createdAt || '').toLocaleString('tr-TR')}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="max-h-[60vh]">
+            <div className="space-y-4 pr-4">
+              {/* Order Note */}
+              {selectedOrder?.note && (
+                <div className="bg-amber-50 p-3 rounded-md border border-amber-200">
+                  <div className="flex items-center gap-2 text-amber-800 font-semibold mb-1">
+                    <MessageSquare className="w-4 h-4" />
+                    Sipariş Notu
+                  </div>
+                  <p className="text-sm text-amber-900">{selectedOrder.note}</p>
+                </div>
+              )}
+
+              {/* Items */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm text-muted-foreground">Ürünler</h4>
+                {selectedOrder?.items.map((item) => (
+                  <div key={item.id} className="border rounded-lg p-3 bg-card">
+                    <div className="flex justify-between items-start font-medium">
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="h-6 w-6 flex items-center justify-center p-0 rounded-full bg-primary/10 border-primary/20 text-primary">
+                          {item.quantity}
+                        </Badge>
+                        <span>{item.product.name}</span>
+                      </div>
+                      <span>{Number(item.totalPrice).toFixed(2)} ₺</span>
+                    </div>
+                    
+                    {/* Options (if parsable) */}
+                    {item.options && item.options !== '{}' && (
+                      <div className="text-xs text-muted-foreground mt-2 pl-8">
+                        {(() => {
+                          try {
+                            const opts = JSON.parse(item.options);
+                            return Object.entries(opts).map(([key, value]) => (
+                              <div key={key} className="flex gap-1">
+                                <span className="font-medium">{key}:</span>
+                                <span>{String(value)}</span>
+                              </div>
+                            ));
+                          } catch {
+                            return item.options;
+                          }
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Item Note */}
+                    {item.note && (
+                      <div className="mt-2 pl-8">
+                        <div className="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded inline-flex items-center gap-1 border border-amber-100">
+                          <MessageSquare className="w-3 h-3" />
+                          {item.note}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollArea>
+
+          <DialogFooter className="flex-col sm:flex-row gap-4 sm:justify-between items-center border-t pt-4">
+             <div className="flex flex-col items-start">
+                <span className="text-xs text-muted-foreground">Durum</span>
+                {selectedOrder && getStatusBadge(selectedOrder.status)}
+             </div>
+             <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <span className="text-xs text-muted-foreground block">Toplam Tutar</span>
+                  <span className="font-bold text-xl text-primary">{Number(selectedOrder?.totalAmount).toFixed(2)} ₺</span>
+                </div>
+                <Button onClick={() => setIsDetailsDialogOpen(false)}>Kapat</Button>
+             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -569,6 +690,96 @@ export default function OrdersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsMoveDialogOpen(false)}>İptal</Button>
             <Button onClick={handleMoveTable} disabled={!moveTargetTableId}>Taşı</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5" />
+              Sipariş Detayı #{selectedOrder?.id.slice(-4)}
+            </DialogTitle>
+            <DialogDescription>
+              Masa {selectedOrder && getTableNumber(selectedOrder.tableId)} - {new Date(selectedOrder?.createdAt || '').toLocaleString('tr-TR')}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="max-h-[60vh]">
+            <div className="space-y-4 pr-4">
+              {/* Order Note */}
+              {selectedOrder?.note && (
+                <div className="bg-amber-50 p-3 rounded-md border border-amber-200">
+                  <div className="flex items-center gap-2 text-amber-800 font-semibold mb-1">
+                    <MessageSquare className="w-4 h-4" />
+                    Sipariş Notu
+                  </div>
+                  <p className="text-sm text-amber-900">{selectedOrder.note}</p>
+                </div>
+              )}
+
+              {/* Items */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm text-muted-foreground">Ürünler</h4>
+                {selectedOrder?.items.map((item) => (
+                  <div key={item.id} className="border rounded-lg p-3 bg-card">
+                    <div className="flex justify-between items-start font-medium">
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="h-6 w-6 flex items-center justify-center p-0 rounded-full bg-primary/10 border-primary/20 text-primary">
+                          {item.quantity}
+                        </Badge>
+                        <span>{item.product.name}</span>
+                      </div>
+                      <span>{Number(item.totalPrice).toFixed(2)} ₺</span>
+                    </div>
+                    
+                    {/* Options (if parsable) */}
+                    {item.options && item.options !== '{}' && (
+                      <div className="text-xs text-muted-foreground mt-2 pl-8">
+                        {(() => {
+                          try {
+                            const opts = JSON.parse(item.options);
+                            return Object.entries(opts).map(([key, value]) => (
+                              <div key={key} className="flex gap-1">
+                                <span className="font-medium">{key}:</span>
+                                <span>{String(value)}</span>
+                              </div>
+                            ));
+                          } catch {
+                            return item.options;
+                          }
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Item Note */}
+                    {item.note && (
+                      <div className="mt-2 pl-8">
+                        <div className="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded inline-flex items-center gap-1 border border-amber-100">
+                          <MessageSquare className="w-3 h-3" />
+                          {item.note}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollArea>
+
+          <DialogFooter className="flex-col sm:flex-row gap-4 sm:justify-between items-center border-t pt-4">
+             <div className="flex flex-col items-start">
+                <span className="text-xs text-muted-foreground">Durum</span>
+                {selectedOrder && getStatusBadge(selectedOrder.status)}
+             </div>
+             <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <span className="text-xs text-muted-foreground block">Toplam Tutar</span>
+                  <span className="font-bold text-xl text-primary">{Number(selectedOrder?.totalAmount).toFixed(2)} ₺</span>
+                </div>
+                <Button onClick={() => setIsDetailsDialogOpen(false)}>Kapat</Button>
+             </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

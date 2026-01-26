@@ -62,6 +62,7 @@ export function ClassicTemplate({
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-background z-10" />
         
         {/* Profile/Login Button */}
+        {!isDemoMode && (
         <div className="absolute top-4 right-4 z-50 flex gap-2">
           {customer ? (
             <div 
@@ -81,6 +82,7 @@ export function ClassicTemplate({
             </div>
           )}
         </div>
+        )}
 
         <motion.div
           initial={{ scale: 1.1 }}

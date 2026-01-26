@@ -125,7 +125,7 @@ export function CreateReviewDialog({ open, onOpenChange, orderId, items, existin
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto bg-white/95 backdrop-blur-xl border-emerald-100 shadow-2xl">
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto bg-white/95 backdrop-blur-xl border-primary/20 shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-gray-900">Siparişi Değerlendir</DialogTitle>
           <DialogDescription>
@@ -179,19 +179,19 @@ export function CreateReviewDialog({ open, onOpenChange, orderId, items, existin
                         placeholder="Yorumunuzu yazın (isteğe bağlı)..."
                         value={review.comment || ''}
                         onChange={(e) => handleComment(item.id, e.target.value)}
-                        className="resize-none bg-gray-50 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                        className="resize-none bg-gray-50 border-gray-200 focus:border-primary focus:ring-primary/20"
                         rows={3}
                       />
                       <Button 
                         onClick={() => handleSubmit(item)} 
                         disabled={review.rating === 0 || isLoading}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                       >
                         {isLoading ? 'Gönderiliyor...' : 'Değerlendir'}
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center gap-2 text-emerald-600 bg-emerald-50 p-3 rounded-lg">
+                    <div className="flex items-center justify-center gap-2 text-primary bg-primary/10 p-3 rounded-lg">
                       <CheckCircle2 className="w-5 h-5" />
                       <span className="font-medium">Değerlendirildi</span>
                     </div>

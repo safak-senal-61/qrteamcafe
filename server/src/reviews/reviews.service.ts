@@ -19,22 +19,24 @@ export class ReviewsService {
       });
 
       if (order) {
-        // If deliveredAt is set, check 5 minutes rule
-        /*
-        if (order.deliveredAt) {
-          const diff = new Date().getTime() - new Date(order.deliveredAt).getTime();
-          const fiveMinutesInMs = 5 * 60 * 1000;
-          
-          if (diff < fiveMinutesInMs) {
-            const remainingMinutes = Math.ceil((fiveMinutesInMs - diff) / 60000);
-            throw new BadRequestException(`Yorum yapmak için sipariş tesliminden sonra 5 dakika geçmesi gerekmektedir. Lütfen ${remainingMinutes} dakika sonra tekrar deneyiniz.`);
-          }
-        } 
-        */
-        // If not delivered yet (and not one of the final states), block review
+        // 1. Check if order is in a reviewable status
         if (!['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status)) {
           throw new BadRequestException(
             'Sipariş teslim edilmeden yorum yapılamaz.',
+          );
+        }
+
+        // 2. Check 5-minute rule
+        const referenceTime = order.deliveredAt
+          ? new Date(order.deliveredAt)
+          : new Date(order.updatedAt);
+        const diff = new Date().getTime() - referenceTime.getTime();
+        const fiveMinutesInMs = 5 * 60 * 1000;
+
+        if (diff < fiveMinutesInMs) {
+          const remainingMinutes = Math.ceil((fiveMinutesInMs - diff) / 60000);
+          throw new BadRequestException(
+            `Yorum yapmak için sipariş tesliminden sonra 5 dakika geçmesi gerekmektedir. Lütfen ${remainingMinutes} dakika sonra tekrar deneyiniz.`,
           );
         }
       }

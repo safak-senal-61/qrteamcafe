@@ -43,7 +43,8 @@ export function BistroTemplate({
   fetchActiveOrders,
   currentTableId,
   copyWifi,
-  getSocialUrl
+  getSocialUrl,
+  isDemoMode
 }: TemplateProps) {
   const t = useTranslations('Menu');
   const router = useRouter();
@@ -60,6 +61,7 @@ export function BistroTemplate({
         <div className="absolute inset-0 bg-stone-900/40 z-10" />
         
         {/* Profile/Login Button */}
+        {!isDemoMode && (
         <div className="absolute top-4 right-4 z-50 flex gap-2">
           {customer ? (
             <div 
@@ -79,6 +81,7 @@ export function BistroTemplate({
             </div>
           )}
         </div>
+        )}
 
         <motion.div
           initial={{ scale: 1.1 }}
@@ -216,7 +219,7 @@ export function BistroTemplate({
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredProducts.map((product, index) => (
-                  <ProductCard key={product.id} index={index} product={{ ...product, image: product.imageUrl, category: product.categoryId }} variant="card" />
+                  <ProductCard key={product.id} index={index} product={{ ...product, image: product.imageUrl, category: product.categoryId }} variant="card" isReadOnly={isDemoMode} />
                 ))}
               </div>
               {filteredProducts.length === 0 && (
@@ -279,7 +282,7 @@ export function BistroTemplate({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
                         {categoryProducts.map((product, index) => (
                           <div key={product.id} className="group">
-                             <ProductCard index={index} product={{ ...product, image: product.imageUrl, category: product.categoryId }} variant="list" className="bg-transparent border-b border-stone-200 rounded-none pb-6 shadow-none hover:bg-transparent" />
+                             <ProductCard index={index} product={{ ...product, image: product.imageUrl, category: product.categoryId }} variant="list" className="bg-transparent border-b border-stone-200 rounded-none pb-6 shadow-none hover:bg-transparent" isReadOnly={isDemoMode} />
                           </div>
                         ))}
                       </div>
@@ -291,6 +294,7 @@ export function BistroTemplate({
         </div>
       </div>
 
+      {!isDemoMode && (
       <CartSheet 
         cafeId={cafeId || cafe.id}
         tableId={currentTableId || undefined}
@@ -303,12 +307,15 @@ export function BistroTemplate({
         activeOrders={activeOrders}
         onCancelOrder={handleCancelOrder}
       />
+      )}
 
+      {!isDemoMode && (
       <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-4">
         <CallWaiterButton 
           options={cafe.waiterCallOptions}
         />
       </div>
+      )}
 
       {/* Dialogs */}
       <CustomerAuthDialog variant="bistro" />

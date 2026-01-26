@@ -123,17 +123,15 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
       <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-3xl p-0 gap-0 overflow-hidden bg-white/95 backdrop-blur-xl border-none shadow-2xl h-[90vh] sm:h-[85vh] flex flex-col sm:flex-row">
         
         {/* Left Side - Image */}
-        <div className="relative h-[35vh] sm:h-full w-full sm:w-[45%] bg-white shrink-0 flex items-center justify-center p-8">
-          <div className="relative w-full h-full">
-            <Image
-              src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
-              alt={product.name}
-              fill
-              className="object-contain"
-              priority
-              unoptimized={true}
-            />
-          </div>
+        <div className="relative h-[35vh] sm:h-full w-full sm:w-[45%] bg-zinc-50 shrink-0 overflow-hidden">
+          <Image
+            src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform hover:scale-105 duration-700"
+            priority
+            unoptimized={true}
+          />
           
           <DialogClose className="absolute top-4 right-4 rounded-full bg-black/20 hover:bg-black/40 text-white p-2 transition-colors backdrop-blur-sm z-10">
             <X className="h-5 w-5" />
@@ -148,32 +146,35 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
               </Badge>
             </div>
           )}
-
-          <div className="absolute bottom-4 left-4 right-4 text-white">
-            <div className="flex justify-between items-end">
-              <div>
-                <DialogTitle className="text-2xl font-bold leading-tight mb-1 text-white text-left">{product.name}</DialogTitle>
-                {showRating && Number(product.averageRating) > 0 && (
-                  <div className="flex items-center gap-1 text-yellow-400 mb-1">
-                    <Star className="w-4 h-4 fill-current" />
-                    <span className="font-bold text-white">{Number(product.averageRating).toFixed(1)}</span>
-                    <span className="text-white/70 text-xs">({product.reviewCount})</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
-                <span className="text-white/70 line-through text-lg decoration-white/50">
-                  {Number(product.originalPrice).toFixed(2)} ₺
-                </span>
-              )}
-              <p className="text-white/95 font-bold text-xl">{Number(product.price).toFixed(2)} ₺</p>
-            </div>
-          </div>
         </div>
 
         <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+          {/* Header Info (Moved from Image Overlay) */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-start gap-4">
+              <DialogTitle className="text-2xl font-bold leading-tight text-foreground text-left">
+                {product.name}
+              </DialogTitle>
+              <div className="flex flex-col items-end shrink-0">
+                {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
+                  <span className="text-muted-foreground line-through text-sm decoration-muted-foreground/50">
+                    {Number(product.originalPrice).toFixed(2)} ₺
+                  </span>
+                )}
+                <span className="text-2xl font-bold text-primary">{Number(product.price).toFixed(2)} ₺</span>
+              </div>
+            </div>
+
+            {showRating && Number(product.averageRating) > 0 && (
+              <div className="flex items-center gap-1 text-yellow-500">
+                <Star className="w-4 h-4 fill-current" />
+                <span className="font-bold">{Number(product.averageRating).toFixed(1)}</span>
+                <span className="text-muted-foreground text-xs">({product.reviewCount})</span>
+              </div>
+            )}
+            <Separator />
+          </div>
+
           <div className="space-y-2">
             <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Ürün Detayı</h4>
             <p id="product-description" className="text-sm text-foreground/80 leading-relaxed">

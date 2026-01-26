@@ -65,6 +65,7 @@ export default function SettingsPage() {
     logoUrl: '',
     coverImageUrl: '',
     brandColor: '#000000',
+    theme: 'default', // default, bordo-gold, custom
     menuViewMode: 'card', // card, list
     welcomeMessage: '',
 
@@ -153,6 +154,7 @@ export default function SettingsPage() {
           logoUrl: data.logoUrl ? (data.logoUrl.startsWith('http') ? data.logoUrl : `${API_URL}${data.logoUrl}`) : '',
           coverImageUrl: data.coverImageUrl ? (data.coverImageUrl.startsWith('http') ? data.coverImageUrl : `${API_URL}${data.coverImageUrl}`) : '',
           brandColor: data.brandColor || '#000000',
+          theme: data.themeConfig ? JSON.parse(data.themeConfig).theme || 'default' : 'default',
           menuViewMode: data.menuViewMode || 'card',
           welcomeMessage: data.welcomeMessage || '',
 
@@ -332,6 +334,7 @@ export default function SettingsPage() {
         ...rest,
         paymentMethods: JSON.stringify(formData.paymentMethods),
         waiterCallOptions: JSON.stringify(formData.waiterCallOptions),
+        themeConfig: JSON.stringify({ theme: formData.theme }),
       };
 
       const res = await fetch(`${API_URL}/cafes/${cafeId}`, {
@@ -529,18 +532,58 @@ export default function SettingsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="brandColor">Marka Rengi (Tema)</Label>
-                        <div className="flex items-center gap-3">
-                            <Input 
-                                id="brandColor" 
-                                type="color" 
-                                value={formData.brandColor} 
-                                onChange={(e) => setFormData({ ...formData, brandColor: e.target.value })} 
-                                className="w-16 h-10 p-1 cursor-pointer"
-                            />
-                            <span className="text-sm font-mono text-muted-foreground">{formData.brandColor}</span>
-                        </div>
+                        <Label>Tema Seçimi</Label>
+                        <Select 
+                          value={formData.theme} 
+                          onValueChange={(value) => {
+                            setFormData({ 
+                              ...formData, 
+                              theme: value,
+                              // If Bordo-Gold is selected, auto-set the brand color for fallback
+                              brandColor: value === 'bordo-gold' ? '#800020' : (value === 'default' ? '#10b981' : formData.brandColor)
+                            });
+                          }}
+                        >
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="default">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded-full bg-emerald-500"></div>
+                                    <span>Varsayılan (Zümrüt Yeşili)</span>
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="bordo-gold">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded-full bg-[#800020] border border-[#FFD700]"></div>
+                                    <span>Bordo - Gold (Premium)</span>
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="custom">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                                    <span>Özel (Marka Rengi)</span>
+                                  </div>
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
+
+                    {formData.theme === 'custom' && (
+                      <div className="space-y-2">
+                          <Label htmlFor="brandColor">Marka Rengi</Label>
+                          <div className="flex items-center gap-3">
+                              <Input 
+                                  id="brandColor" 
+                                  type="color" 
+                                  value={formData.brandColor} 
+                                  onChange={(e) => setFormData({ ...formData, brandColor: e.target.value })} 
+                                  className="w-full h-10 p-1 cursor-pointer"
+                              />
+                              <span className="text-sm font-mono text-muted-foreground">{formData.brandColor}</span>
+                          </div>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                         <Label>Menü Görünümü</Label>
                         <Select value={formData.menuViewMode} onValueChange={(value) => setFormData({ ...formData, menuViewMode: value })}>

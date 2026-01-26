@@ -200,10 +200,13 @@ export class OrdersService {
         }
       }
 
-      // Update deliveredAt if status is DELIVERED
+      // Update deliveredAt if status is DELIVERED or other final states
       // Use explicit type to avoid unsafe assignment warning
       const updateData: { status: string; deliveredAt?: Date } = { status };
-      if (status === 'DELIVERED' && !order.deliveredAt) {
+      if (
+        ['DELIVERED', 'COMPLETED', 'PAID'].includes(status) &&
+        !order.deliveredAt
+      ) {
         updateData.deliveredAt = new Date();
       }
 
@@ -247,13 +250,30 @@ export class OrdersService {
     }
 
     // 2. Tüm siparişleri PAID yap
+    // a) deliveredAt olanlar: sadece status update (mevcut teslimat zamanını koru)
     await this.prisma.order.updateMany({
       where: {
         tableId,
         status: { not: 'PAID' },
+        deliveredAt: { not: null },
       },
       data: {
         status: 'PAID',
+        updatedAt: new Date(),
+      },
+    });
+
+    // b) deliveredAt olmayanlar: status update + deliveredAt set (şimdi teslim edilmiş say)
+    await this.prisma.order.updateMany({
+      where: {
+        tableId,
+        status: { not: 'PAID' },
+        deliveredAt: null,
+      },
+      data: {
+        status: 'PAID',
+        deliveredAt: new Date(),
+        updatedAt: new Date(),
       },
     });
 

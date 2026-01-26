@@ -83,17 +83,35 @@ export default function MenuPage() {
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   useEffect(() => {
-    if (cafe?.welcomeMessage) {
+    const isDemo = searchParams.get('demo') === 'true';
+    if (cafe?.welcomeMessage && !isDemo) {
       setWelcomeOpen(true);
     }
-  }, [cafe?.welcomeMessage]);
+  }, [cafe?.welcomeMessage, searchParams]);
 
   useEffect(() => {
+    if (cafe?.themeConfig) {
+      try {
+        const config = JSON.parse(cafe.themeConfig);
+        if (config.theme === 'bordo-gold') {
+          document.documentElement.setAttribute('data-theme', 'bordo-gold');
+          // Remove inline styles to let the theme class take over
+          document.documentElement.style.removeProperty('--primary');
+          document.documentElement.style.removeProperty('--ring');
+          return;
+        }
+      } catch (e) {
+        console.error('Theme config parse error', e);
+      }
+    }
+    
+    // Default or Custom handling
+    document.documentElement.removeAttribute('data-theme');
     if (cafe?.brandColor) {
       document.documentElement.style.setProperty('--primary', cafe.brandColor);
       document.documentElement.style.setProperty('--ring', cafe.brandColor);
     }
-  }, [cafe?.brandColor]);
+  }, [cafe?.brandColor, cafe?.themeConfig]);
 
   useEffect(() => {
     // Socket connection
@@ -211,10 +229,11 @@ export default function MenuPage() {
   }, [currentTableId, fetchActiveOrders]);
 
   useEffect(() => {
-    if (!customer && !isGuest) {
+    const isDemo = searchParams.get('demo') === 'true';
+    if (!customer && !isGuest && !isDemo) {
       setAuthDialogOpen(true);
     }
-  }, [customer, isGuest, setAuthDialogOpen]);
+  }, [customer, isGuest, setAuthDialogOpen, searchParams]);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -365,6 +384,8 @@ export default function MenuPage() {
     );
   }
 
+  const isDemoMode = searchParams.get('demo') === 'true';
+
   const templateProps: TemplateProps = {
     cafe,
     cafeId, // Explicitly pass cafeId from params
@@ -392,7 +413,7 @@ export default function MenuPage() {
     currentTableId,
     copyWifi,
     getSocialUrl,
-    
+    isDemoMode,
   };
 
   if (cafe.templateId === 'modern') {

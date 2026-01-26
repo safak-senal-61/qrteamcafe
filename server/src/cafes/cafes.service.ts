@@ -123,17 +123,51 @@ export class CafesService {
       },
     });
 
-    // Popular Products (Mocking logic for now as aggregation is complex with Prisma sometimes)
-    // Real implementation would group by order items
-    const popularProducts = await this.prisma.product.findMany({
-      where: { cafeId },
-      take: 5,
-      orderBy: {
-        orderItems: {
-          _count: 'desc',
+    // Popular Products - Real implementation using groupBy on OrderItems
+    const topSellingItems = await this.prisma.orderItem.groupBy({
+      by: ['productId'],
+      where: {
+        order: {
+          cafeId,
+          status: { not: 'CANCELLED' }, // Exclude cancelled orders
         },
       },
+      _sum: {
+        quantity: true,
+      },
+      orderBy: {
+        _sum: {
+          quantity: 'desc',
+        },
+      },
+      take: 5,
     });
+
+    const productIds = topSellingItems.map((item) => item.productId);
+
+    const products = await this.prisma.product.findMany({
+      where: {
+        id: { in: productIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+      },
+    });
+
+    const popularProducts = topSellingItems
+      .map((item) => {
+        const product = products.find((p) => p.id === item.productId);
+        if (!product) return null;
+        return {
+          ...product,
+          _count: {
+            orderItems: item._sum.quantity || 0,
+          },
+        };
+      })
+      .filter(Boolean);
 
     return {
       totalOrders,

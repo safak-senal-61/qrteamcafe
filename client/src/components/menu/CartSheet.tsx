@@ -427,7 +427,7 @@ export function CartSheet({
                            <Button 
                              variant="outline"
                              size="sm"
-                             className="w-full gap-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200"
+                             className="w-full gap-2 text-primary hover:text-primary hover:bg-primary/10 border-primary/20"
                              onClick={() => {
                                setSelectedOrderForReview(order);
                                setReviewDialogOpen(true);

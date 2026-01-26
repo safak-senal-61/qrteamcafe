@@ -55,4 +55,8 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   requiresPreparation?: boolean;
+
+  @IsOptional()
+  @IsUUID('4', { each: true, message: 'Geçersiz ürün ID.' })
+  recommendationIds?: string[];
 }

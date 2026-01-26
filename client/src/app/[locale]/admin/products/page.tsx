@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -81,6 +82,7 @@ interface Product {
   isChefRecommended: boolean;
   requiresPreparation: boolean;
   sortOrder?: number;
+  recommendations?: { id: string }[];
 }
 
 export default function MenuPage() {
@@ -111,7 +113,8 @@ export default function MenuPage() {
     imageUrl: '',
     isAvailable: true,
     isChefRecommended: false,
-    requiresPreparation: true
+    requiresPreparation: true,
+    recommendationIds: [] as string[]
   });
   const [uploading, setUploading] = useState(false);
 
@@ -308,6 +311,21 @@ export default function MenuPage() {
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Manual Validation
+    if (!productForm.name?.trim()) {
+      toast.error('Lütfen ürün adını giriniz.');
+      return;
+    }
+    if (!productForm.categoryId) {
+      toast.error('Lütfen bir kategori seçiniz.');
+      return;
+    }
+    if (!productForm.price) {
+      toast.error('Lütfen satış fiyatını giriniz.');
+      return;
+    }
+
     try {
       const userStr = localStorage.getItem('user');
       if (!userStr) return;
@@ -316,6 +334,11 @@ export default function MenuPage() {
 
       const price = parseFloat(productForm.price);
       const originalPrice = productForm.originalPrice ? parseFloat(productForm.originalPrice) : null;
+
+      if (isNaN(price)) {
+        toast.error('Geçerli bir fiyat giriniz.');
+        return;
+      }
 
       if (originalPrice !== null) {
         if (originalPrice < 0) {
@@ -343,7 +366,8 @@ export default function MenuPage() {
           originalPrice,
           stock: parseInt(productForm.stock) || 0,
           isChefRecommended: productForm.isChefRecommended,
-          requiresPreparation: productForm.requiresPreparation
+          requiresPreparation: productForm.requiresPreparation,
+          recommendationIds: productForm.recommendationIds
         })
       });
 
@@ -353,6 +377,9 @@ export default function MenuPage() {
         setEditingProduct(null);
         resetProductForm();
         fetchData();
+      } else {
+        const data = await res.json();
+        toast.error(data.message || 'İşlem başarısız.');
       }
     } catch {
       toast.error('İşlem başarısız.');
@@ -447,7 +474,8 @@ export default function MenuPage() {
       imageUrl: '',
       isAvailable: true,
       isChefRecommended: false,
-      requiresPreparation: true
+      requiresPreparation: true,
+      recommendationIds: []
     });
   };
 
@@ -464,7 +492,8 @@ export default function MenuPage() {
         imageUrl: product.imageUrl || '',
         isAvailable: product.isAvailable,
         isChefRecommended: product.isChefRecommended || false,
-        requiresPreparation: product.requiresPreparation !== undefined ? product.requiresPreparation : true
+        requiresPreparation: product.requiresPreparation !== undefined ? product.requiresPreparation : true,
+        recommendationIds: product.recommendations?.map(r => r.id) || []
       });
     } else {
       setEditingProduct(null);
@@ -798,7 +827,7 @@ export default function MenuPage() {
             Ürün detaylarını giriniz.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSaveProduct} className="flex flex-col flex-1 overflow-hidden">
+        <form onSubmit={handleSaveProduct} className="flex flex-col flex-1 overflow-hidden" noValidate>
           <div className="flex-1 overflow-y-auto p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
@@ -900,6 +929,7 @@ export default function MenuPage() {
                     onCheckedChange={checked => setProductForm({ ...productForm, requiresPreparation: checked })}
                   />
                 </div>
+
               </div>
 
               <div className="space-y-4">
@@ -955,6 +985,62 @@ export default function MenuPage() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <Label>Bununla İyi Gider (Önerilen Ürünler)</Label>
+                  <ScrollArea className="h-[200px] border rounded-md p-4">
+                    <div className="space-y-4">
+                      {categories.map((category) => {
+                        const categoryProducts = products.filter(
+                          p => p.categoryId === category.id && p.id !== editingProduct?.id
+                        );
+                        
+                        if (categoryProducts.length === 0) return null;
+
+                        return (
+                          <div key={category.id} className="space-y-2">
+                            <h5 className="font-semibold text-sm text-muted-foreground sticky top-0 bg-background py-1 z-10">
+                              {category.name}
+                            </h5>
+                            <div className="grid grid-cols-1 gap-2">
+                              {categoryProducts.map((product) => (
+                                <div key={product.id} className="flex items-center space-x-2">
+                                  <Checkbox 
+                                    id={`rec-${product.id}`}
+                                    checked={productForm.recommendationIds?.includes(product.id)}
+                                    onCheckedChange={(checked) => {
+                                      const current = productForm.recommendationIds || [];
+                                      if (checked) {
+                                        setProductForm({
+                                          ...productForm,
+                                          recommendationIds: [...current, product.id]
+                                        });
+                                      } else {
+                                        setProductForm({
+                                          ...productForm,
+                                          recommendationIds: current.filter(id => id !== product.id)
+                                        });
+                                      }
+                                    }}
+                                  />
+                                  <label 
+                                    htmlFor={`rec-${product.id}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                  >
+                                    {product.name}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                  <p className="text-xs text-muted-foreground">
+                    Seçilen ürünler "Bununla İyi Gider" bölümünde gösterilecektir.
+                  </p>
                 </div>
               </div>
             </div>

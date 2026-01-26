@@ -123,7 +123,10 @@ export function PendingOrdersWidget() {
           >
             <Card className="shadow-2xl border-red-200">
               <div className="p-4 border-b bg-red-50 dark:bg-red-950/20 flex justify-between items-center sticky top-0 backdrop-blur-md">
-                <h3 className="font-bold text-red-700 dark:text-red-400 flex items-center gap-2">
+                <h3 
+                  className="font-bold text-red-700 dark:text-red-400 flex items-center gap-2 cursor-pointer hover:underline"
+                  onClick={() => router.push('/admin/orders')}
+                >
                   <Bell className="h-4 w-4" />
                   Bekleyen Siparişler ({pendingOrders.length})
                 </h3>

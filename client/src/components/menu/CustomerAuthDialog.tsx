@@ -75,22 +75,22 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
 
   const theme = {
     default: {
-      gradient: "bg-gradient-to-br from-emerald-500 to-teal-600",
+      gradient: "bg-gradient-to-br from-primary to-primary/80",
       contentBg: "bg-white/75",
       titleColor: "text-gray-900",
       textColor: "text-gray-500",
       labelColor: "text-gray-700",
       inputBg: "bg-white/50",
       inputBorder: "border-gray-200",
-      inputFocus: "focus:border-emerald-500 focus:ring-emerald-500",
-      primaryBtn: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20 hover:shadow-emerald-500/30",
-      secondaryBtn: "border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 bg-white/50 text-emerald-600",
-      link: "text-emerald-600 hover:text-emerald-700",
+      inputFocus: "focus:border-primary focus:ring-primary",
+      primaryBtn: "bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20 hover:shadow-primary/30",
+      secondaryBtn: "border-primary/20 hover:bg-primary/10 hover:text-primary hover:border-primary/30 bg-white/50 text-primary",
+      link: "text-primary hover:text-primary/80",
       iconBox: "bg-white/20 border-white/10",
-      iconColor: "text-white",
+      iconColor: "text-primary-foreground",
       divider: "bg-white/50 text-gray-400",
-      successIconBg: "bg-emerald-100",
-      successIconColor: "text-emerald-600"
+      successIconBg: "bg-primary/10",
+      successIconColor: "text-primary"
     },
     classic: {
       gradient: "bg-gradient-to-br from-blue-600 to-indigo-700",

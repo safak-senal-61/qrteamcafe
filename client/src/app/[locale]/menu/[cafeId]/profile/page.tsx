@@ -47,6 +47,7 @@ interface Order {
   status: 'PENDING' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED' | 'COMPLETED' | 'PAID';
   totalAmount: number;
   createdAt: string;
+  updatedAt: string;
   deliveredAt?: string;
   table?: {
     name: string;
@@ -77,7 +78,7 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case 'PENDING': return 'bg-amber-100 text-amber-700 border-amber-200';
     case 'PREPARING': return 'bg-blue-100 text-blue-700 border-blue-200';
-    case 'READY': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+    case 'READY': return 'bg-primary/20 text-primary border-primary/20';
     case 'DELIVERED': return 'bg-slate-100 text-slate-700 border-slate-200';
     case 'CANCELLED': return 'bg-red-100 text-red-700 border-red-200';
     case 'PAID': return 'bg-purple-100 text-purple-700 border-purple-200';
@@ -115,35 +116,27 @@ const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order)
   const [, forceUpdate] = useState({});
 
   useEffect(() => {
-    if (order.deliveredAt && ['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status)) {
-      const diff = new Date().getTime() - new Date(order.deliveredAt).getTime();
+    if (['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status)) {
+      const referenceTime = order.deliveredAt ? new Date(order.deliveredAt) : new Date(order.updatedAt);
+      const diff = new Date().getTime() - referenceTime.getTime();
       if (diff < 5 * 60 * 1000) {
         const interval = setInterval(() => forceUpdate({}), 60000);
         return () => clearInterval(interval);
       }
     }
-  }, [order.deliveredAt, order.status]);
+  }, [order.deliveredAt, order.updatedAt, order.status]);
 
   const canReview = () => {
     if (!['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status)) return false;
     if (getReviewStatus(order) === 'ALL') return true;
-    if (!order.deliveredAt) return true;
     
-    const diff = new Date().getTime() - new Date(order.deliveredAt).getTime();
+    const referenceTime = order.deliveredAt ? new Date(order.deliveredAt) : new Date(order.updatedAt);
+    const diff = new Date().getTime() - referenceTime.getTime();
     return diff >= 5 * 60 * 1000;
   };
 
   const getButtonText = () => {
     if (getReviewStatus(order) === 'ALL') return 'Düzenle';
-    
-    if (!canReview() && order.deliveredAt) {
-      const diff = new Date().getTime() - new Date(order.deliveredAt).getTime();
-      const remaining = 5 * 60 * 1000 - diff;
-      if (remaining > 0) {
-        const mins = Math.ceil(remaining / 60000);
-        return `${mins} dk sonra`;
-      }
-    }
     
     return getReviewStatus(order) === 'PARTIAL' ? 'Değerlendirmeye Devam Et' : 'Değerlendir';
   };
@@ -210,7 +203,7 @@ const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order)
                           <div className="h-10 w-10 rounded-lg bg-gray-100 bg-cover bg-center shrink-0 shadow-sm" style={{ backgroundImage: `url(${item.product.imageUrl || '/placeholder-food.jpg'})` }} />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="h-5 px-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100">{item.quantity}x</Badge>
+                                <Badge variant="secondary" className="h-5 px-1.5 bg-primary/10 text-primary hover:bg-primary/20">{item.quantity}x</Badge>
                                 <span className="text-gray-900 truncate font-medium">{item.product.name}</span>
                             </div>
                             {item.note && <p className="text-xs text-gray-500 italic truncate mt-0.5 ml-1">Not: {item.note}</p>}
@@ -221,32 +214,23 @@ const OrderCard = ({ order, onReview }: { order: Order; onReview: (order: Order)
                   ))}
                 </div>
                 
-                {['READY', 'DELIVERED', 'COMPLETED', 'PAID'].includes(order.status) && (
+                {['DELIVERED', 'COMPLETED', 'PAID'].includes(order.status) && (canReview() || getReviewStatus(order) === 'ALL') && (
                   <div className="pt-2 flex justify-end">
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      disabled={!canReview() && getReviewStatus(order) !== 'ALL'}
                       className={cn(
                         "h-9 px-4 text-xs font-bold tracking-wide transition-all",
                         getReviewStatus(order) === 'ALL' 
                           ? "text-gray-500 border-gray-200 hover:bg-gray-100" 
-                          : !canReview() 
-                            ? "text-gray-400 border-gray-200 bg-gray-50 cursor-not-allowed"
-                            : "text-white bg-emerald-600 border-emerald-600 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20"
+                          : "text-primary-foreground bg-primary border-primary hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (canReview() || getReviewStatus(order) === 'ALL') {
-                          onReview(order);
-                        }
+                        onReview(order);
                       }}
                     >
-                      {!canReview() && getReviewStatus(order) !== 'ALL' ? (
-                        <Clock className="w-3.5 h-3.5 mr-2" />
-                      ) : (
-                        <Star className={cn("w-3.5 h-3.5 mr-2", getReviewStatus(order) === 'ALL' ? "" : "fill-current")} />
-                      )}
+                      <Star className={cn("w-3.5 h-3.5 mr-2", getReviewStatus(order) === 'ALL' ? "" : "fill-current")} />
                       {getButtonText()}
                     </Button>
                   </div>
@@ -277,10 +261,10 @@ const Section = ({ title, icon: Icon, children, defaultOpen = true, className }:
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
             <Icon className="w-5 h-5" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">
+          <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors">
             {title}
           </h3>
         </div>

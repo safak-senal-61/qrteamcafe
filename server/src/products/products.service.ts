@@ -13,10 +13,17 @@ export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
   async create(cafeId: string, createProductDto: CreateProductDto) {
+    const { recommendationIds, ...rest } = createProductDto;
+
     const product = await this.prisma.product.create({
       data: {
-        ...createProductDto,
+        ...rest,
         cafeId,
+        recommendations: recommendationIds
+          ? {
+              connect: recommendationIds.map((id) => ({ id })),
+            }
+          : undefined,
       },
       include: {
         category: true,
@@ -38,6 +45,9 @@ export class ProductsService {
       where: { cafeId },
       include: {
         category: true,
+        recommendations: {
+          select: { id: true },
+        },
       },
       orderBy: { sortOrder: 'asc' },
     });
@@ -106,9 +116,18 @@ export class ProductsService {
       }
     }
 
+    const { recommendationIds, ...rest } = updateProductDto;
+
     const updatedProduct = await this.prisma.product.update({
       where: { id },
-      data: updateProductDto,
+      data: {
+        ...rest,
+        recommendations: recommendationIds
+          ? {
+              set: recommendationIds.map((id) => ({ id })),
+            }
+          : undefined,
+      },
       include: { category: true },
     });
 
@@ -142,7 +161,37 @@ export class ProductsService {
   }
 
   async getRecommendations(productId: string, limit = 3) {
-    // 1. Find orders that contain this product
+    // 1. Get manually recommended products
+    const productWithRecommendations = await this.prisma.product.findUnique({
+      where: { id: productId },
+      select: {
+        recommendations: {
+          where: { isAvailable: true },
+          include: { category: true },
+          take: limit,
+        },
+      },
+    });
+
+    let manualRecommendations = productWithRecommendations?.recommendations || [];
+    
+    // Add imageUrl to manual recommendations
+    manualRecommendations = manualRecommendations.map((product) => ({
+      ...product,
+      imageUrl: getProductImage(
+        product.name,
+        product.category?.name,
+        product.imageUrl,
+      ),
+    }));
+
+    if (manualRecommendations.length >= limit) {
+      return manualRecommendations;
+    }
+
+    const remainingLimit = limit - manualRecommendations.length;
+
+    // 2. Find orders that contain this product for additional recommendations
     const ordersWithProduct = await this.prisma.orderItem.findMany({
       where: { productId },
       select: { orderId: true },
@@ -151,41 +200,46 @@ export class ProductsService {
     });
 
     const orderIds = ordersWithProduct.map((o) => o.orderId);
-    if (orderIds.length === 0) return [];
+    let autoRecommendations: any[] = [];
 
-    // 2. Find other items in these orders
-    const relatedItems = await this.prisma.orderItem.groupBy({
-      by: ['productId'],
-      where: {
-        orderId: { in: orderIds },
-        productId: { not: productId },
-      },
-      _count: {
-        productId: true,
-      },
-      orderBy: {
-        _count: {
-          productId: 'desc',
+    if (orderIds.length > 0) {
+      // Find other items in these orders, excluding manually recommended ones
+      const relatedItems = await this.prisma.orderItem.groupBy({
+        by: ['productId'],
+        where: {
+          orderId: { in: orderIds },
+          productId: { 
+            notIn: [productId, ...manualRecommendations.map(p => p.id)] 
+          },
         },
-      },
-      take: limit,
-    });
+        _count: {
+          productId: true,
+        },
+        orderBy: {
+          _count: {
+            productId: 'desc',
+          },
+        },
+        take: remainingLimit,
+      });
 
-    // 3. Get product details
-    const recommendedProductIds = relatedItems.map((item) => item.productId);
-    const products = await this.prisma.product.findMany({
-      where: { id: { in: recommendedProductIds }, isAvailable: true },
-      include: { category: true },
-    });
+      const recommendedProductIds = relatedItems.map((item) => item.productId);
+      const products = await this.prisma.product.findMany({
+        where: { id: { in: recommendedProductIds }, isAvailable: true },
+        include: { category: true },
+      });
 
-    return products.map((product) => ({
-      ...product,
-      imageUrl: getProductImage(
-        product.name,
-        product.category?.name,
-        product.imageUrl,
-      ),
-    }));
+      autoRecommendations = products.map((product) => ({
+        ...product,
+        imageUrl: getProductImage(
+          product.name,
+          product.category?.name,
+          product.imageUrl,
+        ),
+      }));
+    }
+
+    return [...manualRecommendations, ...autoRecommendations];
   }
 
   async toggleChefRecommendation(id: string, isChefRecommended: boolean) {
