@@ -143,31 +143,47 @@ export default function MenuPage() {
     };
   }, [cafeId, currentTableId]);
 
-  const fetchActiveOrders = useCallback(async () => {
+  // Resolve Table ID independently
+  useEffect(() => {
+    const resolveTable = async () => {
       if (!cafeId || !tableNumber) return;
       try {
-          const tablesRes = await fetch(`${API_URL}/tables?cafeId=${cafeId}`);
-          if (tablesRes.ok) {
-              const tables: Table[] = await tablesRes.json();
-              
-              const currentTable = tables.find((t) => t.tableNumber === parseInt(tableNumber));
-              
-              if (currentTable) {
-                  setCurrentTableId(currentTable.id);
-                  const ordersRes = await fetch(`${API_URL}/orders?cafeId=${cafeId}`);
-                  if (ordersRes.ok) {
-                      const allOrders: Order[] = await ordersRes.json();
-                      // Sadece bu masaya ait ve ödenmemiş siparişleri al
-                      
-                      const tableOrders = allOrders.filter((o) => o.tableId === currentTable.id && o.status !== 'PAID');
-                      setActiveOrders(tableOrders);
-                  }
-              }
+        const tablesRes = await fetch(`${API_URL}/tables?cafeId=${cafeId}`);
+        if (tablesRes.ok) {
+          const tables: Table[] = await tablesRes.json();
+          const currentTable = tables.find((t) => t.tableNumber === parseInt(tableNumber));
+          if (currentTable) {
+            setCurrentTableId(currentTable.id);
+          }
+        }
+      } catch (error) {
+        console.error("Masa bilgisi alınamadı", error);
+      }
+    };
+    resolveTable();
+  }, [cafeId, tableNumber]);
+
+  const fetchActiveOrders = useCallback(async () => {
+      if (!cafeId || !currentTableId) return;
+      try {
+          const ordersRes = await fetch(`${API_URL}/orders?cafeId=${cafeId}`);
+          if (ordersRes.ok) {
+              const allOrders: Order[] = await ordersRes.json();
+              // Sadece bu masaya ait ve ödenmemiş siparişleri al
+              const tableOrders = allOrders.filter((o) => o.tableId === currentTableId && o.status !== 'PAID');
+              setActiveOrders(tableOrders);
           }
       } catch (error) {
           console.error("Siparişler çekilemedi", error);
       }
-  }, [cafeId, tableNumber]);
+  }, [cafeId, currentTableId]);
+
+  // Fetch orders when table is resolved
+  useEffect(() => {
+    if (currentTableId) {
+      fetchActiveOrders();
+    }
+  }, [currentTableId, fetchActiveOrders]);
 
   useEffect(() => {
     if (!customer && !isGuest) {
@@ -195,9 +211,6 @@ export default function MenuPage() {
         const prodRes = await fetch(`${API_URL}/products?cafeId=${cafeId}`);
         const prodData = await prodRes.json();
         setProducts(prodData.filter((p: Product) => p.isAvailable));
-
-        // Fetch Active Orders
-        await fetchActiveOrders();
 
       } catch (error) {
         console.error(error);
