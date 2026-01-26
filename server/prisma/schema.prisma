@@ -237,6 +237,7 @@ model Customer {
 
   loyaltyPoints Int      @default(0) @map("loyalty_points")
   referralCode  String?  @unique @map("referral_code")
+  referredById  String?  @map("referred_by_id")
 
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -244,6 +245,9 @@ model Customer {
   orders       Order[]
   reviews      Review[]
   loyaltyTransactions LoyaltyTransaction[]
+  
+  referredBy   Customer?  @relation("CustomerReferrals", fields: [referredById], references: [id])
+  referrals    Customer[] @relation("CustomerReferrals")
 
   @@map("customers")
 }
