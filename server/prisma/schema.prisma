@@ -66,6 +66,7 @@ model Cafe {
   tables    Table[]
   orders    Order[]
   waiterCalls WaiterCall[]
+  rewards     Reward[]
 
   @@map("cafes")
 }
@@ -234,11 +235,15 @@ model Customer {
   // Email Change Verification
   tempEmail String? @map("temp_email")
 
+  loyaltyPoints Int      @default(0) @map("loyalty_points")
+  referralCode  String?  @unique @map("referral_code")
+
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   orders       Order[]
   reviews      Review[]
+  loyaltyTransactions LoyaltyTransaction[]
 
   @@map("customers")
 }
@@ -311,4 +316,34 @@ model Review {
   order    Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
   
   @@map("reviews")
+}
+
+model Reward {
+  id          String   @id @default(uuid())
+  cafeId      String   @map("cafe_id")
+  title       String
+  description String?
+  pointsCost  Int      @map("points_cost")
+  imageUrl    String?  @map("image_url")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  cafe        Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  @@map("rewards")
+}
+
+model LoyaltyTransaction {
+  id          String   @id @default(uuid())
+  customerId  String   @map("customer_id")
+  amount      Int
+  type        String   // EARNED_ORDER, SPENT_REWARD, REFUND, BONUS
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("loyalty_transactions")
 }

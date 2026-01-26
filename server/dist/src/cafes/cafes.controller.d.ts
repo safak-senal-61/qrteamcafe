@@ -39,7 +39,6 @@ export declare class CafesController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
-        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     }>;
@@ -79,7 +78,6 @@ export declare class CafesController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
-        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     }>;
@@ -165,7 +163,7 @@ export declare class CafesController {
             createdAt: Date;
             updatedAt: Date;
         }[];
-        isSoundEnabled: boolean;
+        isSoundEnabled: any;
     }>;
     uploadLogo(id: string, file: Express.Multer.File): Promise<{
         id: string;
@@ -203,7 +201,6 @@ export declare class CafesController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
-        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     }>;
@@ -243,7 +240,6 @@ export declare class CafesController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
-        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     }>;
@@ -283,7 +279,6 @@ export declare class CafesController {
         status: string;
         showProductRatings: boolean;
         autoApproveReviews: boolean;
-        isSoundEnabled: boolean;
         templateId: string | null;
         themeConfig: string | null;
     }>;
