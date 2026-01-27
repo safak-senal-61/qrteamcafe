@@ -17,6 +17,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { CustomersModule } from './customers/customers.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
+import { IssueReportsModule } from './issue-reports/issue-reports.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
     ReviewsModule,
     CustomersModule,
     LoyaltyModule,
+    IssueReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

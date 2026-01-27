@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -175,25 +174,188 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/30 p-4">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background -z-10" />
+    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden">
+      {/* Arka Plan Görseli - Tam Ekran */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: 'url("https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=2078&auto=format&fit=crop")',
+        }}
+      />
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
       
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <Card className="border-none shadow-2xl bg-white/80 backdrop-blur-xl">
-          <CardHeader className="space-y-4 text-center pb-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
-              className="mx-auto bg-primary text-primary-foreground p-3 rounded-2xl w-fit shadow-lg shadow-primary/30"
-            >
-              <Coffee className="h-8 w-8" />
-            </motion.div>
+      {/* Ana İçerik Konteyner */}
+      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 lg:gap-16 p-6 items-center">
+        
+        {/* Sol Taraf - Marka ve Sloganlar */}
+        <div className="hidden lg:flex flex-col text-white space-y-8">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/10 p-3 rounded-xl backdrop-blur-md border border-white/20">
+              <Coffee className="h-8 w-8 text-white" />
+            </div>
+            <span className="text-2xl font-bold tracking-tight">QR Team Cafe</span>
+          </div>
+
+          <div className="space-y-6">
+            <h1 className="text-5xl font-bold leading-tight tracking-tight">
+              Yönetim parmaklarınızın ucunda.
+            </h1>
+            <p className="text-xl text-white/80 leading-relaxed max-w-lg">
+              Sipariş takibi, stok yönetimi ve detaylı raporlar ile işletmenizi bir üst seviyeye taşıyın.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6 pt-4">
+            <div className="space-y-2">
+              <div className="bg-white/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                <Loader2 className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="font-semibold text-lg">Hızlı İşlem</h3>
+              <p className="text-white/60 text-sm">Saniyeler içinde sipariş alın ve yönetin.</p>
+            </div>
+            <div className="space-y-2">
+              <div className="bg-white/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                <Lock className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="font-semibold text-lg">Güvenli Altyapı</h3>
+              <p className="text-white/60 text-sm">Verileriniz uçtan uca şifreleme ile güvende.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Sağ Taraf - Giriş Formu Kartı */}
+        <div className="w-full flex justify-center lg:justify-end">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-[440px] bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+          >
+            <div className="p-8 md:p-10 space-y-8">
+              <div className="text-center space-y-2">
+                <div className="mx-auto bg-white/10 text-white p-3 rounded-2xl w-fit mb-6 lg:hidden">
+                  <Coffee className="h-8 w-8" />
+                </div>
+                <h2 className="text-3xl font-bold tracking-tight text-white">
+                  {is2FARequired ? t('2fa.title') : t('login.title')}
+                </h2>
+                <p className="text-white/70">
+                  {is2FARequired 
+                    ? t('2fa.desc')
+                    : t('login.desc')
+                  }
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {is2FARequired ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="twoFactorCode" className="text-white">{t('common.verificationCode')}</Label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                      <Input
+                        id="twoFactorCode"
+                        value={twoFactorCode}
+                        onChange={(e) => setTwoFactorCode(e.target.value)}
+                        placeholder="123456"
+                        className="pl-10 tracking-widest text-lg text-center font-mono h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                        maxLength={6}
+                        autoFocus
+                        required
+                      />
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      className="w-full text-xs text-white/60 hover:text-white hover:bg-white/10"
+                      onClick={() => {
+                        setIs2FARequired(false);
+                        setTwoFactorCode('');
+                      }}
+                    >
+                      {t('common.back')}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-white">{t('common.email')}</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                        <Input
+                          id="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          placeholder="ornek@cafe.com"
+                          type="email"
+                          className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password" className="text-white">{t('common.password')}</Label>
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="text-xs font-medium text-amber-500 hover:text-amber-400 hover:underline p-0 h-auto"
+                          onClick={() => {
+                            setForgotPasswordStep(1);
+                            setIsForgotPasswordOpen(true);
+                          }}
+                        >
+                          {t('forgotPassword.link')}
+                        </Button>
+                      </div>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                        <Input
+                          id="password"
+                          value={formData.password}
+                          onChange={handleChange}
+                          type="password"
+                          placeholder="••••••••"
+                          className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <Button
+                  type="submit"
+                  className="w-full h-11 font-bold text-base bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {is2FARequired ? t('common.verifying') : t('login.loggingIn')}
+                    </>
+                  ) : (
+                    <>
+                      {is2FARequired ? t('common.verifyAndLogin') : t('login.submit')} 
+                      {!is2FARequired && <ArrowRight className="ml-2 h-4 w-4" />}
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              <div className="text-center text-sm text-white/60">
+                {t('login.noAccount')}{' '}
+                <Link href="/admin/register" className="font-semibold text-amber-500 hover:text-amber-400 hover:underline transition-colors">
+                  {t('login.registerLink')}
+                </Link>
+              </div>
+            </div>
+            
+            {/* Kart Altı Dekoratif Çizgi */}
+            <div className="h-1 w-full bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+          </motion.div>
+        </div>
+      </div>
 
       <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
         <DialogContent>
@@ -215,6 +377,7 @@ export default function AdminLoginPage() {
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
                   placeholder="ornek@cafe.com"
+                  className="focus-visible:ring-amber-500"
                   required
                 />
               </div>
@@ -229,7 +392,7 @@ export default function AdminLoginPage() {
                     value={resetCode}
                     onChange={(e) => setResetCode(e.target.value)}
                     placeholder="123456"
-                    className="pl-10 tracking-widest text-lg"
+                    className="pl-10 tracking-widest text-lg focus-visible:ring-amber-500"
                     maxLength={6}
                     required
                   />
@@ -247,7 +410,7 @@ export default function AdminLoginPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="pl-10"
+                    className="pl-10 focus-visible:ring-amber-500"
                     required
                     minLength={6}
                   />
@@ -255,7 +418,7 @@ export default function AdminLoginPage() {
               </div>
             )}
             <DialogFooterUI>
-              <Button type="submit" disabled={isResetLoading}>
+              <Button type="submit" disabled={isResetLoading} className="bg-amber-600 hover:bg-amber-700 text-white">
                 {isResetLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -273,125 +436,6 @@ export default function AdminLoginPage() {
           </form>
         </DialogContent>
       </Dialog>
-            <div className="space-y-2">
-              <CardTitle className="text-2xl font-bold tracking-tight">
-                {is2FARequired ? t('2fa.title') : t('login.title')}
-              </CardTitle>
-              <CardDescription>
-                {is2FARequired 
-                    ? t('2fa.desc')
-                    : t('login.desc')
-                }
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {is2FARequired ? (
-                <div className="space-y-2">
-                    <Label htmlFor="twoFactorCode">{t('common.verificationCode')}</Label>
-                    <div className="relative">
-                        <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            id="twoFactorCode"
-                            value={twoFactorCode}
-                            onChange={(e) => setTwoFactorCode(e.target.value)}
-                            placeholder="123456"
-                            className="pl-10 tracking-widest text-lg text-center font-mono"
-                            maxLength={6}
-                            autoFocus
-                            required
-                        />
-                    </div>
-                    <Button 
-                        type="button" 
-                        variant="ghost" 
-                        className="w-full text-xs text-muted-foreground"
-                        onClick={() => {
-                            setIs2FARequired(false);
-                            setTwoFactorCode('');
-                        }}
-                    >
-                        {t('common.back')}
-                    </Button>
-                </div>
-              ) : (
-                <>
-                <div className="space-y-2">
-                    <Label htmlFor="email">{t('common.email')}</Label>
-                    <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        id="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="ornek@cafe.com"
-                        type="email"
-                        className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                        required
-                    />
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="password">{t('common.password')}</Label>
-                    <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        id="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        type="password"
-                        placeholder="••••••••"
-                        className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                        required
-                    />
-                    </div>
-                    <div className="flex justify-end">
-                    <Button
-                        type="button"
-                        variant="link"
-                        className="text-xs font-medium text-primary hover:underline p-0 h-auto"
-                        onClick={() => {
-                        setForgotPasswordStep(1);
-                        setIsForgotPasswordOpen(true);
-                        }}
-                    >
-                        {t('forgotPassword.link')}
-                    </Button>
-                    </div>
-                </div>
-                </>
-              )}
-              
-              <Button
-                type="submit"
-                className="w-full h-11 font-bold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {is2FARequired ? t('common.verifying') : t('login.loggingIn')}
-                  </>
-                ) : (
-                  <>
-                    {is2FARequired ? t('common.verifyAndLogin') : t('login.submit')} 
-                    {!is2FARequired && <ArrowRight className="ml-2 h-4 w-4" />}
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="text-center text-sm text-muted-foreground pb-8">
-            <div className="w-full">
-              {t('login.noAccount')}{' '}
-              <Link href="/admin/register" className="font-bold text-primary hover:underline">
-                {t('login.registerLink')}
-              </Link>
-            </div>
-          </CardFooter>
-        </Card>
-      </motion.div>
     </div>
   );
 }

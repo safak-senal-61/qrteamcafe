@@ -246,7 +246,7 @@ export function BistroTemplate({
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
                         {chefProducts.map((product, index) => (
-                          <ProductCard key={product.id} index={index} product={{ ...product, image: product.imageUrl, category: product.categoryId }} variant="list" className="bg-[#f8f5e6] border-none shadow-none" />
+                          <ProductCard key={product.id} index={index} product={{ ...product, image: product.imageUrl, category: product.categoryId }} variant="list" className="bg-[#f8f5e6] border-none shadow-none" isReadOnly={isDemoMode} />
                         ))}
                       </div>
                     </section>
@@ -258,7 +258,7 @@ export function BistroTemplate({
                       <h3 className="text-2xl font-bold mb-6 text-stone-800 border-l-4 border-orange-400 pl-4">Popüler Lezzetler</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {popularProducts.map((product, index) => (
-                          <ProductCard key={product.id} index={index} product={{ ...product, image: product.imageUrl, category: product.categoryId }} variant="card" className="border-2 border-stone-100 hover:border-orange-200 transition-colors" />
+                          <ProductCard key={product.id} index={index} product={{ ...product, image: product.imageUrl, category: product.categoryId }} variant="card" className="border-2 border-stone-100 hover:border-orange-200 transition-colors" isReadOnly={isDemoMode} />
                         ))}
                       </div>
                     </section>

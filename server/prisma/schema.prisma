@@ -67,8 +67,25 @@ model Cafe {
   orders    Order[]
   waiterCalls WaiterCall[]
   rewards     Reward[]
+  issueReports IssueReport[]
 
   @@map("cafes")
+}
+
+model IssueReport {
+  id          String   @id @default(uuid())
+  cafeId      String   @map("cafe_id")
+  title       String
+  description String
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  cafe        Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  @@map("issue_reports")
 }
 
 model WaiterCall {

@@ -38,6 +38,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { API_URL } from '@/lib/api';
 import { RewardsManagement } from '@/components/admin/RewardsManagement';
+import { IssueReportsList } from '@/components/admin/IssueReportsList';
 
 interface CafeAdmin {
   id: string;
@@ -382,7 +383,14 @@ export default function SuperAdminDashboard() {
               <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                 <TabsTrigger value="pending" className="rounded-lg">Bekleyenler</TabsTrigger>
                 <TabsTrigger value="active" className="rounded-lg">Aktif İşletmeler</TabsTrigger>
-                <TabsTrigger value="rejected" className="rounded-lg">Reddedilenler</TabsTrigger>
+                <TabsTrigger value="rejected" className="rounded-lg flex items-center gap-2">
+                  <XCircle className="h-4 w-4" />
+                  Reddedilenler ({stats?.rejectedCafes || 0})
+                </TabsTrigger>
+                <TabsTrigger value="issues" className="rounded-lg flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Bildirimler
+                </TabsTrigger>
                 <TabsTrigger value="rewards" className="rounded-lg flex items-center gap-2"><Gift className="w-4 h-4" /> Hediye Kataloğu</TabsTrigger>
                 <TabsTrigger value="all" className="rounded-lg">Tümü</TabsTrigger>
               </TabsList>
@@ -391,7 +399,11 @@ export default function SuperAdminDashboard() {
                 <RewardsManagement cafes={cafes} />
               </TabsContent>
 
-              {activeTab !== 'rewards' && (
+              <TabsContent value="issues" className="mt-0">
+                <IssueReportsList />
+              </TabsContent>
+
+              {activeTab !== 'rewards' && activeTab !== 'issues' && (
                 <TabsContent value={activeTab} className="mt-0">
                   {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

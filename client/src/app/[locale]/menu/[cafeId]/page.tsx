@@ -384,7 +384,7 @@ export default function MenuPage() {
     );
   }
 
-  const isDemoMode = searchParams.get('demo') === 'true';
+  const isDemoMode = searchParams.get('demo') === 'true' || cafeId === '2ea6acce-7d77-4a0b-910f-56a05666d89d';
 
   const templateProps: TemplateProps = {
     cafe,

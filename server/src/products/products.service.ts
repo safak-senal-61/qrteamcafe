@@ -185,61 +185,7 @@ export class ProductsService {
       ),
     }));
 
-    if (manualRecommendations.length >= limit) {
-      return manualRecommendations;
-    }
-
-    const remainingLimit = limit - manualRecommendations.length;
-
-    // 2. Find orders that contain this product for additional recommendations
-    const ordersWithProduct = await this.prisma.orderItem.findMany({
-      where: { productId },
-      select: { orderId: true },
-      distinct: ['orderId'],
-      take: 50, // Analyze last 50 orders for performance
-    });
-
-    const orderIds = ordersWithProduct.map((o) => o.orderId);
-    let autoRecommendations: any[] = [];
-
-    if (orderIds.length > 0) {
-      // Find other items in these orders, excluding manually recommended ones
-      const relatedItems = await this.prisma.orderItem.groupBy({
-        by: ['productId'],
-        where: {
-          orderId: { in: orderIds },
-          productId: { 
-            notIn: [productId, ...manualRecommendations.map(p => p.id)] 
-          },
-        },
-        _count: {
-          productId: true,
-        },
-        orderBy: {
-          _count: {
-            productId: 'desc',
-          },
-        },
-        take: remainingLimit,
-      });
-
-      const recommendedProductIds = relatedItems.map((item) => item.productId);
-      const products = await this.prisma.product.findMany({
-        where: { id: { in: recommendedProductIds }, isAvailable: true },
-        include: { category: true },
-      });
-
-      autoRecommendations = products.map((product) => ({
-        ...product,
-        imageUrl: getProductImage(
-          product.name,
-          product.category?.name,
-          product.imageUrl,
-        ),
-      }));
-    }
-
-    return [...manualRecommendations, ...autoRecommendations];
+    return manualRecommendations;
   }
 
   async toggleChefRecommendation(id: string, isChefRecommended: boolean) {

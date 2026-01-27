@@ -218,6 +218,7 @@ export function PremiumTemplate({
                        showRating={cafe?.showProductRatings} 
                        variant="compact"
                        className="bg-[#111] border border-[#222] hover:border-[#c6a355]/30 p-4 rounded-sm transition-all duration-500 group"
+                       isReadOnly={isDemoMode}
                     />
                  ))}
               </div>

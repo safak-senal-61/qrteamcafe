@@ -207,7 +207,7 @@ export default function PanelGallery({ isOpen, onClose }: PanelGalleryProps) {
                   setCurrentIndex(idx);
                 }}
                 className={`relative w-24 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
-                  idx === currentIndex ? 'border-primary scale-110 z-10' : 'border-transparent opacity-50 hover:opacity-100'
+                  idx === currentIndex ? 'border-amber-500 scale-110 z-10' : 'border-transparent opacity-50 hover:opacity-100'
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}

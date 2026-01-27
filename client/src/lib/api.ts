@@ -27,12 +27,28 @@ export const api = axios.create({
 // Request interceptor to add token if available
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
+    // Check for Admin Token first if we are in admin section
+    const isAdminSection = window.location.pathname.includes('/admin');
+    const adminToken = localStorage.getItem('token');
+    
+    if (isAdminSection && adminToken) {
+      config.headers.Authorization = `Bearer ${adminToken}`;
+      return config;
+    }
+
+    // Check for Customer Token
     const storage = localStorage.getItem('customer-storage');
     if (storage) {
       const { state } = JSON.parse(storage);
       if (state?.token) {
         config.headers.Authorization = `Bearer ${state.token}`;
+        return config;
       }
+    }
+
+    // Fallback: Use admin token if available (even if not in admin section, e.g. shared components)
+    if (adminToken) {
+      config.headers.Authorization = `Bearer ${adminToken}`;
     }
   }
   return config;

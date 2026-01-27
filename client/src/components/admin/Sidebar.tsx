@@ -17,6 +17,7 @@ import {
   LayoutTemplate,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ReportIssueDialog } from './ReportIssueDialog';
 
 const menuItems = [
   {
@@ -196,7 +197,8 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto pt-4 border-t">
+      <div className="mt-auto pt-4 border-t space-y-2">
+        <ReportIssueDialog />
         <Button
           variant="ghost"
           className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50"
