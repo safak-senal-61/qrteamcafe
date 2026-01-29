@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { issueReportsService, IssueReport } from '@/services/issue-reports.service';
@@ -21,7 +20,7 @@ export function IssueReportsList() {
     try {
       const data = await issueReportsService.findAll();
       setReports(data);
-    } catch (error) {
+    } catch {
       toast.error('Raporlar yüklenemedi.');
     } finally {
       setLoading(false);
@@ -30,10 +29,10 @@ export function IssueReportsList() {
 
   const handleStatusChange = async (id: string, status: string) => {
     try {
-      await issueReportsService.update(id, { status: status as any });
+      await issueReportsService.update(id, { status: status as 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' });
       toast.success('Durum güncellendi.');
       fetchReports();
-    } catch (error) {
+    } catch {
       toast.error('Durum güncellenemedi.');
     }
   };

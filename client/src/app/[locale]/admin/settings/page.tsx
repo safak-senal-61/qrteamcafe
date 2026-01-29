@@ -260,10 +260,16 @@ export default function SettingsPage() {
     formDataUpload.append('file', file);
 
     try {
-      const res = await fetch(`${API_URL}/cafes/${cafeId}/logo`, {
-        method: 'PATCH',
-        body: formDataUpload,
-      });
+      const token = localStorage.getItem('token');
+          if (!token) return;
+
+          const res = await fetch(`${API_URL}/cafes/${cafeId}/cover`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formDataUpload,
+          });
 
       if (res.ok) {
         const data = await res.json();

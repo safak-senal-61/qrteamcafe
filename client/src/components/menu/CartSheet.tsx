@@ -205,7 +205,7 @@ export function CartSheet({
           </motion.div>
         </div>
       </SheetTrigger>
-      <SheetContent className="flex flex-col h-full w-full sm:max-w-md p-0 border-l-0 rounded-l-[2rem] shadow-2xl overflow-hidden">
+      <SheetContent className="flex flex-col h-[100dvh] w-full sm:max-w-md p-0 border-l-0 rounded-l-[2rem] shadow-2xl overflow-hidden">
         <SheetHeader className="p-6 pb-2 bg-secondary/30">
           <SheetTitle className="flex items-center text-2xl font-bold">
             <div className="bg-primary/10 p-2 rounded-xl mr-3">
@@ -215,7 +215,7 @@ export function CartSheet({
           </SheetTitle>
         </SheetHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden min-h-0">
           <div className="px-6 mb-4">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="cart">Sepetim ({totalItems})</TabsTrigger>
@@ -223,8 +223,8 @@ export function CartSheet({
             </TabsList>
           </div>
 
-          <TabsContent value="cart" className="flex-1 overflow-hidden relative mt-0 data-[state=inactive]:hidden">
-            <div className="flex-1 overflow-hidden relative flex flex-col h-full">
+          <TabsContent value="cart" className="flex-1 flex flex-col overflow-hidden relative mt-0 data-[state=inactive]:hidden min-h-0">
+            <div className="flex-1 w-full overflow-hidden relative flex flex-col min-h-0">
               {items.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-6 p-8 text-center animate-in fade-in zoom-in duration-500">
                   <div className="bg-secondary p-8 rounded-full">
@@ -239,7 +239,7 @@ export function CartSheet({
                 </div>
               ) : (
                 <>
-                  <ScrollArea className="flex-1 -mr-4 pr-4">
+                  <ScrollArea className="flex-1 -mr-4 pr-4 min-h-0">
                     <div className="px-6 py-4">
                       <AnimatePresence initial={false}>
                         <div className="space-y-4 pb-4">
@@ -346,8 +346,8 @@ export function CartSheet({
             </div>
           </TabsContent>
 
-          <TabsContent value="orders" className="flex-1 overflow-hidden relative mt-0 data-[state=inactive]:hidden">
-             <ScrollArea className="h-full px-6 py-4">
+          <TabsContent value="orders" className="flex-1 flex flex-col overflow-hidden relative mt-0 data-[state=inactive]:hidden min-h-0">
+             <ScrollArea className="flex-1 px-6 py-4 min-h-0">
               {activeOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-muted-foreground text-center">
                   <ClipboardList className="w-12 h-12 mb-4 opacity-20" />

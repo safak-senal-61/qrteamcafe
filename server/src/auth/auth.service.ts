@@ -344,6 +344,9 @@ export class AuthService {
           slug: `${slug}-${Date.now()}`,
           phone: dto.phone,
           status: 'PENDING',
+          // 30 days trial
+          trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          plan: 'trial',
         },
       });
 
@@ -640,6 +643,15 @@ export class AuthService {
         name: true,
         email: true,
         isTwoFactorEnabled: true,
+        cafe: {
+          select: {
+            id: true,
+            trialEndsAt: true,
+            subscriptionEndsAt: true,
+            isSubscriptionActive: true,
+            plan: true,
+          },
+        },
       },
     });
 

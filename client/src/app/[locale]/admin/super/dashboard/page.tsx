@@ -25,7 +25,8 @@ import {
   Power,
   Globe,
   BellRing,
-  Gift
+  Gift,
+  CreditCard
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -54,6 +55,10 @@ interface Cafe {
   isActive: boolean;
   createdAt: string;
   admins: CafeAdmin[];
+  plan: string;
+  trialEndsAt: string | null;
+  subscriptionEndsAt: string | null;
+  isSubscriptionActive: boolean;
 }
 
 interface DashboardStats {
@@ -87,25 +92,42 @@ export default function SuperAdminDashboard() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
 
+  // Subscription Extension State
+  const [subscriptionDialog, setSubscriptionDialog] = useState<{ open: boolean; cafeId: string; cafeName: string } | null>(null);
+  const [extensionMonths, setExtensionMonths] = useState(1);
+  const [extendingSubscription, setExtendingSubscription] = useState(false);
+
   const fetchData = async () => {
     setLoading(true);
+    const token = localStorage.getItem('token');
+    if (!token) {
+        setLoading(false);
+        return;
+    }
+
     try {
       // Fetch Cafes
-      const cafesRes = await fetch(`${API_URL}/super-admin/cafes`);
+      const cafesRes = await fetch(`${API_URL}/super-admin/cafes`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (cafesRes.ok) {
         const data = await cafesRes.json();
         setCafes(data);
       }
 
       // Fetch Stats
-      const statsRes = await fetch(`${API_URL}/super-admin/stats`);
+      const statsRes = await fetch(`${API_URL}/super-admin/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (statsRes.ok) {
         const data = await statsRes.json();
         setStats(data);
       }
 
       // Fetch Settings
-      const settingsRes = await fetch(`${API_URL}/super-admin/settings`);
+      const settingsRes = await fetch(`${API_URL}/super-admin/settings`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (settingsRes.ok) {
         const data = await settingsRes.json();
         // Parse settings if they exist, otherwise use defaults
@@ -178,6 +200,41 @@ export default function SuperAdminDashboard() {
       toast.error('Ayarlar kaydedilirken bir hata oluştu.');
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  const handleExtendSubscription = async () => {
+    if (!subscriptionDialog) return;
+
+    setExtendingSubscription(true);
+    const token = localStorage.getItem('token');
+    if (!token) {
+        setExtendingSubscription(false);
+        return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/super-admin/cafes/${subscriptionDialog.cafeId}/subscription`, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ months: extensionMonths }),
+      });
+
+      if (response.ok) {
+        toast.success(`${subscriptionDialog.cafeName} için abonelik ${extensionMonths} ay uzatıldı.`);
+        setSubscriptionDialog(null);
+        fetchData();
+      } else {
+        toast.error('Abonelik uzatılırken bir hata oluştu.');
+      }
+    } catch (error) {
+      console.error('Failed to extend subscription:', error);
+      toast.error('Bir hata oluştu.');
+    } finally {
+      setExtendingSubscription(false);
     }
   };
 
@@ -470,9 +527,34 @@ export default function SuperAdminDashboard() {
                                   <Phone className="h-4 w-4 mr-3 text-indigo-500" />
                                   <span>{cafe.phone}</span>
                                 </div>
+                                
+                                {/* Subscription Status */}
+                                <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Abonelik Durumu</span>
+                                    <Badge variant="outline" className={
+                                      cafe.isSubscriptionActive ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-orange-50 text-orange-700 border-orange-200'
+                                    }>
+                                      {cafe.isSubscriptionActive ? 'Pro Paket' : 'Deneme Sürümü'}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center text-xs text-slate-500">
+                                    <Calendar className="h-3 w-3 mr-2" />
+                                    <span>
+                                      Bitiş: {
+                                        cafe.isSubscriptionActive && cafe.subscriptionEndsAt 
+                                          ? format(new Date(cafe.subscriptionEndsAt), 'd MMMM yyyy', { locale: tr })
+                                          : cafe.trialEndsAt 
+                                            ? format(new Date(cafe.trialEndsAt), 'd MMMM yyyy', { locale: tr }) 
+                                            : '-'
+                                      }
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
 
-                              <div className="pt-2 flex gap-3">
+                              <div className="pt-2 flex flex-col gap-2">
+                                <div className="flex gap-3">
                                 {cafe.status === 'PENDING' ? (
                                   <>
                                     <Button
@@ -535,6 +617,16 @@ export default function SuperAdminDashboard() {
                                   </Button>
                                 )}
                               </div>
+                              {cafe.status === 'APPROVED' && (
+                                <Button
+                                  variant="outline"
+                                  className="w-full border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                                  onClick={() => setSubscriptionDialog({ open: true, cafeId: cafe.id, cafeName: cafe.name })}
+                                >
+                                  <CreditCard className="h-4 w-4 mr-2" /> Abonelik Süresi Ekle
+                                </Button>
+                              )}
+                            </div>
                             </CardContent>
                           </Card>
                         </motion.div>
@@ -546,6 +638,58 @@ export default function SuperAdminDashboard() {
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Subscription Extension Dialog */}
+        <Dialog open={!!subscriptionDialog} onOpenChange={(open) => !open && setSubscriptionDialog(null)}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Abonelik Uzat</DialogTitle>
+              <DialogDescription>
+                {subscriptionDialog?.cafeName} için abonelik süresini uzatın.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="months">Ay Sayısı</Label>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => setExtensionMonths(Math.max(1, extensionMonths - 1))}
+                    disabled={extensionMonths <= 1}
+                  >
+                    -
+                  </Button>
+                  <Input
+                    id="months"
+                    type="number"
+                    value={extensionMonths}
+                    onChange={(e) => setExtensionMonths(parseInt(e.target.value) || 1)}
+                    className="text-center"
+                    min="1"
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => setExtensionMonths(extensionMonths + 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Toplam {extensionMonths} ay eklenecek.
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSubscriptionDialog(null)}>İptal</Button>
+              <Button onClick={handleExtendSubscription} disabled={extendingSubscription}>
+                {extendingSubscription && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Onayla ve Uzat
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

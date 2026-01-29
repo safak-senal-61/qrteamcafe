@@ -33,14 +33,21 @@ export function PendingOrdersWidget() {
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
-    if (!userStr) return;
+    const token = localStorage.getItem('token');
+    
+    if (!userStr || !token) return;
+    
     const user = JSON.parse(userStr);
     const cafeId = user.cafeId;
 
     // Fetch initial pending orders
     const fetchPendingOrders = async () => {
       try {
-        const res = await fetch(`${API_URL}/orders?cafeId=${cafeId}`);
+        const res = await fetch(`${API_URL}/orders?cafeId=${cafeId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (res.ok) {
           const allOrders = await res.json();
           // Filter only PENDING orders

@@ -44,6 +44,7 @@
     "class-validator": "^0.14.3",
     "dotenv": "^17.2.3",
     "helmet": "^8.1.0",
+    "iyzipay": "^2.0.64",
     "nodemailer": "^7.0.12",
     "otplib": "^13.1.1",
     "passport": "^0.7.0",

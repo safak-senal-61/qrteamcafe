@@ -12,10 +12,14 @@ import { toast } from 'sonner';
 export function ReportIssueDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  }>({
     title: '',
     description: '',
-    priority: 'MEDIUM' as const,
+    priority: 'MEDIUM',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,8 +31,9 @@ export function ReportIssueDialog() {
       toast.success('Sorun bildirimi başarıyla gönderildi.');
       setOpen(false);
       setFormData({ title: '', description: '', priority: 'MEDIUM' });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.error('Issue report error:', error);
+      console.error('Issue report submission error:', error);
       const errorMessage = error.response?.data?.message || 'Bildirim gönderilirken bir hata oluştu.';
       toast.error(errorMessage);
     } finally {
@@ -63,7 +68,7 @@ export function ReportIssueDialog() {
             <Label>Öncelik</Label>
             <Select
               value={formData.priority}
-              onValueChange={(value: any) => setFormData({ ...formData, priority: value })}
+              onValueChange={(value) => setFormData({ ...formData, priority: value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' })}
             >
               <SelectTrigger>
                 <SelectValue />

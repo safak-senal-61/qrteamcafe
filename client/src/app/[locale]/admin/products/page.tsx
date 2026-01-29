@@ -122,13 +122,18 @@ export default function MenuPage() {
     try {
       setLoading(true);
       const userStr = localStorage.getItem('user');
-      if (!userStr) return;
+      const token = localStorage.getItem('token');
+      if (!userStr || !token) return;
       const user = JSON.parse(userStr);
       const cafeId = user.cafeId;
 
       const [catsRes, prodsRes] = await Promise.all([
-        fetch(`${API_URL}/categories?cafeId=${cafeId}`),
-        fetch(`${API_URL}/products?cafeId=${cafeId}`)
+        fetch(`${API_URL}/categories?cafeId=${cafeId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/products?cafeId=${cafeId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
       ]);
 
       if (catsRes.ok && prodsRes.ok) {
@@ -252,7 +257,13 @@ export default function MenuPage() {
   const handleDeleteCategory = async (id: string) => {
     if (!confirm('Kategoriyi ve içindeki ürünleri silmek istediğinize emin misiniz?')) return;
     try {
-      const res = await fetch(`${API_URL}/categories/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const res = await fetch(`${API_URL}/categories/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) {
         toast.success('Kategori silindi.');
         if (selectedCategoryId === id) setSelectedCategoryId(null);
@@ -291,6 +302,9 @@ export default function MenuPage() {
     const timer = setTimeout(async () => {
       if (viewProducts.length > 0) {
         try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+
           const items = viewProducts.map((prod, index) => ({
             id: prod.id,
             sortOrder: index
@@ -298,7 +312,10 @@ export default function MenuPage() {
           
           await fetch(`${API_URL}/products/reorder`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify(items)
           });
         } catch (error) {
@@ -389,7 +406,13 @@ export default function MenuPage() {
   const handleDeleteProduct = async (id: string) => {
     if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
     try {
-      const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const res = await fetch(`${API_URL}/products/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) {
         toast.success('Ürün silindi.');
         fetchData();
@@ -1039,7 +1062,7 @@ export default function MenuPage() {
                     </div>
                   </ScrollArea>
                   <p className="text-xs text-muted-foreground">
-                    Seçilen ürünler "Bununla İyi Gider" bölümünde gösterilecektir.
+                    Seçilen ürünler &quot;Bununla İyi Gider&quot; bölümünde gösterilecektir.
                   </p>
                 </div>
               </div>

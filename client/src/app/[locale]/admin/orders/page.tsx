@@ -62,10 +62,17 @@ export default function OrdersPage() {
 
   const fetchData = useCallback(async () => {
     if (!cafeId) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const [ordersRes, tablesRes] = await Promise.all([
-        fetch(`${API_URL}/orders?cafeId=${cafeId}`),
-        fetch(`${API_URL}/tables?cafeId=${cafeId}`)
+        fetch(`${API_URL}/orders?cafeId=${cafeId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/tables?cafeId=${cafeId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
       ]);
 
       if (ordersRes.ok && tablesRes.ok) {
@@ -82,11 +89,16 @@ export default function OrdersPage() {
 
   const handleMoveTable = async () => {
     if (!moveSourceTable || !moveTargetTableId || !cafeId) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
     try {
       const res = await fetch(`${API_URL}/tables/move?cafeId=${cafeId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           fromTableId: moveSourceTable.id,
           toTableId: moveTargetTableId
@@ -126,10 +138,16 @@ export default function OrdersPage() {
   }, [cafeId, fetchData]);
 
   const updateOrderStatus = async (orderId: string, status: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ status }),
       });
 
@@ -168,6 +186,8 @@ export default function OrdersPage() {
 
   const handlePayTable = async () => {
     if (!selectedTable) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
     
     // Yazdırma için tabloyu sakla (selectedTable null olsa bile bu kalacak)
     setPrintTable(selectedTable);
@@ -175,6 +195,7 @@ export default function OrdersPage() {
     try {
       const res = await fetch(`${API_URL}/orders/table/${selectedTable.id}/pay`, {
         method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (res.ok) {

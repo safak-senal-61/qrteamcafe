@@ -6,15 +6,19 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { TablesService } from './tables.service';
 import { CreateTableDto } from './dto/create-table.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SubscriptionGuard } from '../auth/subscription.guard';
 
 @Controller('tables')
 export class TablesController {
   constructor(private readonly tablesService: TablesService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   create(
     @Body() createTableDto: CreateTableDto,
     @Query('cafeId') cafeId: string,
@@ -23,6 +27,7 @@ export class TablesController {
   }
 
   @Post('move')
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   moveTable(
     @Query('cafeId') cafeId: string,
     @Body() body: { fromTableId: string; toTableId: string },
@@ -40,6 +45,7 @@ export class TablesController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   remove(@Param('id') id: string) {
     return this.tablesService.remove(id);
   }

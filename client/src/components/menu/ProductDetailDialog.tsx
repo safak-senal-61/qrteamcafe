@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Minus, Plus, ShoppingBasket, X, Star, ChefHat, MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

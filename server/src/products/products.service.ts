@@ -173,8 +173,9 @@ export class ProductsService {
       },
     });
 
-    let manualRecommendations = productWithRecommendations?.recommendations || [];
-    
+    let manualRecommendations =
+      productWithRecommendations?.recommendations || [];
+
     // Add imageUrl to manual recommendations
     manualRecommendations = manualRecommendations.map((product) => ({
       ...product,

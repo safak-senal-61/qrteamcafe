@@ -7,12 +7,15 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { CafesService } from './cafes.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { UpdateCafeDto } from './dto/update-cafe.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SubscriptionGuard } from '../auth/subscription.guard';
 
 @Controller('cafes')
 export class CafesController {
@@ -28,11 +31,13 @@ export class CafesController {
     return this.cafesService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   @Get(':id/dashboard-stats')
   getDashboardStats(@Param('id') id: string) {
     return this.cafesService.getDashboardStats(id);
   }
 
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   @Patch(':id/logo')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -71,6 +76,7 @@ export class CafesController {
     return this.cafesService.update(id, { logoUrl });
   }
 
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   @Patch(':id/cover-image')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -110,6 +116,7 @@ export class CafesController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   update(@Param('id') id: string, @Body() updateCafeDto: UpdateCafeDto) {
     return this.cafesService.update(id, updateCafeDto);
   }

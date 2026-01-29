@@ -85,7 +85,13 @@ export class CafesService {
 
     const cafeSettings = await this.prisma.cafe.findUnique({
       where: { id: cafeId },
-      select: { isSoundEnabled: true },
+      select: { 
+        isSoundEnabled: true,
+        plan: true,
+        subscriptionEndsAt: true,
+        trialEndsAt: true,
+        isSubscriptionActive: true
+      },
     });
 
     const [totalOrders, dailyRevenue, activeTables, totalProducts] =
@@ -177,6 +183,12 @@ export class CafesService {
       recentOrders,
       popularProducts,
       isSoundEnabled: cafeSettings?.isSoundEnabled ?? true,
+      subscription: {
+        plan: cafeSettings?.plan,
+        subscriptionEndsAt: cafeSettings?.subscriptionEndsAt,
+        trialEndsAt: cafeSettings?.trialEndsAt,
+        isSubscriptionActive: cafeSettings?.isSubscriptionActive
+      }
     };
   }
 }

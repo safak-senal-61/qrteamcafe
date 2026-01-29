@@ -20,7 +20,9 @@ import {
   ExternalLink,
   BellRing,
   ChevronRight,
-  Star
+  Star,
+  Crown,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -73,6 +75,12 @@ interface DashboardStats {
   recentOrders: DashboardOrder[];
   popularProducts: PopularProduct[];
   isSoundEnabled: boolean;
+  subscription?: {
+    plan: string;
+    subscriptionEndsAt: string | null;
+    trialEndsAt: string | null;
+    isSubscriptionActive: boolean;
+  };
 }
 
 import { io } from 'socket.io-client';
@@ -159,10 +167,12 @@ export default function DashboardPage() {
     try {
       if (!cafeId) return;
       
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/cafes/${cafeId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ isSoundEnabled: newState }),
       });
@@ -301,14 +311,19 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       const userStr = localStorage.getItem('user');
-      if (!userStr) return;
+      const token = localStorage.getItem('token');
+      if (!userStr || !token) return;
       
       const user = JSON.parse(userStr);
       const cafeId = user.cafeId;
       setCafeId(cafeId);
 
       try {
-        const response = await fetch(`${API_URL}/cafes/${cafeId}/dashboard-stats`);
+        const response = await fetch(`${API_URL}/cafes/${cafeId}/dashboard-stats`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (response.ok) {
           const data = await response.json();
           setStats(data);
@@ -390,8 +405,89 @@ export default function DashboardPage() {
     },
   ];
 
+  // Subscription Status Logic
+  const getSubscriptionStatus = () => {
+    if (!stats.subscription) return null;
+
+    const { plan, subscriptionEndsAt, trialEndsAt, isSubscriptionActive } = stats.subscription;
+    const now = new Date();
+    
+    // Check Pro Subscription first
+    if (isSubscriptionActive && subscriptionEndsAt) {
+      const end = new Date(subscriptionEndsAt);
+      const diffTime = Math.abs(end.getTime() - now.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      
+      return {
+        type: 'PRO',
+        label: 'Pro Üyelik',
+        daysLeft: diffDays,
+        color: 'bg-gradient-to-r from-amber-500 to-orange-500',
+        icon: Crown
+      };
+    }
+
+    // Check Trial
+    if (trialEndsAt) {
+      const end = new Date(trialEndsAt);
+      if (end > now) {
+        const diffTime = Math.abs(end.getTime() - now.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        return {
+          type: 'TRIAL',
+          label: 'Deneme Sürümü',
+          daysLeft: diffDays,
+          color: 'bg-gradient-to-r from-blue-500 to-indigo-500',
+          icon: Clock
+        };
+      }
+    }
+
+    return {
+      type: 'EXPIRED',
+      label: 'Süre Doldu',
+      daysLeft: 0,
+      color: 'bg-red-500',
+      icon: Clock
+    };
+  };
+
+  const subStatus = getSubscriptionStatus();
+
   return (
     <div className="space-y-8">
+      {/* Subscription Status Banner */}
+      {subStatus && (
+        <div className={`p-6 rounded-xl text-white shadow-lg ${subStatus.color} flex items-center justify-between relative overflow-hidden`}>
+          <div className="flex items-center gap-4 z-10">
+            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
+              <subStatus.icon className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                {subStatus.label}
+                {subStatus.type === 'PRO' && <Badge variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-0">Premium</Badge>}
+              </h3>
+              <p className="text-white/90 text-sm">
+                {subStatus.daysLeft > 0 
+                  ? `${subStatus.daysLeft} gün kaldı` 
+                  : 'Abonelik süreniz doldu, lütfen yenileyin.'}
+              </p>
+            </div>
+          </div>
+          
+          {subStatus.type !== 'PRO' && (
+             <Button variant="secondary" className="bg-white text-primary hover:bg-gray-100 z-10" onClick={() => router.push('/pricing')}>
+               Yükselt
+             </Button>
+          )}
+
+          {/* Background decoration */}
+          <div className="absolute right-0 top-0 h-full w-1/3 bg-white/10 skew-x-12 transform translate-x-10" />
+        </div>
+      )}
+
       {newOrderCount > 0 && (
         <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-center justify-between animate-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-3">

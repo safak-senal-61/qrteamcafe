@@ -7,9 +7,12 @@ import {
   Patch,
   Query,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { WaiterCallsService } from './waiter-calls.service';
 import { CreateWaiterCallDto } from './dto/create-waiter-call.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SubscriptionGuard } from '../auth/subscription.guard';
 
 @Controller('waiter-calls')
 export class WaiterCallsController {
@@ -24,6 +27,7 @@ export class WaiterCallsController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   findAll(
     @Query('cafeId') cafeId: string,
     @Query('status') status?: 'PENDING' | 'COMPLETED',
@@ -32,11 +36,13 @@ export class WaiterCallsController {
   }
 
   @Patch(':id/complete')
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   complete(@Param('id') id: string) {
     return this.waiterCallsService.complete(id);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   remove(@Param('id') id: string) {
     return this.waiterCallsService.remove(id);
   }

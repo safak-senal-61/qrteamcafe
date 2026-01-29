@@ -184,7 +184,6 @@ export default function MenuPage() {
           console.log('Tables fetched:', tables);
           
           // Use loose comparison for tableNumber (string vs number)
-          // eslint-disable-next-line eqeqeq
           const currentTable = tables.find((t) => t.tableNumber == parseInt(tableNumber));
           
           if (currentTable) {

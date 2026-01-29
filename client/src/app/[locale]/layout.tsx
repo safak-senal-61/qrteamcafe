@@ -20,12 +20,35 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'QR Cafe Team',
-  description: 'Cafe Management System',
+  metadataBase: new URL('https://qrders.com.tr'),
+  title: {
+    default: 'Qrders - QR Menü Sistemi',
+    template: '%s | Qrders'
+  },
+  description: 'Modern QR Menü ve Sipariş Yönetim Sistemi. Hızlı, kolay ve temassız sipariş deneyimi.',
   icons: {
     icon: '/icon.svg',
     shortcut: '/icon.svg',
     apple: '/icon.svg',
+  },
+  openGraph: {
+    title: 'Qrders - QR Menü Sistemi',
+    description: 'Modern QR Menü ve Sipariş Yönetim Sistemi',
+    url: 'https://qrders.com.tr',
+    siteName: 'Qrders',
+    locale: 'tr_TR',
+    type: 'website',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 

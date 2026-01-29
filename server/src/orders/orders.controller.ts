@@ -12,6 +12,7 @@ import {
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SubscriptionGuard } from '../auth/subscription.guard';
 import type { RequestWithUser } from '../auth/interfaces';
 
 @Controller('orders')
@@ -33,16 +34,19 @@ export class OrdersController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   findAll(@Query('cafeId') cafeId: string) {
     return this.ordersService.findAll(cafeId);
   }
 
   @Patch(':id/status')
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   updateStatus(@Param('id') id: string, @Body('status') status: string) {
     return this.ordersService.updateStatus(id, status);
   }
 
   @Post('table/:id/pay')
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
   closeTable(@Param('id') tableId: string) {
     return this.ordersService.closeTable(tableId);
   }

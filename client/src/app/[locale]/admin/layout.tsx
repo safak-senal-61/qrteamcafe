@@ -25,7 +25,7 @@ export default function AdminLayout({
 
   console.log('AdminLayout pathname:', pathname, 'isAuthPage:', isAuthPage);
 
-  const applyTheme = useCallback((cafe: any) => {
+  const applyTheme = useCallback((cafe: { themeConfig?: string; brandColor?: string }) => {
     if (cafe?.themeConfig) {
       try {
         const config = JSON.parse(cafe.themeConfig);
@@ -53,17 +53,33 @@ export default function AdminLayout({
     if (!userStr) return;
     try {
       const user = JSON.parse(userStr);
+      
       if (user.cafeId) {
         const res = await fetch(`${API_URL}/cafes/${user.cafeId}`);
         if (res.ok) {
           const cafe = await res.json();
           applyTheme(cafe);
+
+          // Subscription Check (Skip for Super Admin)
+          if (user.role !== 'SUPER_ADMIN') {
+            const now = new Date();
+            const trialEndsAt = cafe.trialEndsAt ? new Date(cafe.trialEndsAt) : null;
+            const subscriptionEndsAt = cafe.subscriptionEndsAt ? new Date(cafe.subscriptionEndsAt) : null;
+            
+            const isTrialActive = trialEndsAt && trialEndsAt > now;
+            const isSubscriptionActive = cafe.isSubscriptionActive && subscriptionEndsAt && subscriptionEndsAt > now;
+
+            if (!isTrialActive && !isSubscriptionActive) {
+               // Subscription expired
+               router.replace('/pricing');
+            }
+          }
         }
       }
     } catch (e) {
       console.error('Failed to fetch theme', e);
     }
-  }, [applyTheme]);
+  }, [applyTheme, router]);
 
   useEffect(() => {
     if (isAuthPage) return;
@@ -102,7 +118,47 @@ export default function AdminLayout({
     };
 
     checkAuth();
-  }, [pathname, isAuthPage, isSuperAdmin, router]);
+  }, [isAuthPage, isSuperAdmin, router]);
+
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (isAuthPage || isSuperAdmin) return;
+      
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${API_URL}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+          const userData = await res.json();
+          const cafe = userData.cafe;
+          if (cafe) {
+             const now = new Date();
+             const trialEnds = cafe.trialEndsAt ? new Date(cafe.trialEndsAt) : null;
+             const subEnds = cafe.subscriptionEndsAt ? new Date(cafe.subscriptionEndsAt) : null;
+             
+             // Check if trial is active
+             const isTrialActive = trialEnds && trialEnds > now;
+             
+             // Check if subscription is active
+             const isSubActive = cafe.isSubscriptionActive && subEnds && subEnds > now;
+             
+             if (!isTrialActive && !isSubActive) {
+               console.log('Subscription expired, redirecting to pricing...');
+               router.push('/pricing');
+             }
+          }
+        }
+      } catch (e) {
+        console.error('Subscription check failed', e);
+      }
+    };
+
+    checkSubscription();
+  }, [isAuthPage, isSuperAdmin, router]);
 
   // Close mobile menu on route change
   useEffect(() => {

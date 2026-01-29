@@ -45,4 +45,9 @@ export class SuperAdminController {
   rejectCafe(@Param('id') id: string) {
     return this.superAdminService.rejectCafe(id);
   }
+
+  @Post('cafes/:id/subscription')
+  extendSubscription(@Param('id') id: string, @Body() body: { months: number }) {
+    return this.superAdminService.extendSubscription(id, body.months);
+  }
 }

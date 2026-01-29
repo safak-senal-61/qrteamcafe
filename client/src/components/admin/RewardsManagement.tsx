@@ -45,8 +45,16 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
 
   const fetchRewards = useCallback(async () => {
     setLoading(true);
+    const token = localStorage.getItem('token');
+    if (!token) {
+        setLoading(false);
+        return;
+    }
+
     try {
-      const res = await fetch(`${API_URL}/loyalty/admin/rewards/${selectedCafeId}`);
+      const res = await fetch(`${API_URL}/loyalty/admin/rewards/${selectedCafeId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) {
         const data = await res.json();
         setRewards(data);
@@ -78,6 +86,12 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
     setUploadingImage(true);
     const formData = new FormData();
     formData.append('file', file);
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+        setUploadingImage(false);
+        return;
+    }
 
     try {
       // Using the generic upload endpoint or creating a specific one if needed
@@ -85,6 +99,7 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
       // For now, let's use a hypothetical rewards image upload endpoint
       const res = await fetch(`${API_URL}/loyalty/upload-image`, {
         method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
 
@@ -109,11 +124,17 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
     e.preventDefault();
     if (!selectedCafeId) return toast.error('Lütfen bir işletme seçin');
     
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     setCreating(true);
     try {
       const res = await fetch(`${API_URL}/loyalty/rewards`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           cafeId: selectedCafeId,
           title,
@@ -143,10 +164,13 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Bu ödülü silmek istediğinize emin misiniz?')) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
     try {
       const res = await fetch(`${API_URL}/loyalty/rewards/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         toast.success('Ödül silindi');

@@ -1,5 +1,5 @@
 import { redirect } from '@/navigation';
 
 export default function AdminPage() {
-  redirect('/admin/dashboard');
+  redirect({ href: '/admin/dashboard', locale: 'tr' });
 }

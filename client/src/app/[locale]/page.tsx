@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Link } from '@/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { QrCode, Utensils, Smartphone, ChevronRight, CheckCircle2, Zap, LayoutDashboard, Users, BarChart3, Clock, Globe, Wallet, Menu, Lock, ArrowRight } from 'lucide-react';
+import { QrCode, Utensils, Smartphone, CheckCircle2, Zap, LayoutDashboard, Users, BarChart3, Clock, Globe, Wallet, ChevronRight, Menu } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import AOS from 'aos';
 import 'aos/dist/aos.css';

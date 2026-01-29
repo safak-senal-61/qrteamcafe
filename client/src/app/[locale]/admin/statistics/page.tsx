@@ -101,17 +101,25 @@ export default function StatisticsPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchData = async () => {
+    setLoading(true);
     const userStr = localStorage.getItem('user');
-    if (!userStr) return;
+    const token = localStorage.getItem('token');
+    if (!userStr || !token) return;
     
     const user = JSON.parse(userStr);
     const cafeId = user.cafeId;
 
     try {
       const [statsRes, catRes, prodRes] = await Promise.all([
-        fetch(`${API_URL}/cafes/${cafeId}/dashboard-stats`),
-        fetch(`${API_URL}/categories?cafeId=${cafeId}`),
-        fetch(`${API_URL}/products?cafeId=${cafeId}`)
+        fetch(`${API_URL}/cafes/${cafeId}/dashboard-stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/categories?cafeId=${cafeId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/products?cafeId=${cafeId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
       ]);
 
       if (statsRes.ok && catRes.ok && prodRes.ok) {

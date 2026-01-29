@@ -34,14 +34,19 @@ export function WaiterCallWidget() {
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
-    if (!userStr) return;
+    const token = localStorage.getItem('token');
+    
+    if (!userStr || !token) return;
+    
     const user = JSON.parse(userStr);
     const cafeId = user.cafeId;
 
     // Fetch initial pending calls
     const fetchCalls = async () => {
       try {
-        const res = await fetch(`${API_URL}/waiter-calls?cafeId=${cafeId}&status=PENDING`);
+        const res = await fetch(`${API_URL}/waiter-calls?cafeId=${cafeId}&status=PENDING`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         if (res.ok) {
           const data = await res.json();
           setCalls(data);
@@ -88,9 +93,13 @@ export function WaiterCallWidget() {
 
   const handleComplete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const res = await fetch(`${API_URL}/waiter-calls/${id}/complete`, {
         method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         setCalls(prev => prev.filter(c => c.id !== id));

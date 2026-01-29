@@ -151,4 +151,35 @@ export class SuperAdminService {
       return cafe;
     });
   }
+
+  async extendSubscription(cafeId: string, months: number) {
+    const cafe = await this.prisma.cafe.findUnique({
+      where: { id: cafeId },
+    });
+
+    if (!cafe) {
+      throw new BadRequestException('Cafe bulunamadı.');
+    }
+
+    const now = new Date();
+    let newEndDate = now;
+
+    if (cafe.isSubscriptionActive && cafe.subscriptionEndsAt && cafe.subscriptionEndsAt > now) {
+      // If active, extend from the current end date
+      newEndDate = new Date(cafe.subscriptionEndsAt);
+    }
+
+    // Add months
+    newEndDate.setMonth(newEndDate.getMonth() + months);
+
+    return this.prisma.cafe.update({
+      where: { id: cafeId },
+      data: {
+        isSubscriptionActive: true,
+        plan: 'pro',
+        subscriptionEndsAt: newEndDate,
+        // If it was in trial, trial logic is superseded by pro subscription
+      },
+    });
+  }
 }

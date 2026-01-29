@@ -57,6 +57,13 @@ model Cafe {
   templateId      String?   @default("classic") @map("template_id")
   themeConfig     String?   @map("theme_config") // JSON string for advanced customization
 
+  // Subscription & Payment
+  trialEndsAt        DateTime? @map("trial_ends_at")
+  subscriptionEndsAt DateTime? @map("subscription_ends_at")
+  isSubscriptionActive Boolean @default(false) @map("is_subscription_active")
+  plan               String    @default("trial") // trial, pro, enterprise
+  iyzicoSubReferenceCode String? @map("iyzico_sub_reference_code")
+
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
 
