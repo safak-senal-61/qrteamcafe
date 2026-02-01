@@ -27,7 +27,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     // Bağlantı logu eklenebilir
-    console.log(`Client connected: ${client.id}`);
+    // console.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
@@ -37,9 +37,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // İstemci bir masadan ayrıldıysa
         // Kullanıcı sayfayı yenilediğinde veya kısa süreli kopmalarda hemen düşmemesi için
         // 10 saniyelik bir bekleme süresi (grace period) ekliyoruz.
-        console.log(
-          `Client ${client.id} disconnected from table ${info.tableId}. Waiting 10s before removal.`,
-        );
+        // console.log(
+        //   `Client ${client.id} disconnected from table ${info.tableId}. Waiting 10s before removal.`,
+        // );
 
         // Socket'i map'ten hemen siliyoruz ki checkAndRemoveTable doğru çalışsın
         this.clientMap.delete(client.id);
@@ -73,9 +73,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     if (!isTableStillActive) {
-      console.log(
-        `Table ${tableId} in cafe ${cafeId} is empty. Removing from active tables.`,
-      );
+      // console.log(
+      //   `Table ${tableId} in cafe ${cafeId} is empty. Removing from active tables.`,
+      // );
       const tables = this.activeTables.get(cafeId);
       if (tables) {
         tables.delete(tableId);
@@ -88,9 +88,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.emitActiveTablesUpdate(cafeId);
       }
     } else {
-      console.log(
-        `Table ${tableId} in cafe ${cafeId} is still active. Keeping.`,
-      );
+      // console.log(
+      //   `Table ${tableId} in cafe ${cafeId} is still active. Keeping.`,
+      // );
     }
   }
 

@@ -62,6 +62,11 @@ export class AuthController {
     return this.authService.changePassword(dto);
   }
 
+  @Post('send-verification-code')
+  async sendVerificationCode(@Body() dto: ForgotPasswordDto) {
+    return this.authService.sendCafeRegistrationVerificationCode(dto.email);
+  }
+
   @Post('register')
   async register(@Body() dto: RegisterCafeDto) {
     return this.authService.registerCafe(dto);

@@ -12,7 +12,8 @@ import {
 import { CafesService } from './cafes.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import { UpdateCafeDto } from './dto/update-cafe.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SubscriptionGuard } from '../auth/subscription.guard';
@@ -42,7 +43,13 @@ export class CafesController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads/logos',
+        destination: (req, file, cb) => {
+          const uploadPath = './uploads/logos';
+          if (!existsSync(uploadPath)) {
+            mkdirSync(uploadPath, { recursive: true });
+          }
+          cb(null, uploadPath);
+        },
         filename: (req, file, callback) => {
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -81,7 +88,13 @@ export class CafesController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads/covers',
+        destination: (req, file, cb) => {
+          const uploadPath = './uploads/covers';
+          if (!existsSync(uploadPath)) {
+            mkdirSync(uploadPath, { recursive: true });
+          }
+          cb(null, uploadPath);
+        },
         filename: (req, file, callback) => {
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);

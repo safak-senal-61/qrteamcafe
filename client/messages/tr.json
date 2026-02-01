@@ -106,6 +106,80 @@
     "globalSupport": "Global Destek",
     "languages": "Türkçe & İngilizce"
   },
+  "SubscriptionPage": {
+    "title": "Abonelik Yönetimi",
+    "subtitle": "Mevcut planınızı ve ödeme bilgilerinizi buradan yönetebilirsiniz.",
+    "loading": "Yükleniyor...",
+    "errorFetch": "Abonelik bilgileri alınamadı.",
+    "labels": {
+      "planType": "Plan Tipi",
+      "renewalAmount": "Yenileme Tutarı",
+      "endDate": "Bitiş Tarihi"
+    },
+    "status": {
+      "active": "Aktif",
+      "expired": "Süresi Doldu",
+      "cancelled": "İptal Edildi",
+      "daysLeft": "{days} gün kaldı",
+      "expiredDaysAgo": "{days} gün önce bitti"
+    },
+    "currentPlan": {
+      "title": "Mevcut Plan",
+      "description": "Aktif abonelik detayları"
+    },
+    "paymentMethod": {
+      "title": "Ödeme Yöntemi",
+      "description": "Kayıtlı kart bilgileri",
+      "info": "Ödemeleriniz bu kart üzerinden otomatik olarak tahsil edilir.",
+      "update": "Kartı Güncelle",
+      "noCard": "Kayıtlı kart bulunmuyor.",
+      "add": "Kart Ekle"
+    },
+    "deleteCard": {
+      "title": "Kartı Sil",
+      "description": "Bu kartı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+      "action": "Sil",
+      "cancel": "İptal"
+    },
+    "cancelSubscription": {
+      "title": "Aboneliği İptal Et",
+      "description": "Aboneliğinizi iptal etmek istediğinize emin misiniz? İptal ettikten sonra mevcut dönem sonuna kadar özelliklerden faydalanmaya devam edebilirsiniz. Dönem sonunda otomatik yenileme yapılmayacaktır.",
+      "inputPlaceholder": "Onaylamak için 'onayla' yazın",
+      "confirm": "Aboneliği İptal Et",
+      "cancel": "Vazgeç",
+      "button": "Aboneliği İptal Et"
+    },
+    "messages": {
+      "cardDeleted": "Kart başarıyla silindi.",
+      "subscriptionCancelled": "Aboneliğiniz başarıyla iptal edildi."
+    },
+    "errors": {
+      "cardDeleteFailed": "Kart silinirken bir hata oluştu.",
+      "subscriptionCancelFailed": "Abonelik iptal edilirken bir hata oluştu."
+    },
+    "plans": {
+      "monthly": {
+        "title": "Aylık Plan",
+        "description": "Esnek ödeme, istediğin zaman iptal et.",
+        "action": "Aylık Plana Geç / Uzat"
+      },
+      "yearly": {
+        "title": "Yıllık Plan",
+        "description": "Uzun vadeli düşün, %20 tasarruf et.",
+        "discountBadge": "%20 İndirim",
+        "savings": "Yıllık 998 ₺ avantaj",
+        "action": "Yıllık Plana Geç / Uzat"
+      }
+    },
+    "actions": {
+      "extend": "Süreyi Uzat",
+      "cancel": "Aboneliği İptal Et",
+      "viewPackages": "Paketleri İncele"
+    },
+    "notFound": {
+      "title": "Abonelik Bulunamadı"
+    }
+  },
   "PricingPage": {
     "title": "Basit ve Şeffaf",
     "titleHighlight": "Fiyatlandırma",
@@ -114,7 +188,7 @@
     "plans": {
       "starter": {
         "name": "Başlangıç",
-        "price": "Ücretsiz",
+        "price": "1 Ay Ücretsiz Deneme",
         "description": "Küçük işletmeler ve yeni başlayanlar için ideal.",
         "cta": "Hemen Başla",
         "features": {
@@ -550,7 +624,13 @@
       "errorGeneric": "Bir hata oluştu. Lütfen tekrar deneyin.",
       "editLogo": "Logoyu Düzenle",
       "cropDesc": "Logonuzu kare formatında kırpın ve ayarlayın.",
-      "zoom": "Yakınlaştır"
+      "zoom": "Yakınlaştır",
+      "codeSent": "Doğrulama kodu gönderildi.",
+      "verifyEmail": "E-posta Doğrulama",
+      "verifyEmailDesc": "Lütfen {email} adresine gönderilen 6 haneli doğrulama kodunu giriniz.",
+      "verificationCode": "Doğrulama Kodu",
+      "continue": "Devam Et",
+      "complete": "Tamamla"
     },
     "forgotPassword": {
       "title": "Şifre Sıfırlama",

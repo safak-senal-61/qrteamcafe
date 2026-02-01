@@ -1,5 +1,6 @@
-import { Controller, Post, Body, Res, UseGuards, Request, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Res, UseGuards, Request, Get, Query, Delete, Param } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
+import { InitializePaymentDto } from './dto/initialize-payment.dto';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -9,13 +10,9 @@ export class PaymentsController {
 
   @UseGuards(JwtAuthGuard)
   @Post('initialize')
-  async initializePayment(@Request() req: any, @Body() body: { ip: string }) {
+  async initializePayment(@Request() req: any, @Body() body: InitializePaymentDto) {
     // req.user is populated by JwtAuthGuard
     // req.user: { id, email, name, role, cafeId }
-    
-    // We need user name, assuming it's in the token or we can fetch it. 
-    // For now, let's use what we have in token (name might be missing in payload depending on strategy)
-    // Checking JwtStrategy might be useful, but let's assume req.user has name or use default.
     
     const { cafeId, email, name } = req.user;
     
@@ -24,7 +21,28 @@ export class PaymentsController {
     const host = req.get('host');
     const baseUrl = `${protocol}://${host}`;
     
-    return this.paymentsService.initializePayment(cafeId, body.ip, email, name || 'Admin User', baseUrl);
+    return this.paymentsService.initializePayment(cafeId, body.ip, email, name || 'Admin User', body, baseUrl);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('cards')
+  async listCards(@Request() req: any) {
+    const { cafeId } = req.user;
+    return this.paymentsService.listStoredCards(cafeId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('cards/:cardToken')
+  async deleteCard(@Request() req: any, @Param('cardToken') cardToken: string) {
+    const { cafeId } = req.user;
+    return this.paymentsService.deleteStoredCard(cafeId, cardToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('cancel-subscription')
+  async cancelSubscription(@Request() req: any) {
+    const { cafeId } = req.user;
+    return this.paymentsService.cancelSubscription(cafeId);
   }
 
   @Post('callback')

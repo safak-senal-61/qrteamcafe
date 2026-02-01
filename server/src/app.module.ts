@@ -18,9 +18,12 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { CustomersModule } from './customers/customers.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { IssueReportsModule } from './issue-reports/issue-reports.module';
+import { VerificationModule } from './verification/verification.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 1 minute
@@ -45,6 +48,7 @@ import { IssueReportsModule } from './issue-reports/issue-reports.module';
     CustomersModule,
     LoyaltyModule,
     IssueReportsModule,
+    VerificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

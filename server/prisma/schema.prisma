@@ -60,9 +60,11 @@ model Cafe {
   // Subscription & Payment
   trialEndsAt        DateTime? @map("trial_ends_at")
   subscriptionEndsAt DateTime? @map("subscription_ends_at")
+  subscriptionPeriod String?   @default("monthly") @map("subscription_period") // monthly, yearly
   isSubscriptionActive Boolean @default(false) @map("is_subscription_active")
   plan               String    @default("trial") // trial, pro, enterprise
   iyzicoSubReferenceCode String? @map("iyzico_sub_reference_code")
+  iyzicoCardUserKey  String?   @map("iyzico_card_user_key")
 
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
@@ -378,4 +380,14 @@ model LoyaltyTransaction {
   customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("loyalty_transactions")
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  code      String
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("email_verifications")
 }

@@ -20,4 +20,7 @@ export class RegisterCafeDto {
       'Şifre en az 1 büyük harf, 1 küçük harf ve 1 rakam veya özel karakter içermelidir.',
   })
   password: string;
+
+  @IsNotEmpty({ message: 'Doğrulama kodu gereklidir.' })
+  verificationCode: string;
 }

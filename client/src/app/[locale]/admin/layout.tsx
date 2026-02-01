@@ -20,10 +20,8 @@ export default function AdminLayout({
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
-  const isAuthPage = pathname === '/admin/login' || pathname === '/admin/register';
+  const isAuthPage = pathname.includes('/admin/login') || pathname.includes('/admin/register');
   const isSuperAdmin = pathname.startsWith('/admin/super');
-
-  console.log('AdminLayout pathname:', pathname, 'isAuthPage:', isAuthPage);
 
   const applyTheme = useCallback((cafe: { themeConfig?: string; brandColor?: string }) => {
     if (cafe?.themeConfig) {
@@ -36,7 +34,7 @@ export default function AdminLayout({
           return;
         }
       } catch (e) {
-        console.error('Theme config parse error', e);
+        // Silent fail for theme parse
       }
     }
     
@@ -49,12 +47,15 @@ export default function AdminLayout({
   }, []);
 
   const fetchTheme = useCallback(async () => {
+    // Skip if on auth pages or super admin
+    if (isAuthPage || isSuperAdmin) return;
+
     const userStr = localStorage.getItem('user');
     if (!userStr) return;
     try {
       const user = JSON.parse(userStr);
       
-      if (user.cafeId) {
+      if (user.cafeId && API_URL) {
         const res = await fetch(`${API_URL}/cafes/${user.cafeId}`);
         if (res.ok) {
           const cafe = await res.json();
@@ -77,9 +78,12 @@ export default function AdminLayout({
         }
       }
     } catch (e) {
-      console.error('Failed to fetch theme', e);
+      // Ignore network errors for theme fetching to prevent console spam
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Theme fetch failed (likely server down or network issue):', e);
+      }
     }
-  }, [applyTheme, router]);
+  }, [applyTheme, router, isAuthPage, isSuperAdmin]);
 
   useEffect(() => {
     if (isAuthPage) return;

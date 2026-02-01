@@ -55,7 +55,8 @@ export class SubscriptionGuard implements CanActivate {
     }
 
     // Check subscription
-    if (cafe.isSubscriptionActive && cafe.subscriptionEndsAt && cafe.subscriptionEndsAt > now) {
+    // Allow access if subscription is active OR if the paid period hasn't ended yet
+    if ((cafe.isSubscriptionActive || (cafe.subscriptionEndsAt && cafe.subscriptionEndsAt > now))) {
       return true;
     }
 

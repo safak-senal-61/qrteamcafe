@@ -311,6 +311,37 @@ export class AuthService {
     throw new NotFoundException('Kullanıcı bulunamadı.');
   }
 
+  async sendCafeRegistrationVerificationCode(email: string) {
+    const normalizedEmail = email.toLowerCase();
+
+    // Check if email already registered
+    const existingCafeAdmin = await this.prisma.cafeAdmin.findUnique({
+      where: { email: normalizedEmail },
+    });
+    const existingSuperAdmin = await this.prisma.superAdmin.findUnique({
+      where: { email: normalizedEmail },
+    });
+    const existingCustomer = await this.prisma.customer.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (existingCafeAdmin || existingSuperAdmin || existingCustomer) {
+      throw new BadRequestException('Bu e-posta adresi zaten kullanımda.');
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    await this.prisma.emailVerification.upsert({
+      where: { email: normalizedEmail },
+      update: { code, expiresAt },
+      create: { email: normalizedEmail, code, expiresAt },
+    });
+
+    await this.mailService.sendVerificationEmail(normalizedEmail, code);
+    return { message: 'Doğrulama kodu gönderildi.' };
+  }
+
   async registerCafe(dto: RegisterCafeDto) {
     const email = dto.email.toLowerCase();
     const existingCafeAdmin = await this.prisma.cafeAdmin.findUnique({
@@ -327,6 +358,28 @@ export class AuthService {
 
     if (existingCafeAdmin || existingSuperAdmin || existingCustomer) {
       throw new BadRequestException('Bu e-posta adresi zaten kullanımda.');
+    }
+
+    // Verify Code
+    const verification = await this.prisma.emailVerification.findUnique({
+      where: { email },
+    });
+
+    if (
+      !verification ||
+      verification.code !== dto.verificationCode ||
+      verification.expiresAt < new Date()
+    ) {
+      console.log('Verification failed details:', {
+        email: email,
+        receivedCode: dto.verificationCode,
+        dbCode: verification?.code,
+        expiresAt: verification?.expiresAt,
+        now: new Date()
+      });
+      throw new BadRequestException(
+        'Geçersiz veya süresi dolmuş doğrulama kodu.',
+      );
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -358,6 +411,11 @@ export class AuthService {
           passwordHash: passwordHash,
           isApproved: false,
         },
+      });
+
+      // Consume verification code
+      await prisma.emailVerification.delete({
+        where: { email },
       });
 
       return { cafe, admin };

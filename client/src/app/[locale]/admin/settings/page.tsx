@@ -33,6 +33,36 @@ interface CroppedAreaPixels {
   height: number;
 }
 
+// Helper to construct full URL
+const getFullUrl = (url: string | null | undefined) => {
+  if (!url) return '';
+  if (url.startsWith('data:')) return url;
+
+  // If it looks like a relative path stored as full URL with old IP/domain, fix it
+  // Specifically for our uploads folder
+  if (url.startsWith('http') && url.includes('/uploads/')) {
+    try {
+      const urlObj = new URL(url);
+      // Use current API_URL + path
+      const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+      return `${baseUrl}${urlObj.pathname}`;
+    } catch {
+      // Fallback if URL parsing fails
+      return url;
+    }
+  }
+
+  if (url.startsWith('http')) return url;
+  
+  const baseUrl = API_URL;
+  // Remove trailing slash from baseUrl if exists
+  const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  // Ensure url starts with /
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  
+  return `${cleanBaseUrl}${cleanUrl}`;
+};
+
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -151,8 +181,8 @@ export default function SettingsPage() {
           description: data.description || '',
           googleMapsUrl: data.googleMapsUrl || '',
           
-          logoUrl: data.logoUrl ? (data.logoUrl.startsWith('http') ? data.logoUrl : `${API_URL}${data.logoUrl}`) : '',
-          coverImageUrl: data.coverImageUrl ? (data.coverImageUrl.startsWith('http') ? data.coverImageUrl : `${API_URL}${data.coverImageUrl}`) : '',
+          logoUrl: getFullUrl(data.logoUrl),
+          coverImageUrl: getFullUrl(data.coverImageUrl),
           brandColor: data.brandColor || '#000000',
           theme: data.themeConfig ? JSON.parse(data.themeConfig).theme || 'default' : 'default',
           menuViewMode: data.menuViewMode || 'card',
@@ -263,7 +293,7 @@ export default function SettingsPage() {
       const token = localStorage.getItem('token');
           if (!token) return;
 
-          const res = await fetch(`${API_URL}/cafes/${cafeId}/cover`, {
+          const res = await fetch(`${API_URL}/cafes/${cafeId}/logo`, {
             method: 'PATCH',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -273,9 +303,7 @@ export default function SettingsPage() {
 
       if (res.ok) {
         const data = await res.json();
-        const fullLogoUrl = data.logoUrl.startsWith('http') 
-          ? data.logoUrl 
-          : `${API_URL}${data.logoUrl}`;
+        const fullLogoUrl = getFullUrl(data.logoUrl);
           
         setFormData(prev => ({ ...prev, logoUrl: fullLogoUrl }));
         toast.success('Logo başarıyla yüklendi.');
@@ -308,9 +336,7 @@ export default function SettingsPage() {
 
       if (res.ok) {
         const data = await res.json();
-        const fullCoverUrl = data.coverImageUrl.startsWith('http') 
-          ? data.coverImageUrl 
-          : `${API_URL}${data.coverImageUrl}`;
+        const fullCoverUrl = getFullUrl(data.coverImageUrl);
           
         setFormData(prev => ({ ...prev, coverImageUrl: fullCoverUrl }));
         toast.success('Kapak fotoğrafı başarıyla yüklendi.');

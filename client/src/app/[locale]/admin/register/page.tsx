@@ -32,6 +32,8 @@ export default function RegisterPage() {
     email: '',
     password: '',
   });
+  const [verificationCode, setVerificationCode] = useState('');
+  const [step, setStep] = useState<'form' | 'verify'>('form');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -103,46 +105,64 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      // First register the user and cafe
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cafeName: formData.cafeName,
-          fullName: formData.fullName,
-          phone: formData.phone,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+      if (step === 'form') {
+        // Step 1: Send verification code
+        const response = await fetch(`${API_URL}/auth/send-verification-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email }),
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        
-        // If logo is selected, upload it
-        if (selectedFile && data.cafeId) {
-            const formDataUpload = new FormData();
-            formDataUpload.append('file', selectedFile);
-
-            await fetch(`${API_URL}/cafes/${data.cafeId}/logo`, {
-                method: 'PATCH',
-                body: formDataUpload,
-            });
-        }
-
-        setIsSuccess(true);
-        toast.success(t('register.successTitle'));
-      } else {
-        const error = await response.json();
-        let errorMessage = t('register.failMessage');
-        if (error.message === 'Bu e-posta adresi zaten kullanımda.') {
-          errorMessage = t('register.emailInUse');
-        } else if (Array.isArray(error.message)) {
-          errorMessage = error.message.join(', ');
+        if (response.ok) {
+          setStep('verify');
+          toast.success(t('register.codeSent'));
         } else {
-          errorMessage = error.message || t('register.failMessage');
+          const error = await response.json();
+          toast.error(error.message || t('register.failMessage'));
         }
-        toast.error(errorMessage);
+      } else {
+        // Step 2: Register with code
+        const response = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cafeName: formData.cafeName,
+            fullName: formData.fullName,
+            phone: formData.phone,
+            email: formData.email,
+            password: formData.password,
+            verificationCode,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // If logo is selected, upload it
+          if (selectedFile && data.cafeId) {
+              const formDataUpload = new FormData();
+              formDataUpload.append('file', selectedFile);
+
+              await fetch(`${API_URL}/cafes/${data.cafeId}/logo`, {
+                  method: 'PATCH',
+                  body: formDataUpload,
+              });
+          }
+
+          setIsSuccess(true);
+          toast.success(t('register.successTitle'));
+        } else {
+          const error = await response.json();
+          let errorMessage = t('register.failMessage');
+          if (error.message === 'Bu e-posta adresi zaten kullanımda.') {
+            errorMessage = t('register.emailInUse');
+          } else if (Array.isArray(error.message)) {
+            errorMessage = error.message.join(', ');
+          } else {
+            errorMessage = error.message || t('register.failMessage');
+          }
+          toast.error(errorMessage);
+        }
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -210,128 +230,154 @@ export default function RegisterPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="cafeName">{t('register.cafeName')}</Label>
-                <div className="relative">
-                  <Store className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="cafeName"
-                    value={formData.cafeName}
-                    onChange={handleChange}
-                    placeholder={t('register.cafeNamePlaceholder')}
-                    className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                    required
-                  />
-                </div>
-              </div>
+              {step === 'form' ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="cafeName">{t('register.cafeName')}</Label>
+                    <div className="relative">
+                      <Store className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="cafeName"
+                        value={formData.cafeName}
+                        onChange={handleChange}
+                        placeholder={t('register.cafeNamePlaceholder')}
+                        className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label>{t('register.cafeLogo')}</Label>
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-secondary/50 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    {logoPreview ? (
-                      <div className="relative w-full h-full">
-                        <Image 
-                          src={logoPreview} 
-                          alt="Logo Preview" 
-                          fill
-                          className="object-cover"
-                          unoptimized
+                  <div className="space-y-2">
+                    <Label>{t('register.cafeLogo')}</Label>
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-secondary/50 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {logoPreview ? (
+                          <div className="relative w-full h-full">
+                            <Image 
+                              src={logoPreview} 
+                              alt="Logo Preview" 
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
+                        ) : (
+                          <Upload className="h-6 w-6 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          {t('register.selectLogo')}
+                        </Button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={onFileChange}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1 text-center">
+                            {t('register.logoHint')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">{t('register.fullName')}</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="fullName"
+                          value={formData.fullName}
+                          onChange={handleChange}
+                          placeholder={t('register.fullNamePlaceholder')}
+                          className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
+                          required
                         />
                       </div>
-                    ) : (
-                      <Upload className="h-6 w-6 text-muted-foreground" />
-                    )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">{t('register.phone')}</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="phone"
+                          value={formData.phone}
+                          onChange={handleChange}
+                          placeholder={t('register.phonePlaceholder')}
+                          type="tel"
+                          className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      {t('register.selectLogo')}
-                    </Button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={onFileChange}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1 text-center">
-                        {t('register.logoHint')}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">{t('common.email')}</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder={t('register.emailPlaceholder')}
+                        type="email"
+                        className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{t('register.setPassword')}</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        type="password"
+                        placeholder="••••••••"
+                        className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-4 py-4">
+                  <div className="text-center space-y-2">
+                    <Mail className="h-12 w-12 mx-auto text-primary" />
+                    <h3 className="font-semibold text-lg">{t('register.verifyEmail')}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t('register.verifyEmailDesc', { email: formData.email })}
                     </p>
                   </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">{t('register.fullName')}</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <Label htmlFor="code">{t('register.verificationCode')}</Label>
                     <Input
-                      id="fullName"
-                      value={formData.fullName}
-                      onChange={handleChange}
-                      placeholder={t('register.fullNamePlaceholder')}
-                      className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
+                      id="code"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      placeholder="123456"
+                      className="text-center text-lg tracking-widest h-12"
+                      maxLength={6}
                       required
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">{t('register.phone')}</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder={t('register.phonePlaceholder')}
-                      type="tel"
-                      className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">{t('common.email')}</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder={t('register.emailPlaceholder')}
-                    type="email"
-                    className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">{t('register.setPassword')}</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                    required
-                  />
-                </div>
-              </div>
+              )}
 
               <Button
                 type="submit"
@@ -345,7 +391,7 @@ export default function RegisterPage() {
                   </>
                 ) : (
                   <>
-                    {t('register.submit')} <ArrowRight className="ml-2 h-5 w-5" />
+                    {step === 'form' ? t('register.continue') : t('register.complete')} <ArrowRight className="ml-2 h-5 w-5" />
                   </>
                 )}
               </Button>

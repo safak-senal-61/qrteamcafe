@@ -22,11 +22,13 @@ import {
   ChevronRight,
   Star,
   Crown,
+  CreditCard,
   Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Link, useRouter } from '@/navigation';
+import { Link, useRouter, usePathname } from '@/navigation';
+import { useSearchParams } from 'next/navigation';
 import { API_URL } from '@/lib/api';
 import Image from 'next/image';
 import { Socket } from 'socket.io-client';
@@ -86,14 +88,31 @@ interface DashboardStats {
 import { io } from 'socket.io-client';
 import { useRef } from 'react';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+
 export default function DashboardPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [cafeId, setCafeId] = useState<string | null>(null);
   const [newOrderCount, setNewOrderCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   
+  // Payment Success Dialog State
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
+  const [hasStoredCard, setHasStoredCard] = useState(false);
+
   // DB'den gelen ses ayarı - Default olarak TRUE (Açık) başlatıyoruz
   const [soundEnabled, setSoundEnabled] = useState(true);
   // Socket eventleri içinde güncel değeri okuyabilmek için ref kullanıyoruz
@@ -147,6 +166,49 @@ export default function DashboardPage() {
       document.removeEventListener('keydown', unlockAudio);
     };
   }, [audio]);
+
+  // Payment Status Handler
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    const reason = searchParams.get('reason');
+
+    if (paymentStatus === 'success') {
+      // Check if we have a stored card
+      const checkCardStatus = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${API_URL}/payments/cards`, {
+             headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const cards = await res.json();
+            setHasStoredCard(Array.isArray(cards) && cards.length > 0);
+          }
+        } catch (e) {
+          console.error('Failed to check cards', e);
+        } finally {
+          setShowPaymentSuccess(true);
+        }
+      };
+      
+      checkCardStatus();
+      
+      // URL'i temizle
+      router.replace(pathname);
+    } else if (paymentStatus === 'failed') {
+      toast.error(`Ödeme başarısız oldu. ${reason ? `Sebep: ${reason}` : ''}`, {
+        duration: 5000,
+      });
+      // URL'i temizle
+      router.replace(pathname);
+    } else if (paymentStatus === 'error') {
+      toast.error('Ödeme işlemi sırasında bir hata oluştu.', {
+        duration: 5000,
+      });
+      // URL'i temizle
+      router.replace(pathname);
+    }
+  }, [searchParams, router, pathname]);
 
   const toggleSound = async () => {
     const newState = !soundEnabled;
@@ -457,6 +519,71 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Payment Success Dialog */}
+      <Dialog open={showPaymentSuccess} onOpenChange={setShowPaymentSuccess}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <Crown className="w-5 h-5" />
+              Ödeme Başarılı
+            </DialogTitle>
+            <DialogDescription>
+              Aboneliğiniz başarıyla yenilenmiştir.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+             {hasStoredCard ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+                   <div className="p-1 bg-green-100 rounded-full shrink-0">
+                      <CreditCard className="w-4 h-4 text-green-600" />
+                   </div>
+                   <div>
+                      <h4 className="font-semibold text-green-900 text-sm">Otomatik Yenileme Aktif</h4>
+                      <p className="text-green-700 text-xs mt-1">
+                        Kayıtlı kartınız ile aboneliğiniz otomatik olarak yenilenecektir.
+                      </p>
+                   </div>
+                </div>
+             ) : (
+                <div className="space-y-4">
+                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+                     <div className="p-1 bg-amber-100 rounded-full shrink-0">
+                        <CreditCard className="w-4 h-4 text-amber-600" />
+                     </div>
+                     <div>
+                        <h4 className="font-semibold text-amber-900 text-sm">Otomatik Yenileme Kapalı</h4>
+                        <p className="text-amber-700 text-xs mt-1">
+                          Henüz kayıtlı kartınız bulunmuyor. Aboneliğinizin kesintisiz devam etmesi için kartınızı kaydedebilirsiniz.
+                        </p>
+                     </div>
+                   </div>
+
+                   <div className="flex items-center space-x-2 border p-4 rounded-lg bg-slate-50">
+                      <Switch 
+                        id="auto-renew" 
+                        onCheckedChange={(checked) => {
+                           if (checked) {
+                              // Redirect to Add Card flow
+                              router.push('/pricing?mode=update_card');
+                           }
+                        }}
+                      />
+                      <Label htmlFor="auto-renew" className="flex-1 cursor-pointer">
+                        <span className="font-medium block">Kartımı Kaydet</span>
+                        <span className="text-xs text-muted-foreground font-normal">Otomatik yenileme özelliğini aç</span>
+                      </Label>
+                   </div>
+                </div>
+             )}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setShowPaymentSuccess(false)}>Tamam</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Subscription Status Banner */}
       {subStatus && (
         <div className={`p-6 rounded-xl text-white shadow-lg ${subStatus.color} flex items-center justify-between relative overflow-hidden`}>
