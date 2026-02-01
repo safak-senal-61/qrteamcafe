@@ -186,7 +186,7 @@ export default function AdminLayout({
       <PendingOrdersWidget />
       <WaiterCallWidget />
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex">
+      <div className="hidden md:flex w-[22rem] shrink-0">
         <Sidebar />
       </div>
 

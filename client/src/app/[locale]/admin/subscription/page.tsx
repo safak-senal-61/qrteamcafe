@@ -20,6 +20,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface SubscriptionData {
   plan: string;
@@ -54,6 +62,8 @@ export default function SubscriptionPage() {
   // Payment States
   const [isExtending, setIsExtending] = useState(false);
   const [selectedPlanDuration, setSelectedPlanDuration] = useState<'monthly' | 'yearly'>('monthly');
+  const [isExtendDialogOpen, setIsExtendDialogOpen] = useState(false);
+  const [extendMonth, setExtendMonth] = useState(1);
 
   const fetchSubscriptionData = useCallback(async () => {
     try {
@@ -258,7 +268,7 @@ export default function SubscriptionPage() {
           </CardContent>
           <CardFooter className="bg-slate-50 dark:bg-slate-900/50 border-t p-6 flex flex-wrap gap-4">
             <Button 
-              onClick={() => router.push('/pricing?extend=true')} 
+              onClick={() => setIsExtendDialogOpen(true)} 
               className="bg-green-600 hover:bg-green-700"
             >
               <Clock className="w-4 h-4 mr-2" />
@@ -455,6 +465,53 @@ export default function SubscriptionPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Extend Subscription Dialog */}
+        <Dialog open={isExtendDialogOpen} onOpenChange={setIsExtendDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Abonelik Süresini Uzat</DialogTitle>
+              <DialogDescription>
+                Mevcut aboneliğinizi uzatmak için bir süre seçin.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3, 6, 12].map((month) => (
+                  <Button
+                    key={month}
+                    variant={extendMonth === month ? "default" : "outline"}
+                    className={extendMonth === month ? "bg-primary text-primary-foreground" : ""}
+                    onClick={() => setExtendMonth(month)}
+                  >
+                    {month === 12 ? "1 Yıl" : `${month} Ay`}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                <span className="font-medium">Toplam Tutar:</span>
+                <span className="text-xl font-bold">
+                  {extendMonth === 12 
+                    ? "4.990,00 ₺" 
+                    : `${(extendMonth * 499).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺`}
+                </span>
+              </div>
+              {extendMonth === 12 && (
+                <p className="text-sm text-green-600 text-center font-medium">
+                  Yıllık planda %20 tasarruf edersiniz!
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button onClick={() => {
+                const duration = extendMonth === 12 ? 'yearly' : (extendMonth === 1 ? 'monthly' : `${extendMonth}_months`);
+                router.push(`/pricing?mode=extend&duration=${duration}`);
+              }}>
+                Ödemeye Geç
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }

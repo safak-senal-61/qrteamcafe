@@ -239,8 +239,8 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-card border-r w-64 p-4">
-      <div className="flex flex-col px-2 py-4 mb-6">
+    <div className="flex flex-col h-full bg-card border-r w-full p-4">
+      <div className="flex flex-col px-6 py-6 mb-2">
         <div className="flex items-center gap-3">
           <div 
             className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border"
@@ -263,11 +263,11 @@ export function Sidebar() {
           <span className="font-bold text-xl tracking-tight truncate" suppressHydrationWarning>{cafeData.name}</span>
         </div>
         <div className="pl-[52px] -mt-1">
-            <span className="text-[10px] font-bold text-muted-foreground/70 tracking-wider uppercase">powered by qrcafeteam</span>
+            <span className="text-[10px] font-bold text-muted-foreground/70 tracking-wider uppercase whitespace-nowrap">powered by qrcafeteam</span>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-1 px-4 overflow-y-auto py-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -291,7 +291,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto pt-4 border-t space-y-2">
+      <div className="mt-auto pt-4 border-t space-y-2 px-4 pb-6 bg-card">
         {getSubscriptionStatus()}
         <ReportIssueDialog />
         <Button

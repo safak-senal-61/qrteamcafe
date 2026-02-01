@@ -18,6 +18,34 @@ export class PaymentsService {
     });
   }
 
+  async createCardUser(cafeId: string, email: string) {
+    return new Promise((resolve, reject) => {
+      this.iyzipay.cardUser.create({
+        locale: Iyzipay.LOCALE.TR,
+        conversationId: cafeId,
+        email: email,
+        externalId: cafeId
+      }, async (err: any, result: any) => {
+        if (err) {
+            this.logger.error('Iyzico Card User Creation Error', err);
+            resolve(null);
+        } else {
+            if (result.status === 'success' && result.cardUserKey) {
+                // Save to DB
+                await this.prisma.cafe.update({
+                    where: { id: cafeId },
+                    data: { iyzicoCardUserKey: result.cardUserKey }
+                });
+                resolve(result.cardUserKey);
+            } else {
+                this.logger.warn('Iyzico Card User Creation Failed', result);
+                resolve(null);
+            }
+        }
+      });
+    });
+  }
+
   async initializePayment(cafeId: string, userIp: string, userEmail: string, userName: string, billingInfo: InitializePaymentDto, baseUrl?: string) {
     const cafe = await this.prisma.cafe.findUnique({ where: { id: cafeId } });
     if (!cafe) throw new BadRequestException('Cafe not found');
@@ -25,15 +53,88 @@ export class PaymentsService {
     // Get Admin User for more details if needed
     const admin = await this.prisma.cafeAdmin.findUnique({ where: { email: userEmail } });
 
-    // Ensure Card User Key exists
+    // Ensure Card User Key exists and is valid
     let cardUserKey = cafe.iyzicoCardUserKey;
     
-    // Determine price and duration based on plan type
-    const isYearly = billingInfo.planDuration === 'yearly';
-    const price = isYearly ? '4990.00' : '499.00';
-    const planName = isYearly ? 'QR Team Cafe Pro Plan (1 Yıllık)' : 'QR Team Cafe Pro Plan (1 Aylık)';
-    const planId = isYearly ? 'PRO_PLAN_1_YEAR' : 'PRO_PLAN_1_MONTH';
-    const planDuration = isYearly ? 'yearly' : 'monthly';
+    // Validate existing key
+    if (cardUserKey) {
+        try {
+             // Try to list cards to see if the key is valid
+             await new Promise((resolve, reject) => {
+                this.iyzipay.cardList.retrieve({
+                    locale: Iyzipay.LOCALE.TR,
+                    cardUserKey: cardUserKey,
+                }, (err: any, result: any) => {
+                    if (err) reject(err);
+                    else if (result.status !== 'success') reject(new Error(result.errorMessage));
+                    else resolve(result);
+                });
+             });
+        } catch (error) {
+            this.logger.warn(`Existing cardUserKey ${cardUserKey} is invalid or belongs to another env. Rotating...`);
+            cardUserKey = null; // Force recreation
+            // Update DB to null first to avoid confusion if creation fails
+             await this.prisma.cafe.update({
+                where: { id: cafeId },
+                data: { iyzicoCardUserKey: null }
+            });
+        }
+    }
+    
+    // If no cardUserKey exists (or was invalid), create one immediately
+    if (!cardUserKey) {
+        this.logger.log(`No cardUserKey found for cafe ${cafeId}, creating one...`);
+        try {
+            const newKey = await this.createCardUser(cafeId, userEmail);
+            if (newKey) {
+                cardUserKey = newKey as string;
+                this.logger.log(`Created new cardUserKey: ${cardUserKey}`);
+            }
+        } catch (e) {
+            this.logger.error('Failed to create card user during initialization', e);
+        }
+    }
+    
+    // Check mode
+    const isUpdateCardMode = billingInfo.mode === 'update_card';
+    
+    // Determine price and duration based on plan type or mode
+    let isYearly = billingInfo.planDuration === 'yearly';
+    let durationMonths = 1;
+    let planDuration = 'monthly';
+
+    if (billingInfo.planDuration === 'yearly') {
+        durationMonths = 12;
+        planDuration = 'yearly';
+    } else if (billingInfo.planDuration === 'monthly') {
+        durationMonths = 1;
+        planDuration = 'monthly';
+    } else if (billingInfo.planDuration && billingInfo.planDuration.endsWith('_months')) {
+        const m = parseInt(billingInfo.planDuration.split('_')[0]);
+        if (!isNaN(m) && m > 0) {
+            durationMonths = m;
+            planDuration = billingInfo.planDuration;
+            if (m === 12) {
+                isYearly = true;
+                planDuration = 'yearly';
+            }
+        }
+    }
+    
+    let price = isYearly ? '4990.00' : (durationMonths * 499).toFixed(2);
+    let planName = isYearly 
+        ? 'QR Team Cafe Pro Plan (1 Yıllık)' 
+        : `QR Team Cafe Pro Plan (${durationMonths} Aylık)`;
+    let planId = isYearly 
+        ? 'PRO_PLAN_1_YEAR' 
+        : `PRO_PLAN_${durationMonths}_MONTHS`;
+
+    if (isUpdateCardMode) {
+      price = '1.00';
+      planName = 'Kart Güncelleme / Doğrulama (İade Edilir)';
+      planId = 'CARD_UPDATE_VERIFY';
+      // Use a special duration tag or keep monthly but mark as update_card in basketId
+    }
 
     // Use provided baseUrl or fallback to ENV/localhost
     const apiBase = baseUrl || process.env.API_URL || 'http://localhost:3001';
@@ -48,14 +149,22 @@ export class PaymentsService {
     const surname = nameParts.length > 1 ? nameParts.pop() : 'User';
     const name = nameParts.join(' ') || 'Admin';
 
+    // Basket ID Construction
+    // Standard: BASKET-{cafeId}-{planDuration}-{timestamp}
+    // Update: BASKET-{cafeId}-update_card-{timestamp}
+    const basketId = isUpdateCardMode 
+      ? `BASKET-${cafeId}-update_card-${Date.now()}`
+      : `BASKET-${cafeId}-${planDuration}-${Date.now()}`;
+
+    this.logger.log(`Initializing payment for cafe ${cafeId}. Mode: ${billingInfo.mode}, CardUserKey: ${cardUserKey || 'NONE'}`);
+
     const request = {
       locale: Iyzipay.LOCALE.TR,
       conversationId: cafeId,
       price: price,
       paidPrice: price,
       currency: Iyzipay.CURRENCY.TRY,
-      // Encode planDuration in basketId: BASKET-{cafeId}-{planDuration}-{timestamp}
-      basketId: `BASKET-${cafeId}-${planDuration}-${Date.now()}`,
+      basketId: basketId,
       paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
       callbackUrl: callbackUrl,
       ...(cardUserKey ? { cardUserKey: cardUserKey } : {}),
@@ -174,80 +283,102 @@ export class PaymentsService {
             let cafeId = result.conversationId;
             let planDuration = 'monthly';
             
-            // Fallback: try to extract cafeId from basketId if conversationId is missing
+            // Extract info from basketId if needed or to get planDuration
             if (result.basketId && result.basketId.startsWith('BASKET-')) {
-              // basketId format: BASKET-{cafeId}-{planDuration}-{timestamp}
-              // OR OLD format: BASKET-{cafeId}-{timestamp}
-              const parts = result.basketId.split('-');
-              // parts[0] = BASKET
-              // parts[1] = cafeId (UUID)
-              // parts[2] = planDuration (monthly/yearly) OR timestamp
-              // parts[3] = timestamp (if planDuration exists)
-
-              // Check if we can extract cafeId from basketId if conversationId is missing
-              if (!cafeId && parts.length >= 2) {
-                 // UUIDs can contain dashes, so this simple split might be risky if we just took index 1.
-                 // But wait, our previous fix used lastIndexOf. Let's stick to a more robust parsing if we controlled the generation.
-                 // Since we generate: `BASKET-${cafeId}-${planDuration}-${Date.now()}`
-                 // cafeId is a UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (5 groups, 4 dashes)
-                 // BASKET-UUID-monthly-TIMESTAMP
-                 // Total dashes = 1 (BASKET-) + 4 (UUID) + 1 (-monthly) + 1 (-TIMESTAMP) = 7 dashes.
-                 
-                 // If monthly/yearly is present:
-                 // BASKET-UUID-monthly-123456789
-                 
-                 // If old format:
-                 // BASKET-UUID-123456789
-                 
-                 // Let's try to parse planDuration first.
-                 if (result.basketId.includes('-yearly-')) {
-                   planDuration = 'yearly';
-                 } else if (result.basketId.includes('-monthly-')) {
-                   planDuration = 'monthly';
+                 // Format: BASKET-{cafeId}-{planDuration}-{timestamp}
+                 // Safer extraction from end since cafeId (UUID) might contain dashes
+                 const lastDashIndex = result.basketId.lastIndexOf('-');
+                 if (lastDashIndex > 0) {
+                     const remaining = result.basketId.substring(0, lastDashIndex); // Removes timestamp
+                     const secondLastDashIndex = remaining.lastIndexOf('-');
+                     
+                     if (secondLastDashIndex > 0) {
+                         const extractedDuration = remaining.substring(secondLastDashIndex + 1);
+                         
+                         if (extractedDuration === 'monthly' || extractedDuration === 'yearly' || extractedDuration.endsWith('_months') || extractedDuration === 'update_card') {
+                             planDuration = extractedDuration;
+                             
+                             if (!cafeId) {
+                                 const cafeIdWithPrefix = remaining.substring(0, secondLastDashIndex);
+                                 if (cafeIdWithPrefix.startsWith('BASKET-')) {
+                                     cafeId = cafeIdWithPrefix.substring(7);
+                                 }
+                             }
+                         }
+                     }
                  }
-
-                 // If cafeId is missing, let's try to extract it.
-                 // We know it is between BASKET- and -{planDuration}-... or -{timestamp}
-                 if (!cafeId) {
-                    const prefix = 'BASKET-';
-                    let suffixIndex = -1;
-                    if (planDuration === 'yearly') suffixIndex = result.basketId.lastIndexOf('-yearly-');
-                    else if (planDuration === 'monthly') suffixIndex = result.basketId.lastIndexOf('-monthly-');
-                    else suffixIndex = result.basketId.lastIndexOf('-'); // Old format fallback (timestamp)
-
-                    if (suffixIndex > prefix.length) {
-                      cafeId = result.basketId.substring(prefix.length, suffixIndex);
-                    }
-                 }
-              } else {
-                 // Try to detect plan duration even if cafeId is present
-                 if (result.basketId.includes('-yearly-')) {
-                   planDuration = 'yearly';
-                 }
-              }
             }
 
             if (!cafeId) {
-              console.error('Payment successful but cafeId (conversationId) is missing in result:', JSON.stringify(result));
-              resolve({ success: false, message: 'Payment successful but cannot identify cafe.', result });
+              const errorMsg = `Payment successful but cannot identify cafe. conversationId: ${result.conversationId}, basketId: ${result.basketId}`;
+              this.logger.error(errorMsg, JSON.stringify(result));
+              resolve({ success: false, message: errorMsg, result });
               return;
             }
 
-            // Update subscription
-            const now = new Date();
-            let endDate = new Date(now);
-            if (planDuration === 'yearly') {
-              endDate.setFullYear(endDate.getFullYear() + 1);
-            } else {
-              endDate.setMonth(endDate.getMonth() + 1);
+            // Check for update_card mode
+            const isUpdateCardMode = planDuration === 'update_card' || result.basketId?.includes('-update_card-');
+
+            if (isUpdateCardMode) {
+                 this.logger.log(`Update Card Mode detected for cafe ${cafeId}.`);
+                 
+                 // If cardUserKey is present, update it
+                 const returnedCardUserKey = result.cardUserKey || (result.paymentCard && result.paymentCard.cardUserKey);
+                 
+                 if (returnedCardUserKey) {
+                    await this.prisma.cafe.update({
+                        where: { id: cafeId },
+                        data: { iyzicoCardUserKey: returnedCardUserKey }
+                    });
+                    result.cardUserKey = returnedCardUserKey;
+                 } else {
+                    // Fallback check for stored cards
+                    try {
+                        const storedCards: any[] = await this.listStoredCards(cafeId);
+                        if (storedCards.length > 0) {
+                             result.cardUserKey = (await this.prisma.cafe.findUnique({where: {id: cafeId}}))?.iyzicoCardUserKey;
+                        }
+                    } catch (e) {
+                        this.logger.error('Failed to check stored cards during verification fallback', e);
+                    }
+                 }
+                 
+                 // Refund the 1 TL verification amount
+                 try {
+                     if (result.paymentId) {
+                         await this.refundPayment(result.paymentId, result.price || '1.00', cafeId);
+                     }
+                 } catch (refundError) {
+                     this.logger.error(`Failed to refund verification payment: ${refundError.message}`);
+                 }
+
+                 resolve({ success: true, message: 'Card updated successfully', cafeId, mode: 'update_card', cardStored: !!result.cardUserKey });
+                 return;
             }
 
-            this.logger.log(`Payment Verified. Result: ${JSON.stringify(result)}`);
-            if (result.cardUserKey) {
-                this.logger.log(`Captured cardUserKey: ${result.cardUserKey}`);
-            } else {
-                this.logger.warn(`No cardUserKey returned in payment result. User might not have checked 'Store Card' or feature is disabled.`);
+            // Update subscription logic
+            const cafe = await this.prisma.cafe.findUnique({ where: { id: cafeId } });
+            
+            const now = new Date();
+            let endDate = new Date(now);
+            
+            // If subscription is active and not expired, extend from existing end date
+            if (cafe && cafe.isSubscriptionActive && cafe.subscriptionEndsAt && cafe.subscriptionEndsAt > now) {
+                endDate = new Date(cafe.subscriptionEndsAt);
             }
+
+            let monthsToAdd = 1;
+            if (planDuration === 'yearly') {
+                monthsToAdd = 12;
+            } else if (planDuration.endsWith('_months')) {
+                const m = parseInt(planDuration.split('_')[0]);
+                if (!isNaN(m) && m > 0) monthsToAdd = m;
+            }
+
+            // Add months
+            endDate.setMonth(endDate.getMonth() + monthsToAdd);
+
+            this.logger.log(`Payment Verified. Cafe: ${cafeId}, Duration: ${planDuration}, New End Date: ${endDate}`);
 
             await this.prisma.cafe.update({
               where: { id: cafeId },
@@ -257,13 +388,10 @@ export class PaymentsService {
                 plan: 'pro',
                 subscriptionPeriod: planDuration,
                 iyzicoSubReferenceCode: result.paymentId,
-                // ALWAYS update cardUserKey if present in result, or use existing one if not returned but we have it.
-                // Note: Checkout form result usually contains cardUserKey if 'cardUserKey' was passed during init OR if it was a new card registration.
-                // However, if the user paid with a NEW card and saved it, result.cardUserKey should be populated.
                 ...(result.cardUserKey ? { iyzicoCardUserKey: result.cardUserKey } : {}),
               },
             });
-            resolve({ success: true, message: 'Payment successful', cafeId });
+            resolve({ success: true, message: 'Payment successful', cafeId, cardStored: !!result.cardUserKey });
           } else {
             resolve({ success: false, message: 'Payment failed', result });
           }
@@ -272,21 +400,25 @@ export class PaymentsService {
     });
   }
 
-  async listStoredCards(cafeId: string) {
+  async listStoredCards(cafeId: string): Promise<any[]> {
     const cafe = await this.prisma.cafe.findUnique({ where: { id: cafeId } });
     if (!cafe || !cafe.iyzicoCardUserKey) {
+      this.logger.debug(`listStoredCards: No cardUserKey for cafe ${cafeId}`);
       return [];
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise<any[]>((resolve, reject) => {
+      this.logger.debug(`Listing stored cards for cafe ${cafeId} using key ${cafe.iyzicoCardUserKey}`);
       this.iyzipay.cardList.retrieve({
         locale: Iyzipay.LOCALE.TR,
         cardUserKey: cafe.iyzicoCardUserKey,
       }, (err: any, result: any) => {
         if (err) {
+          this.logger.error(`Error listing cards for cafe ${cafeId}`, err);
           reject(err);
         } else {
           if (result.status === 'success') {
+            this.logger.debug(`Found ${result.cardDetails?.length || 0} cards for cafe ${cafeId}`);
             resolve(result.cardDetails || []);
           } else {
             // If user not found or no cards, it might return failure or empty list. 
@@ -456,6 +588,29 @@ export class PaymentsService {
              });
             resolve(result);
           }
+        }
+      });
+    });
+  }
+
+  async refundPayment(paymentId: string, price: string, conversationId: string) {
+    return new Promise((resolve, reject) => {
+      // First try to cancel (void) the payment since it is likely same-day
+      this.iyzipay.cancel.create({
+        locale: Iyzipay.LOCALE.TR,
+        conversationId: conversationId,
+        paymentId: paymentId,
+        ip: '127.0.0.1', // Server IP
+      }, (err: any, result: any) => {
+        if (err) {
+            reject(err);
+        } else {
+            if (result.status === 'success') {
+                resolve(result);
+            } else {
+                // If cancel fails, reject with error message.
+                reject(new Error(result.errorMessage));
+            }
         }
       });
     });

@@ -65,7 +65,9 @@ export class PaymentsController {
       
       if (result.success) {
         // Redirect to frontend success page
-        return res.redirect(`${frontendUrl}/admin/dashboard?payment=success`);
+        const modeParam = result.mode ? `&mode=${result.mode}` : '';
+        const cardStoredParam = result.cardStored !== undefined ? `&card_stored=${result.cardStored}` : '';
+        return res.redirect(`${frontendUrl}/admin/dashboard?payment=success${modeParam}${cardStoredParam}`);
       } else {
         // Redirect to frontend failure page
         return res.redirect(`${frontendUrl}/admin/dashboard?payment=failed&reason=${result.message}`);

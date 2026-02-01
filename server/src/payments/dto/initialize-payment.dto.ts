@@ -35,5 +35,9 @@ export class InitializePaymentDto {
 
   @IsString()
   @IsOptional()
-  planDuration?: 'monthly' | 'yearly';
+  planDuration?: string;
+
+  @IsString()
+  @IsOptional()
+  mode?: string;
 }

@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import IyzipayForm from '@/components/IyzipayForm';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
@@ -34,7 +35,11 @@ export default function PricingPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentContent, setPaymentContent] = useState('');
   
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  // Extension Dialog States
+  const [isExtendDialogOpen, setIsExtendDialogOpen] = useState(false);
+  const [extendMonth, setExtendMonth] = useState(1);
+  
+  const [billingCycle, setBillingCycle] = useState<string>('monthly');
   const [mode, setMode] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,7 +47,7 @@ export default function PricingPage() {
     const modeParam = searchParams.get('mode');
     const extendParam = searchParams.get('extend');
     
-    if (durationParam === 'monthly' || durationParam === 'yearly') {
+    if (durationParam) {
       setBillingCycle(durationParam);
     }
 
@@ -57,7 +62,28 @@ export default function PricingPage() {
           setIsAdmin(true);
           // Auto-open if mode is present and user is admin
           if (modeParam === 'extend' || modeParam === 'update_card' || extendParam === 'true') {
-             setShowBillingForm(true);
+             // If extending but no duration specified, open selection dialog instead of billing form
+             if ((modeParam === 'extend' || extendParam === 'true') && !durationParam) {
+                setIsExtendDialogOpen(true);
+             } else {
+                setShowBillingForm(true);
+             }
+          }
+
+          // Fetch Cafe Info to pre-fill billing data
+          if (user.cafeId) {
+            fetch(`${API_URL}/cafes/${user.cafeId}`)
+              .then(res => res.json())
+              .then(cafe => {
+                setBillingData(prev => ({
+                  ...prev,
+                  contactName: cafe.authorizedPerson || prev.contactName,
+                  city: cafe.city || prev.city,
+                  address: cafe.address || prev.address,
+                  gsmNumber: cafe.phone || prev.gsmNumber,
+                }));
+              })
+              .catch(console.error);
           }
         }
       } catch (e) {
@@ -80,7 +106,11 @@ export default function PricingPage() {
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
 
   const handleSubscribeClick = () => {
-    setShowBillingForm(true);
+    if (mode === 'extend') {
+      setIsExtendDialogOpen(true);
+    } else {
+      setShowBillingForm(true);
+    }
   };
 
   const handleBillingSubmit = async (e: React.FormEvent) => {
@@ -122,7 +152,8 @@ export default function PricingPage() {
         body: JSON.stringify({
               ip: '127.0.0.1',
               ...billingData,
-              planDuration: billingCycle
+              planDuration: billingCycle,
+              mode: mode
             })
           });
 
@@ -174,6 +205,19 @@ export default function PricingPage() {
     },
   };
 
+  const getPriceDisplay = () => {
+    if (billingCycle === 'yearly') return '₺4.990/yıl';
+    if (billingCycle === 'monthly') return '₺499/ay';
+    if (billingCycle && billingCycle.endsWith('_months')) {
+        const m = parseInt(billingCycle.split('_')[0]);
+        if (!isNaN(m)) {
+            const price = (499 * m).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            return `₺${price} / ${m} Ay`;
+        }
+    }
+    return '₺499/ay';
+  };
+
   const plans = [
     {
       name: t('plans.starter.name'),
@@ -192,7 +236,7 @@ export default function PricingPage() {
     },
     {
       name: t('plans.pro.name'),
-      price: billingCycle === 'yearly' ? '₺4.990/yıl' : '₺499/ay',
+      price: getPriceDisplay(),
       description: billingCycle === 'yearly' ? 'Yıllık öde, %20 tasarruf et.' : t('plans.pro.description'),
       features: [
         t('plans.pro.features.0'),
@@ -258,7 +302,8 @@ export default function PricingPage() {
             </motion.p>
           </div>
 
-          {/* Billing Cycle Toggle */}
+          {/* Billing Cycle Toggle - Hide if custom duration */}
+          {!billingCycle.endsWith('_months') && (
           <div className="flex justify-center -mt-4 mb-8">
             <div className="bg-slate-100 p-1 rounded-xl flex items-center relative">
                <button 
@@ -278,6 +323,7 @@ export default function PricingPage() {
                </button>
             </div>
           </div>
+          )}
 
           <div className="grid md:grid-cols-3 gap-8 items-start">
             {plans.map((plan, index) => (
@@ -343,10 +389,14 @@ export default function PricingPage() {
               <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                 <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-              <DialogTitle className="text-xl sm:text-2xl font-bold">Fatura Bilgileri</DialogTitle>
+              <DialogTitle className="text-xl sm:text-2xl font-bold">
+                {mode === 'update_card' ? 'Kart Güncelleme Bilgileri' : 'Fatura Bilgileri'}
+              </DialogTitle>
             </div>
             <DialogDescription className="text-indigo-100 text-sm sm:text-base mt-2">
-              Yasal zorunluluk gereği lütfen bilgileri doldurunuz.
+              {mode === 'update_card' 
+                ? 'Kart doğrulaması için 1 TL çekilecek ve iade edilecektir.' 
+                : 'Yasal zorunluluk gereği lütfen bilgileri doldurunuz.'}
             </DialogDescription>
           </div>
           
@@ -500,7 +550,7 @@ export default function PricingPage() {
                       </>
                     ) : (
                       <>
-                        Ödemeye Geç <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
+                        {mode === 'update_card' ? 'Doğrula ve Güncelle' : 'Ödemeye Geç'} <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
                       </>
                     )}
                   </Button>
@@ -511,20 +561,75 @@ export default function PricingPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Extend Subscription Dialog */}
+      <Dialog open={isExtendDialogOpen} onOpenChange={setIsExtendDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Abonelik Süresini Uzat</DialogTitle>
+            <DialogDescription>
+              Mevcut aboneliğinizi uzatmak için bir süre seçin.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3, 6, 12].map((month) => (
+                <Button
+                  key={month}
+                  variant={extendMonth === month ? "default" : "outline"}
+                  className={extendMonth === month ? "bg-primary text-primary-foreground" : ""}
+                  onClick={() => setExtendMonth(month)}
+                >
+                  {month === 12 ? "1 Yıl" : `${month} Ay`}
+                </Button>
+              ))}
+            </div>
+            <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
+              <span className="font-medium">Toplam Tutar:</span>
+              <span className="text-xl font-bold">
+                {extendMonth === 12 
+                  ? "4.990,00 ₺" 
+                  : `${(extendMonth * 499).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺`}
+              </span>
+            </div>
+            {extendMonth === 12 && (
+              <p className="text-sm text-green-600 text-center font-medium">
+                Yıllık planda %20 tasarruf edersiniz!
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => {
+              const duration = extendMonth === 12 ? 'yearly' : (extendMonth === 1 ? 'monthly' : `${extendMonth}_months`);
+              setBillingCycle(duration);
+              setIsExtendDialogOpen(false);
+              setShowBillingForm(true);
+            }}>
+              Ödemeye Geç
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal} modal={false}>
         <DialogContent 
           className="w-[95vw] sm:w-full sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-white p-0 sm:p-6 rounded-xl"
           onInteractOutside={(e) => e.preventDefault()}
         >
           <DialogHeader className="p-4 sm:p-0">
-            <DialogTitle className="text-center text-xl font-bold">Güvenli Ödeme</DialogTitle>
+            <DialogTitle className="text-center text-xl font-bold">{mode === 'update_card' ? 'Kart Doğrulama' : 'Güvenli Ödeme'}</DialogTitle>
           </DialogHeader>
           <div className="mt-0 sm:mt-4 w-full">
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 flex gap-3">
-               <CreditCard className="w-5 h-5 shrink-0 text-blue-600" />
+            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900 flex gap-3 shadow-sm">
+               <div className="bg-amber-100 p-2 rounded-full h-fit shrink-0">
+                 <CreditCard className="w-5 h-5 text-amber-600" />
+               </div>
                <div>
-                  <p className="font-semibold mb-1">Kartınızı Kaydetmeyi Unutmayın</p>
-                  <p>Aboneliğinizin sorunsuz devam etmesi ve otomatik yenileme için ödeme ekranında <span className="font-bold underline">"Kartımı sakla"</span> seçeneğini işaretleyiniz.</p>
+                  <p className="font-bold mb-1 text-base">⚠️ Kartınızı Kaydetmeyi Unutmayın!</p>
+                  <p className="leading-relaxed">
+                    {mode === 'update_card' 
+                      ? 'Kartınızın başarıyla güncellenmesi için açılan pencerede "Iyzico ile kartımı sakla" kutucuğunu MUTLAKA işaretleyiniz. Aksi takdirde kartınız kaydedilmeyecektir.' 
+                      : 'Aboneliğinizin sorunsuz devam etmesi ve otomatik yenileme için ödeme ekranında "Kartımı sakla" seçeneğini işaretleyiniz.'}
+                  </p>
                </div>
             </div>
             <IyzipayForm content={paymentContent} />

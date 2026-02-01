@@ -5,7 +5,6 @@ import { Link } from '@/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Coffee, User, Mail, Phone, Lock, Store, ArrowRight, Loader2, CheckCircle2, Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -58,8 +57,6 @@ export default function RegisterPage() {
         toast.error(t('register.invalidImage'));
         return;
       }
-      // Keep the original file for later use if needed, but we mostly care about the cropped one
-      // However, we start by showing the cropper with this file
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         setSelectedImage(reader.result as string);
@@ -174,240 +171,289 @@ export default function RegisterPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary/30 p-4">
+      <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden">
+         {/* Background Image - Same as Login */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: 'url("https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=2078&auto=format&fit=crop")',
+          }}
+        />
+        <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+        
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-full max-w-md"
+          className="relative z-10 w-full max-w-md p-6"
         >
-          <Card className="border-none shadow-2xl bg-white/80 backdrop-blur-xl text-center p-8">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden text-center p-8">
             <div className="flex justify-center mb-6">
-              <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+              <div className="h-20 w-20 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 border border-green-500/30">
                 <CheckCircle2 className="h-10 w-10" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold mb-2">{t('register.successHeading')}</h2>
-            <p className="text-muted-foreground mb-8">
+            <h2 className="text-2xl font-bold mb-2 text-white">{t('register.successHeading')}</h2>
+            <p className="text-white/70 mb-8">
               {t('register.successDesc')}
             </p>
             <Link href="/admin/login">
-              <Button className="w-full h-12 rounded-xl text-lg">
+              <Button className="w-full h-12 rounded-xl text-lg bg-amber-500 hover:bg-amber-600 text-black font-bold">
                 {t('register.backToLogin')}
               </Button>
             </Link>
-          </Card>
+          </div>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/30 p-4 py-12">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-primary/5 via-background to-background -z-10" />
+    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden">
+      {/* Background Image - Same as Login */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: 'url("https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=2078&auto=format&fit=crop")',
+        }}
+      />
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
       
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-lg"
-      >
-        <Card className="border-none shadow-2xl bg-white/80 backdrop-blur-xl">
-          <CardHeader className="space-y-4 text-center pb-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
-              className="mx-auto bg-primary text-primary-foreground p-3 rounded-2xl w-fit shadow-lg shadow-primary/30"
-            >
-              <Coffee className="h-8 w-8" />
-            </motion.div>
-            <div className="space-y-2">
-              <CardTitle className="text-2xl font-bold tracking-tight">{t('register.title')}</CardTitle>
-              <CardDescription>
-                {t('register.desc')}
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {step === 'form' ? (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="cafeName">{t('register.cafeName')}</Label>
-                    <div className="relative">
-                      <Store className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="cafeName"
-                        value={formData.cafeName}
-                        onChange={handleChange}
-                        placeholder={t('register.cafeNamePlaceholder')}
-                        className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                        required
-                      />
-                    </div>
-                  </div>
+      {/* Main Content Container */}
+      <div className="relative z-10 w-full max-w-7xl grid lg:grid-cols-2 gap-8 lg:gap-16 p-6 items-center">
+        
+        {/* Left Side - Register Form Card */}
+        <div className="w-full flex justify-center lg:justify-start">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-[550px] bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+          >
+            <div className="p-8 md:p-10 space-y-6">
+              <div className="text-center space-y-2">
+                 <div className="mx-auto bg-white/10 text-white p-3 rounded-2xl w-fit mb-6 lg:hidden">
+                   <Coffee className="h-8 w-8" />
+                 </div>
+                <h2 className="text-3xl font-bold tracking-tight text-white">{t('register.title')}</h2>
+                <p className="text-white/70">
+                  {t('register.desc')}
+                </p>
+              </div>
 
-                  <div className="space-y-2">
-                    <Label>{t('register.cafeLogo')}</Label>
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-secondary/50 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        {logoPreview ? (
-                          <div className="relative w-full h-full">
-                            <Image 
-                              src={logoPreview} 
-                              alt="Logo Preview" 
-                              fill
-                              className="object-cover"
-                              unoptimized
-                            />
-                          </div>
-                        ) : (
-                          <Upload className="h-6 w-6 text-muted-foreground" />
-                        )}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {step === 'form' ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="cafeName" className="text-white">{t('register.cafeName')}</Label>
+                      <div className="relative">
+                        <Store className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                        <Input
+                          id="cafeName"
+                          value={formData.cafeName}
+                          onChange={handleChange}
+                          placeholder={t('register.cafeNamePlaceholder')}
+                          className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                          required
+                        />
                       </div>
-                      <div className="flex-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full"
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-white">{t('register.cafeLogo')}</Label>
+                      <div className="flex items-center gap-4">
+                        <div 
+                          className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/5 flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
                           onClick={() => fileInputRef.current?.click()}
                         >
-                          {t('register.selectLogo')}
-                        </Button>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={onFileChange}
-                        />
-                        <p className="text-xs text-muted-foreground mt-1 text-center">
-                            {t('register.logoHint')}
-                        </p>
+                          {logoPreview ? (
+                            <div className="relative w-full h-full">
+                              <Image 
+                                src={logoPreview} 
+                                alt="Logo Preview" 
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
+                            </div>
+                          ) : (
+                            <Upload className="h-6 w-6 text-white/50" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            {t('register.selectLogo')}
+                          </Button>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={onFileChange}
+                          />
+                          <p className="text-xs text-white/40 mt-1 text-center">
+                              {t('register.logoHint')}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fullName" className="text-white">{t('register.fullName')}</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                          <Input
+                            id="fullName"
+                            value={formData.fullName}
+                            onChange={handleChange}
+                            placeholder={t('register.fullNamePlaceholder')}
+                            className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone" className="text-white">{t('register.phone')}</Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                          <Input
+                            id="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            placeholder={t('register.phonePlaceholder')}
+                            type="tel"
+                            className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="fullName">{t('register.fullName')}</Label>
+                      <Label htmlFor="email" className="text-white">{t('common.email')}</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-white/50" />
                         <Input
-                          id="fullName"
-                          value={formData.fullName}
+                          id="email"
+                          value={formData.email}
                           onChange={handleChange}
-                          placeholder={t('register.fullNamePlaceholder')}
-                          className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
+                          placeholder={t('register.emailPlaceholder')}
+                          type="email"
+                          className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
                           required
                         />
                       </div>
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="phone">{t('register.phone')}</Label>
+                      <Label htmlFor="password" className="text-white">{t('register.setPassword')}</Label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
                         <Input
-                          id="phone"
-                          value={formData.phone}
+                          id="password"
+                          value={formData.password}
                           onChange={handleChange}
-                          placeholder={t('register.phonePlaceholder')}
-                          type="tel"
-                          className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
+                          type="password"
+                          placeholder="••••••••"
+                          className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
                           required
                         />
                       </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t('common.email')}</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder={t('register.emailPlaceholder')}
-                        type="email"
-                        className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password">{t('register.setPassword')}</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        type="password"
-                        placeholder="••••••••"
-                        className="pl-10 h-11 bg-secondary/50 border-transparent focus:border-primary/50 focus:bg-white transition-all"
-                        required
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-4 py-4">
-                  <div className="text-center space-y-2">
-                    <Mail className="h-12 w-12 mx-auto text-primary" />
-                    <h3 className="font-semibold text-lg">{t('register.verifyEmail')}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t('register.verifyEmailDesc', { email: formData.email })}
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="code">{t('register.verificationCode')}</Label>
-                    <Input
-                      id="code"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value)}
-                      placeholder="123456"
-                      className="text-center text-lg tracking-widest h-12"
-                      maxLength={6}
-                      required
-                    />
-                  </div>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full h-12 font-bold text-lg shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all mt-4"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    {t('register.sending')}
                   </>
                 ) : (
-                  <>
-                    {step === 'form' ? t('register.continue') : t('register.complete')} <ArrowRight className="ml-2 h-5 w-5" />
-                  </>
+                  <div className="space-y-4 py-4">
+                    <div className="text-center space-y-2">
+                      <Mail className="h-12 w-12 mx-auto text-amber-500" />
+                      <h3 className="font-semibold text-lg text-white">{t('register.verifyEmail')}</h3>
+                      <p className="text-sm text-white/70">
+                        {t('register.verifyEmailDesc', { email: formData.email })}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="code" className="text-white">{t('register.verificationCode')}</Label>
+                      <Input
+                        id="code"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        placeholder="123456"
+                        className="text-center text-lg tracking-widest h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50"
+                        maxLength={6}
+                        required
+                      />
+                    </div>
+                  </div>
                 )}
-              </Button>
-            </form>
-          </CardContent>
 
-          <CardFooter className="text-center text-sm text-muted-foreground pb-8">
-            <div className="w-full">
-              {t('register.hasAccount')}{' '}
-              <Link href="/admin/login" className="font-bold text-primary hover:underline">
-                {t('register.loginLink')}
-              </Link>
+                <Button
+                  type="submit"
+                  className="w-full h-12 font-bold text-lg bg-amber-500 hover:bg-amber-600 text-black transition-all mt-4"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      {t('register.sending')}
+                    </>
+                  ) : (
+                    <>
+                      {step === 'form' ? t('register.continue') : t('register.complete')} <ArrowRight className="ml-2 h-5 w-5" />
+                    </>
+                  )}
+                </Button>
+              </form>
             </div>
-          </CardFooter>
-        </Card>
-      </motion.div>
+
+            <div className="text-center text-sm text-white/60 pb-8 bg-black/20 p-4 border-t border-white/5">
+                {t('register.hasAccount')}{' '}
+                <Link href="/admin/login" className="font-bold text-amber-500 hover:text-amber-400 hover:underline">
+                  {t('register.loginLink')}
+                </Link>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Right Side - Brand & Slogans (Hidden on Mobile) */}
+        <div className="hidden lg:flex flex-col text-white space-y-8">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/10 p-3 rounded-xl backdrop-blur-md border border-white/20">
+              <Coffee className="h-8 w-8 text-white" />
+            </div>
+            <span className="text-2xl font-bold tracking-tight">QR Team Cafe</span>
+          </div>
+
+          <div className="space-y-6">
+            <h1 className="text-5xl font-bold leading-tight tracking-tight">
+              Yönetim parmaklarınızın ucunda.
+            </h1>
+            <p className="text-xl text-white/80 leading-relaxed max-w-lg">
+              İşletmenizi dijital dünyaya taşıyın, siparişleri hızlandırın ve müşteri memnuniyetini artırın.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6 pt-4">
+            <div className="space-y-2">
+              <div className="bg-white/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                <Loader2 className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="font-semibold text-lg">Hızlı Kurulum</h3>
+              <p className="text-white/60 text-sm">Dakikalar içinde menünüzü oluşturun ve yayına alın.</p>
+            </div>
+            <div className="space-y-2">
+              <div className="bg-white/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                <Lock className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="font-semibold text-lg">Güvenli Altyapı</h3>
+              <p className="text-white/60 text-sm">Verileriniz ve ödemeleriniz güvende.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Cropper Dialog */}
       <Dialog open={isCropperOpen} onOpenChange={setIsCropperOpen}>

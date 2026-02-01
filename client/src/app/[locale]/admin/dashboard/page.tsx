@@ -171,18 +171,33 @@ export default function DashboardPage() {
   useEffect(() => {
     const paymentStatus = searchParams.get('payment');
     const reason = searchParams.get('reason');
+    const mode = searchParams.get('mode');
+    const cardStored = searchParams.get('card_stored');
+
+    console.log('Payment Callback Params:', {
+        paymentStatus,
+        reason,
+        mode,
+        cardStored,
+        allParams: Object.fromEntries(searchParams.entries())
+    });
 
     if (paymentStatus === 'success') {
       // Check if we have a stored card
       const checkCardStatus = async () => {
         try {
           const token = localStorage.getItem('token');
+          console.log('Checking stored cards from API...');
           const res = await fetch(`${API_URL}/payments/cards`, {
              headers: { 'Authorization': `Bearer ${token}` }
           });
+          
           if (res.ok) {
             const cards = await res.json();
+            console.log('Stored cards response:', cards);
             setHasStoredCard(Array.isArray(cards) && cards.length > 0);
+          } else {
+             console.error('Failed to fetch cards:', res.status, res.statusText);
           }
         } catch (e) {
           console.error('Failed to check cards', e);
@@ -559,20 +574,20 @@ export default function DashboardPage() {
                      </div>
                    </div>
 
-                   <div className="flex items-center space-x-2 border p-4 rounded-lg bg-slate-50">
-                      <Switch 
-                        id="auto-renew" 
-                        onCheckedChange={(checked) => {
-                           if (checked) {
-                              // Redirect to Add Card flow
-                              router.push('/pricing?mode=update_card');
-                           }
-                        }}
-                      />
-                      <Label htmlFor="auto-renew" className="flex-1 cursor-pointer">
-                        <span className="font-medium block">Kartımı Kaydet</span>
-                        <span className="text-xs text-muted-foreground font-normal">Otomatik yenileme özelliğini aç</span>
-                      </Label>
+                   <div className="flex items-center justify-between border p-4 rounded-lg bg-slate-50">
+                      <div className="space-y-0.5">
+                        <Label className="text-base font-medium">Kartımı Kaydet</Label>
+                        <p className="text-xs text-muted-foreground">Otomatik yenileme için kart bilgilerinizi ekleyin</p>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => router.push('/pricing?mode=update_card')}
+                        className="gap-2"
+                      >
+                        <CreditCard className="w-4 h-4" />
+                        Kart Ekle
+                      </Button>
                    </div>
                 </div>
              )}
