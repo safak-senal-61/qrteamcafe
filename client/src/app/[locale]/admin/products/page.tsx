@@ -233,9 +233,15 @@ export default function MenuPage() {
       
       const method = editingCategory ? 'PATCH' : 'POST';
 
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(categoryForm)
       });
 
@@ -374,9 +380,15 @@ export default function MenuPage() {
       
       const method = editingProduct ? 'PATCH' : 'POST';
 
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           ...productForm,
           price,
@@ -450,9 +462,15 @@ export default function MenuPage() {
       );
       setProducts(updatedProducts);
 
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
       await fetch(`${API_URL}/products/${product.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ isAvailable: !product.isAvailable })
       });
       toast.success('Durum güncellendi');
@@ -470,10 +488,16 @@ export default function MenuPage() {
     const formData = new FormData();
     formData.append('file', file);
 
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     setUploading(true);
     try {
       const res = await fetch(`${API_URL}/products/upload`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       });
       const data = await res.json();

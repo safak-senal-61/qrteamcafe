@@ -21,11 +21,20 @@ export class ReviewsController {
   }
 
   @Get()
-  findAll(@Query('productId') productId?: string) {
+  findAll(
+    @Query('productId') productId?: string,
+    @Query('cafeId') cafeId?: string,
+  ) {
+    console.log('ReviewsController findAll called with:', { productId, cafeId });
     if (productId) {
       return this.reviewsService.findAllByProduct(productId);
     }
-    return this.reviewsService.findAll();
+    // Eğer cafeId varsa o kafenin yorumlarını getir
+    if (cafeId) {
+      return this.reviewsService.findAll(cafeId);
+    }
+    // Güvenlik: Eğer cafeId veya productId yoksa boş liste dön (tüm yorumları gösterme)
+    return [];
   }
 
   @Patch(':id/score')

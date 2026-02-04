@@ -55,7 +55,24 @@ export default function AdminReviewsPage() {
 
   const fetchReviews = async () => {
     try {
-      const res = await fetch(`${API_URL}/reviews`);
+      const userStr = localStorage.getItem('user');
+      console.log('Reviews Page - User from localStorage:', userStr);
+
+      let url = `${API_URL}/reviews`;
+
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.cafeId) {
+          url += `?cafeId=${user.cafeId}`;
+          console.log('Reviews Page - Fetching URL:', url);
+        } else {
+          console.warn('Reviews Page - No cafeId found in user object');
+        }
+      } else {
+        console.warn('Reviews Page - No user found in localStorage');
+      }
+
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setReviews(data);

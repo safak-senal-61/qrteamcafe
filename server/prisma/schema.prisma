@@ -77,6 +77,7 @@ model Cafe {
   waiterCalls WaiterCall[]
   rewards     Reward[]
   issueReports IssueReport[]
+  reviews     Review[]
 
   @@map("cafes")
 }
@@ -348,6 +349,7 @@ model Review {
   product  Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
   order    Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  cafe     Cafe      @relation(fields: [cafeId], references: [id], onDelete: Cascade)
   
   @@map("reviews")
 }

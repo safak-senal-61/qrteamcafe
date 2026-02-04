@@ -104,8 +104,9 @@ export class ReviewsService {
     });
   }
 
-  async findAll() {
+  async findAll(cafeId?: string) {
     return this.prisma.review.findMany({
+      where: cafeId ? { cafeId } : undefined,
       include: {
         product: {
           select: { name: true, imageUrl: true },
