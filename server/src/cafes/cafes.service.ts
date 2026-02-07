@@ -85,12 +85,12 @@ export class CafesService {
 
     const cafeSettings = await this.prisma.cafe.findUnique({
       where: { id: cafeId },
-      select: { 
+      select: {
         isSoundEnabled: true,
         plan: true,
         subscriptionEndsAt: true,
         trialEndsAt: true,
-        isSubscriptionActive: true
+        isSubscriptionActive: true,
       },
     });
 
@@ -187,8 +187,8 @@ export class CafesService {
         plan: cafeSettings?.plan,
         subscriptionEndsAt: cafeSettings?.subscriptionEndsAt,
         trialEndsAt: cafeSettings?.trialEndsAt,
-        isSubscriptionActive: cafeSettings?.isSubscriptionActive
-      }
+        isSubscriptionActive: cafeSettings?.isSubscriptionActive,
+      },
     };
   }
 }

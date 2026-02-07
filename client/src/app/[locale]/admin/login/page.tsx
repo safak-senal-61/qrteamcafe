@@ -193,7 +193,7 @@ export default function AdminLoginPage() {
             <div className="bg-white/10 p-3 rounded-xl backdrop-blur-md border border-white/20">
               <Coffee className="h-8 w-8 text-white" />
             </div>
-            <span className="text-2xl font-bold tracking-tight">QR Team Cafe</span>
+            <span className="text-2xl font-bold tracking-tight">qrders</span>
           </div>
 
           <div className="space-y-6">

@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from '@/navigation';
-import { io, Socket } from 'socket.io-client';
-import { API_URL, SOCKET_URL } from '@/lib/api';
+import { API_URL } from '@/lib/api';
 import { Bell, Receipt, X } from 'lucide-react';
+import { useAdminSocket } from '@/providers/AdminSocketProvider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -22,7 +22,7 @@ interface PendingOrder {
 export function PendingOrdersWidget() {
   const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
+  const { socket } = useAdminSocket();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
 
@@ -61,14 +61,9 @@ export function PendingOrdersWidget() {
 
     fetchPendingOrders();
 
-    // Socket connection
-    socketRef.current = io(SOCKET_URL || 'http://localhost:3001');
+    if (!socket) return;
 
-    socketRef.current.on('connect', () => {
-      socketRef.current?.emit('joinAdmin', { cafeId });
-    });
-
-    socketRef.current.on('newOrder', (newOrder: PendingOrder) => {
+    const onNewOrder = (newOrder: PendingOrder) => {
       // Play sound
       if (audioRef.current) {
         audioRef.current.play().catch(e => console.log('Audio play failed', e));
@@ -81,9 +76,9 @@ export function PendingOrdersWidget() {
         if (prev.some(o => o.id === newOrder.id)) return prev;
         return [newOrder, ...prev];
       });
-    });
+    };
 
-    socketRef.current.on('orderStatusUpdate', (updatedOrder: PendingOrder) => {
+    const onOrderStatusUpdate = (updatedOrder: PendingOrder) => {
       setPendingOrders(prev => {
         // If status is no longer PENDING, remove it
         if (updatedOrder.status !== 'PENDING') {
@@ -91,12 +86,16 @@ export function PendingOrdersWidget() {
         }
         return prev;
       });
-    });
+    };
+
+    socket.on('newOrder', onNewOrder);
+    socket.on('orderStatusUpdate', onOrderStatusUpdate);
 
     return () => {
-      socketRef.current?.disconnect();
+      socket.off('newOrder', onNewOrder);
+      socket.off('orderStatusUpdate', onOrderStatusUpdate);
     };
-  }, []);
+  }, [socket]);
 
   if (pendingOrders.length === 0) return null;
 

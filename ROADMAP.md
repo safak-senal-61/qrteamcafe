@@ -1,9 +1,9 @@
-# Gunibirlik / QR Team Cafe - Proje Roadmap
+# qrders - Proje Roadmap
 
-Bu doküman, QR Team Cafe projesinin mevcut durumunu, tamamlanan özelliklerini ve gelecek planlarını içerir.
+Bu doküman, qrders projesinin mevcut durumunu, tamamlanan özelliklerini ve gelecek planlarını içerir.
 
 ## 🌟 Proje Durum Özeti
-**Gunibirlik / QR Team Cafe**, NestJS (Backend) ve Next.js (Frontend) üzerine kurulu, modern bir mimariye sahip, çoklu panelli (Süper Admin, Kafe Admin, Müşteri) bir QR menü sistemidir.
+**qrders**, NestJS (Backend) ve Next.js (Frontend) üzerine kurulu, modern bir mimariye sahip, çoklu panelli (Süper Admin, Kafe Admin, Müşteri) bir QR menü sistemidir.
 
 ---
 

@@ -13,7 +13,7 @@
     "getStarted": "Ücretsiz Başla",
     "innovation": "İnovasyon",
     "futureOfDining": "Geleceğin Restoran Deneyimi",
-    "whyQrTeam": "Neden QR Team Cafe?",
+    "whyQrTeam": "Neden qrders?",
     "whyQrTeamDesc": "İşletmenizi dijital çağa taşıyacak, cironuzu artıracak özellikler.",
     "notJustMenu": "Sadece Bir Menü Değil,",
     "fullOperation": "Tam Kapsamlı Operasyon",
@@ -22,7 +22,7 @@
     "readyToMoveHighlight": "Taşımaya Hazır Mısınız?",
     "readyToMoveDesc": "Hemen ücretsiz bir hesap oluşturun, menünüzü oluşturun ve 15 dakika içinde satışa başlayın.",
     "contactUs": "Bize Ulaşın",
-    "noCreditCard": "*Kredi kartı gerekmez. 14 gün ücretsiz deneme.",
+    "noCreditCard": "*Kredi kartı gerekmez. 30 gün ücretsiz deneme.",
     "featuresList": {
       "contactless": "Temassız QR Menü",
       "contactlessDesc": "Müşterileriniz uygulama indirmeden, saniyeler içinde menünüze ulaşsın. Hijyenik, hızlı ve modern.",
@@ -74,7 +74,7 @@
     "company": "Şirket",
     "legal": "Yasal",
     "description": "Restoran ve kafeler için yeni nesil dijital menü ve sipariş yönetim sistemi.",
-    "rights": "© 2026 QR Team Cafe. Tüm hakları saklıdır."
+    "rights": "© 2026 qrders. Tüm hakları saklıdır."
   },
   "NotFound": {
     "title": "Sayfa Bulunamadı",
@@ -230,7 +230,7 @@
     "title": "Gizlilik Politikası",
     "lastUpdated": "Son Güncelleme: 21 Ocak 2026",
     "subtitle": "Verilerinizin güvenliği ve gizliliği bizim için en önemli önceliktir.",
-    "intro": "QR Team Cafe (\"Biz\", \"Şirket\") olarak, müşterilerimizin ve kullanıcılarımızın gizliliğine büyük önem veriyoruz. Bu politika, hizmetlerimizi kullandığınızda kişisel verilerinizin nasıl toplandığını, kullanıldığını, korunduğunu ve paylaşıldığını şeffaf bir şekilde açıklamaktadır.",
+    "intro": "qrders (\"Biz\", \"Şirket\") olarak, müşterilerimizin ve kullanıcılarımızın gizliliğine büyük önem veriyoruz. Bu politika, hizmetlerimizi kullandığınızda kişisel verilerinizin nasıl toplandığını, kullanıldığını, korunduğunu ve paylaşıldığını şeffaf bir şekilde açıklamaktadır.",
     "sections": {
       "1": {
         "title": "1. Toplanan Kişisel Veriler",
@@ -300,11 +300,11 @@
     "title": "Kullanım Şartları",
     "lastUpdated": "Son Güncelleme: 21 Ocak 2026",
     "subtitle": "Hizmetlerimizi kullanırken uymanız gereken kurallar ve yasal sorumluluklar.",
-    "intro": "QR Team Cafe (\"Biz\", \"Platform\") olarak, sizlere en iyi dijital menü ve restoran yönetim deneyimini sunmayı hedefliyoruz. Aşağıdaki şartlar, platformumuzun adil, güvenli ve yasalara uygun kullanımını sağlamak amacıyla belirlenmiştir.",
+    "intro": "qrders (\"Biz\", \"Platform\") olarak, sizlere en iyi dijital menü ve restoran yönetim deneyimini sunmayı hedefliyoruz. Aşağıdaki şartlar, platformumuzun adil, güvenli ve yasalara uygun kullanımını sağlamak amacıyla belirlenmiştir.",
     "sections": {
       "1": {
         "title": "1. Hizmetin Tanımı ve Kabulü",
-        "content": "QR Team Cafe, restoran ve kafeler için dijital menü, sipariş yönetimi, personel takibi ve raporlama hizmetleri sunan bulut tabanlı bir SaaS (Hizmet Olarak Yazılım) platformudur.",
+        "content": "qrders, restoran ve kafeler için dijital menü, sipariş yönetimi, personel takibi ve raporlama hizmetleri sunan bulut tabanlı bir SaaS (Hizmet Olarak Yazılım) platformudur.",
         "content2": "Hizmetlerimizi kullanarak veya platformumuza erişerek, bu Kullanım Şartları'nı okuduğunuzu, anladığınızı ve bunlara uymayı kabul ettiğinizi beyan edersiniz."
       },
       "2": {
@@ -339,7 +339,7 @@
       },
       "5": {
         "title": "5. Fikri Mülkiyet Hakları",
-        "content": "Platform üzerindeki tüm yazılım, tasarım, grafikler, logolar, ticari markalar ve içerikler QR Team Cafe'nin veya lisans verenlerinin mülkiyetindedir. İzinsiz kopyalanması, çoğaltılması, dağıtılması veya türev çalışmaların oluşturulması yasaktır."
+        "content": "Platform üzerindeki tüm yazılım, tasarım, grafikler, logolar, ticari markalar ve içerikler qrders'in veya lisans verenlerinin mülkiyetindedir. İzinsiz kopyalanması, çoğaltılması, dağıtılması veya türev çalışmaların oluşturulması yasaktır."
       },
       "6": {
         "title": "6. Sorumluluk Reddi ve Sınırlamalar",
@@ -369,7 +369,7 @@
     "sections": {
       "1": {
         "title": "1. Veri Sorumlusu ve Amacı",
-        "content": "QR Team Cafe (\"Şirket\") olarak, 6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca, veri sorumlusu sıfatıyla kişisel verilerinizi işleme amaçlarımız şunlardır:",
+        "content": "qrders (\"Şirket\") olarak, 6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca, veri sorumlusu sıfatıyla kişisel verilerinizi işleme amaçlarımız şunlardır:",
         "list": {
           "0": "Ürün ve hizmetlerimizin sizlere sunulabilmesi ve kesintisiz devamlılığı.",
           "1": "Müşteri ilişkileri yönetimi ve memnuniyet süreçlerinin takibi.",
@@ -428,7 +428,7 @@
       "badge": "Restoran Teknolojilerinde Lider",
       "title": "Geleceğin Restoran",
       "titleHighlight": "Deneyimini Tasarlıyoruz",
-      "description": "QR Team Cafe, işletmenizi dijital çağa taşıyan, operasyonları basitleştiren ve müşteri memnuniyetini artıran uçtan uca bir teknoloji çözümüdür.",
+      "description": "qrders, işletmenizi dijital çağa taşıyan, operasyonları basitleştiren ve müşteri memnuniyetini artıran uçtan uca bir teknoloji çözümüdür.",
       "buttonContact": "Bizimle Tanışın",
       "buttonFeatures": "Özellikleri Keşfet"
     },
@@ -470,7 +470,7 @@
     },
     "team": {
       "title": "Ekibimizle Tanışın",
-      "subtitle": "Tutkulu, deneyimli ve yenilikçi. İşte QR Team Cafe'nin arkasındaki güç.",
+      "subtitle": "Tutkulu, deneyimli ve yenilikçi. İşte qrders'nin arkasındaki güç.",
       "roles": {
         "founder": "Kurucu & CEO",
         "cto": "CTO",
@@ -482,7 +482,7 @@
   "FeaturesPage": {
     "title": "İşletmenizi Güçlendiren",
     "titleHighlight": "Gelişmiş Özellikler",
-    "subtitle": "QR Team Cafe, bir menüden çok daha fazlası. İşletmenizin tüm ihtiyaçlarını karşılayan kapsamlı bir çözüm.",
+    "subtitle": "qrders, bir menüden çok daha fazlası. İşletmenizin tüm ihtiyaçlarını karşılayan kapsamlı bir çözüm.",
     "items": {
       "mobile": {
         "title": "Mobil Uyumlu QR Menü",
@@ -571,7 +571,7 @@
     "table": "Masa",
     "connect": "Bağlan",
     "wifi": "Wi-Fi",
-    "poweredBy": "QR Team Cafe Altyapısı ile Hazırlanmıştır",
+    "poweredBy": "qrders Altyapısı ile Hazırlanmıştır",
     "welcome": "Hoş Geldiniz!",
     "viewMenu": "Menüyü İncele",
     "searchPlaceholder": "Lezzetli bir şeyler ara...",

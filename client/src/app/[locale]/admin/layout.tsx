@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { PendingOrdersWidget } from '@/components/admin/PendingOrdersWidget';
 import { WaiterCallWidget } from '@/components/admin/WaiterCallWidget';
 import { API_URL } from '@/lib/api';
+import { AdminSocketProvider } from '@/providers/AdminSocketProvider';
 
 export default function AdminLayout({
   children,
@@ -33,7 +34,7 @@ export default function AdminLayout({
           document.documentElement.style.removeProperty('--ring');
           return;
         }
-      } catch (e) {
+      } catch {
         // Silent fail for theme parse
       }
     }
@@ -182,36 +183,38 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex h-screen bg-secondary/20">
-      <PendingOrdersWidget />
-      <WaiterCallWidget />
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex w-[22rem] shrink-0">
-        <Sidebar />
-      </div>
-
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Header */}
-        <header className="md:hidden flex items-center p-4 bg-card border-b">
-          <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="mr-2">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-64">
-              <SheetTitle className="sr-only">Admin Navigation</SheetTitle>
-              <Sidebar />
-            </SheetContent>
-          </Sheet>
-          <span className="font-bold text-lg">Cafe Admin</span>
-        </header>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">{children}</div>
+    <AdminSocketProvider>
+      <div className="flex h-screen bg-secondary/20">
+        <PendingOrdersWidget />
+        <WaiterCallWidget />
+        {/* Desktop Sidebar */}
+        <div className="hidden md:flex w-[24rem] shrink-0">
+          <Sidebar />
         </div>
-      </main>
-    </div>
+
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Mobile Header */}
+          <header className="md:hidden flex items-center p-4 bg-card border-b">
+            <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="mr-2">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64">
+                <SheetTitle className="sr-only">Admin Navigation</SheetTitle>
+                <Sidebar />
+              </SheetContent>
+            </Sheet>
+            <span className="font-bold text-lg">Cafe Admin</span>
+          </header>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-8">
+            <div className="max-w-7xl mx-auto">{children}</div>
+          </div>
+        </main>
+      </div>
+    </AdminSocketProvider>
   );
 }

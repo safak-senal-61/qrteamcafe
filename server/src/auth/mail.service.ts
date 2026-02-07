@@ -17,21 +17,21 @@ export class MailService {
 
   async sendVerificationEmail(to: string, code: string) {
     const mailOptions = {
-      from: `"QR Team Cafe" <${process.env.MAIL_USER}>`,
+      from: `"qrders" <${process.env.MAIL_USER}>`,
       to,
       subject: 'Hesap Doğrulama Kodu',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
           <h2 style="color: #059669; text-align: center;">Hoş Geldiniz!</h2>
           <p>Merhaba,</p>
-          <p>QR Team Cafe'ye hoş geldiniz. Hesabınızı doğrulamak için lütfen aşağıdaki kodu kullanın:</p>
+          <p>qrders'e hoş geldiniz. Hesabınızı doğrulamak için lütfen aşağıdaki kodu kullanın:</p>
           <div style="background-color: #ecfdf5; padding: 15px; text-align: center; border-radius: 5px; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #047857; border: 1px solid #a7f3d0;">
             ${code}
           </div>
           <p style="margin-top: 20px;">Bu kod 15 dakika boyunca geçerlidir.</p>
           <p>Eğer bu hesabı siz oluşturmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
           <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-          <p style="font-size: 12px; color: #888; text-align: center;">QR Team Cafe Yönetim Sistemi</p>
+          <p style="font-size: 12px; color: #888; text-align: center;">qrders Yönetim Sistemi</p>
         </div>
       `,
     };
@@ -41,7 +41,7 @@ export class MailService {
 
   async sendPasswordResetEmail(to: string, code: string) {
     const mailOptions = {
-      from: `"QR Team Cafe" <${process.env.MAIL_USER}>`,
+      from: `"qrders" <${process.env.MAIL_USER}>`,
       to,
       subject: 'Şifre Sıfırlama Kodu',
       html: `
@@ -55,7 +55,7 @@ export class MailService {
           <p style="margin-top: 20px;">Bu kod 15 dakika boyunca geçerlidir.</p>
           <p>Eğer bu talebi siz yapmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
           <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-          <p style="font-size: 12px; color: #888; text-align: center;">QR Team Cafe Yönetim Sistemi</p>
+          <p style="font-size: 12px; color: #888; text-align: center;">qrders Yönetim Sistemi</p>
         </div>
       `,
     };
@@ -65,7 +65,7 @@ export class MailService {
 
   async sendEmailChangeVerificationEmail(to: string, code: string) {
     const mailOptions = {
-      from: `"QR Team Cafe" <${process.env.MAIL_USER}>`,
+      from: `"qrders" <${process.env.MAIL_USER}>`,
       to,
       subject: 'E-posta Değişikliği Doğrulama Kodu',
       html: `
@@ -79,7 +79,7 @@ export class MailService {
           <p style="margin-top: 20px;">Bu kod 15 dakika boyunca geçerlidir.</p>
           <p>Eğer bu talebi siz yapmadıysanız, lütfen bizimle iletişime geçin.</p>
           <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-          <p style="font-size: 12px; color: #888; text-align: center;">QR Team Cafe Yönetim Sistemi</p>
+          <p style="font-size: 12px; color: #888; text-align: center;">qrders Yönetim Sistemi</p>
         </div>
       `,
     };

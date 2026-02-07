@@ -25,7 +25,10 @@ export class ReviewsController {
     @Query('productId') productId?: string,
     @Query('cafeId') cafeId?: string,
   ) {
-    console.log('ReviewsController findAll called with:', { productId, cafeId });
+    console.log('ReviewsController findAll called with:', {
+      productId,
+      cafeId,
+    });
     if (productId) {
       return this.reviewsService.findAllByProduct(productId);
     }

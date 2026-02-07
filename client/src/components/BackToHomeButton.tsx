@@ -7,23 +7,28 @@ import { useEffect, useState } from 'react';
 
 export default function BackToHomeButton() {
   const pathname = usePathname();
-  const [backLink, setBackLink] = useState('/');
-
-  useEffect(() => {
-    // Check if user is logged in
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
+  const [mounted, setMounted] = useState(false);
+  
+  const [backLink] = useState(() => {
+    if (typeof window !== 'undefined') {
       try {
-        const user = JSON.parse(userStr);
-        if (user.role === 'CAFE_ADMIN') {
-           setBackLink('/admin/dashboard');
-        } else if (user.role === 'SUPER_ADMIN') {
-           setBackLink('/admin/super/dashboard');
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user.role === 'CAFE_ADMIN') return '/admin/dashboard';
+          if (user.role === 'SUPER_ADMIN') return '/admin/super/dashboard';
         }
       } catch (e) {
         console.error('User parse error', e);
       }
     }
+    return '/';
+  });
+
+  useEffect(() => {
+    // Avoid synchronous setState in effect
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   // Don't show on home page
@@ -33,6 +38,8 @@ export default function BackToHomeButton() {
   if (pathname.startsWith('/admin') || pathname.startsWith('/menu') || pathname.startsWith('/super')) {
     return null;
   }
+
+  if (!mounted) return null;
 
   return (
     <div className="absolute top-6 left-6 z-50">

@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Plus, Trash2, Loader2, QrCode, Download, X, Bell } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
-import { API_URL, SOCKET_URL } from '@/lib/api';
-import { io, Socket } from 'socket.io-client';
+import { API_URL } from '@/lib/api';
+import { useAdminSocket } from '@/providers/AdminSocketProvider';
 import { cn } from '@/lib/utils';
 
 function TableDuration({ startTime }: { startTime: string }) {
@@ -65,7 +65,7 @@ export default function TablesPage() {
   const [cafeId, setCafeId] = useState<string | null>(null);
   const [qrTable, setQrTable] = useState<Table | null>(null);
   
-  const socketRef = useRef<Socket | null>(null);
+  const { socket } = useAdminSocket();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const fetchTables = async (id: string) => {
@@ -92,13 +92,9 @@ export default function TablesPage() {
       setCafeId(user.cafeId);
       fetchTables(user.cafeId);
 
-      // Socket connection
-      socketRef.current = io(SOCKET_URL || 'http://localhost:3001');
-      socketRef.current.on('connect', () => {
-        socketRef.current?.emit('joinAdmin', { cafeId: user.cafeId });
-      });
+      if (!socket) return;
 
-      socketRef.current.on('waiterCall', (newCall: WaiterCall) => {
+      const onWaiterCall = (newCall: WaiterCall) => {
         // Play sound
         if (audioRef.current) {
           audioRef.current.play().catch(e => console.log('Audio play failed', e));
@@ -115,13 +111,15 @@ export default function TablesPage() {
         }));
 
         toast.info(`${newCall.table?.tableNumber || '?'} . Masa garson çağırıyor!`);
-      });
-    }
+      };
 
-    return () => {
-      socketRef.current?.disconnect();
-    };
-  }, []);
+      socket.on('waiterCall', onWaiterCall);
+
+      return () => {
+        socket.off('waiterCall', onWaiterCall);
+      };
+    }
+  }, [socket]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

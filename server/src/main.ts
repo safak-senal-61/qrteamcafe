@@ -32,8 +32,8 @@ async function bootstrap() {
 
   // Swagger Configuration
   const config = new DocumentBuilder()
-    .setTitle('QR Team Cafe API')
-    .setDescription('The QR Team Cafe API description')
+    .setTitle('qrders API')
+    .setDescription('The qrders API description')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

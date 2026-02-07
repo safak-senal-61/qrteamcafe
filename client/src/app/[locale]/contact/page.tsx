@@ -88,8 +88,8 @@ export default function ContactPage() {
                       <div>
                         <h3 className="font-semibold text-lg mb-1">{t('emailTitle')}</h3>
                         <p className="text-muted-foreground text-sm mb-2">{t('emailDesc')}</p>
-                        <a href="mailto:info@qrteamcafe.com" className="text-foreground font-medium hover:text-primary transition-colors">
-                          info@qrteamcafe.com
+                        <a href="mailto:info@qrders.com" className="text-foreground font-medium hover:text-primary transition-colors">
+                          info@qrders.com
                         </a>
                       </div>
                     </CardContent>

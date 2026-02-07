@@ -375,7 +375,7 @@ export class AuthService {
         receivedCode: dto.verificationCode,
         dbCode: verification?.code,
         expiresAt: verification?.expiresAt,
-        now: new Date()
+        now: new Date(),
       });
       throw new BadRequestException(
         'Geçersiz veya süresi dolmuş doğrulama kodu.',
@@ -743,7 +743,7 @@ export class AuthService {
     const secret = generateSecret();
     const otpauthUrl = generateURI({
       secret,
-      issuer: 'QR Team Cafe',
+      issuer: 'qrders',
       label: user.email,
     });
 

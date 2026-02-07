@@ -13,7 +13,7 @@
     "getStarted": "Start for Free",
     "innovation": "Innovation",
     "futureOfDining": "Future of Dining Experience",
-    "whyQrTeam": "Why QR Team Cafe?",
+    "whyQrTeam": "Why qrders?",
     "whyQrTeamDesc": "Features that will carry your business to the digital age and increase your turnover.",
     "notJustMenu": "Not Just a Menu,",
     "fullOperation": "Full-Scale Operation",
@@ -74,7 +74,7 @@
     "company": "Company",
     "legal": "Legal",
     "description": "Next generation digital menu and order management system for restaurants and cafes.",
-    "rights": "© 2026 QR Team Cafe. All rights reserved."
+    "rights": "© 2026 qrders. All rights reserved."
   },
   "NotFound": {
     "title": "Page Not Found",
@@ -156,7 +156,7 @@
     "title": "Privacy Policy",
     "lastUpdated": "Last Updated: January 21, 2026",
     "subtitle": "Your data security and privacy is our top priority.",
-    "intro": "As QR Team Cafe (\"We\", \"Company\"), we attach great importance to the privacy of our customers and users. This policy transparently explains how your personal data is collected, used, protected, and shared when you use our services.",
+    "intro": "As qrders (\"We\", \"Company\"), we attach great importance to the privacy of our customers and users. This policy transparently explains how your personal data is collected, used, protected, and shared when you use our services.",
     "sections": {
       "1": {
         "title": "1. Collected Personal Data",
@@ -226,11 +226,11 @@
     "title": "Terms of Use",
     "lastUpdated": "Last Updated: January 21, 2026",
     "subtitle": "Rules and legal responsibilities you must follow when using our services.",
-    "intro": "As QR Team Cafe (\"We\", \"Platform\"), we aim to provide you with the best digital menu and restaurant management experience. The following terms have been established to ensure the fair, secure, and lawful use of our platform.",
+    "intro": "As qrders (\"We\", \"Platform\"), we aim to provide you with the best digital menu and restaurant management experience. The following terms have been established to ensure the fair, secure, and lawful use of our platform.",
     "sections": {
       "1": {
         "title": "1. Definition and Acceptance of Service",
-        "content": "QR Team Cafe is a cloud-based SaaS (Software as a Service) platform that offers digital menu, order management, staff tracking, and reporting services for restaurants and cafes.",
+        "content": "qrders is a cloud-based SaaS (Software as a Service) platform that offers digital menu, order management, staff tracking, and reporting services for restaurants and cafes.",
         "content2": "By using our services or accessing our platform, you declare that you have read, understood, and agreed to abide by these Terms of Use."
       },
       "2": {
@@ -265,7 +265,7 @@
       },
       "5": {
         "title": "5. Intellectual Property Rights",
-        "content": "All software, design, graphics, logos, trademarks, and content on the platform are the property of QR Team Cafe or its licensors. Unauthorized copying, reproduction, distribution, or creation of derivative works is prohibited."
+        "content": "All software, design, graphics, logos, trademarks, and content on the platform are the property of qrders or its licensors. Unauthorized copying, reproduction, distribution, or creation of derivative works is prohibited."
       },
       "6": {
         "title": "6. Disclaimer and Limitations",
@@ -295,7 +295,7 @@
     "sections": {
       "1": {
         "title": "1. Data Controller and Purpose",
-        "content": "As QR Team Cafe (\"Company\"), our purposes for processing your personal data as a data controller pursuant to the Law on the Protection of Personal Data No. 6698 (\"KVKK\") are as follows:",
+        "content": "As qrders (\"Company\"), our purposes for processing your personal data as a data controller pursuant to the Law on the Protection of Personal Data No. 6698 (\"KVKK\") are as follows:",
         "list": {
           "0": "Provision of our products and services to you and their uninterrupted continuity.",
           "1": "Management of customer relations and follow-up of satisfaction processes.",
@@ -354,7 +354,7 @@
       "badge": "Leader in Restaurant Technologies",
       "title": "Designing the Future",
       "titleHighlight": "Restaurant Experience",
-      "description": "QR Team Cafe is an end-to-end technology solution that carries your business to the digital age, simplifies operations and increases customer satisfaction.",
+      "description": "qrders is an end-to-end technology solution that carries your business to the digital age, simplifies operations and increases customer satisfaction.",
       "buttonContact": "Meet Us",
       "buttonFeatures": "Discover Features"
     },
@@ -396,7 +396,7 @@
     },
     "team": {
       "title": "Meet Our Team",
-      "subtitle": "Passionate, experienced and innovative. Here is the power behind QR Team Cafe.",
+      "subtitle": "Passionate, experienced and innovative. Here is the power behind qrders.",
       "roles": {
         "founder": "Founder & CEO",
         "cto": "CTO",
@@ -408,7 +408,7 @@
   "FeaturesPage": {
     "title": "Empowering Your Business",
     "titleHighlight": "Advanced Features",
-    "subtitle": "QR Team Cafe is much more than a menu. A comprehensive solution that meets all your business needs.",
+    "subtitle": "qrders is much more than a menu. A comprehensive solution that meets all your business needs.",
     "items": {
       "mobile": {
         "title": "Mobile Friendly QR Menu",
@@ -497,7 +497,7 @@
     "table": "Table",
     "connect": "Connect",
     "wifi": "Wi-Fi",
-    "poweredBy": "Powered by QR Team Cafe",
+    "poweredBy": "Powered by qrders",
     "welcome": "Welcome!",
     "viewMenu": "View Menu",
     "searchPlaceholder": "Search for something delicious...",

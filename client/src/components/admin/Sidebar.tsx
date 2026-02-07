@@ -19,6 +19,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { ReportIssueDialog } from './ReportIssueDialog';
 
+interface CafeData {
+  name: string;
+  logoUrl: string;
+  plan?: string;
+  trialEndsAt?: string | null;
+  subscriptionEndsAt?: string | null;
+  isSubscriptionActive?: boolean;
+}
+
 const menuItems = [
   {
     title: 'Panel',
@@ -72,7 +81,7 @@ export function Sidebar() {
   const router = useRouter();
   
   // Initialize state from localStorage if available to prevent flickering
-  const [cafeData, setCafeData] = useState<any>(() => {
+  const [cafeData, setCafeData] = useState<CafeData>(() => {
     if (typeof window !== 'undefined') {
       const cached = localStorage.getItem('cafe_info');
       if (cached) {
@@ -263,7 +272,7 @@ export function Sidebar() {
           <span className="font-bold text-xl tracking-tight truncate" suppressHydrationWarning>{cafeData.name}</span>
         </div>
         <div className="pl-[52px] -mt-1">
-            <span className="text-[10px] font-bold text-muted-foreground/70 tracking-wider uppercase whitespace-nowrap">powered by qrcafeteam</span>
+            <span className="text-[10px] font-bold text-muted-foreground/70 tracking-wider uppercase whitespace-nowrap">powered by qrders</span>
         </div>
       </div>
 

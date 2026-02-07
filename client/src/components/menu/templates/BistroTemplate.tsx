@@ -298,6 +298,7 @@ export function BistroTemplate({
       <CartSheet 
         cafeId={cafeId || cafe.id}
         tableId={currentTableId || undefined}
+        themeConfig={cafe.themeConfig}
         onOrderSuccess={() => {
             setIsCartOpen(true);
             fetchActiveOrders();

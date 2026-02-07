@@ -22,8 +22,8 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL('https://qrders.com.tr'),
   title: {
-    default: 'Qrders - QR Menü Sistemi',
-    template: '%s | Qrders'
+    default: 'qrders - QR Menü Sistemi',
+    template: '%s | qrders'
   },
   description: 'Modern QR Menü ve Sipariş Yönetim Sistemi. Hızlı, kolay ve temassız sipariş deneyimi.',
   icons: {
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
     apple: '/icon.svg',
   },
   openGraph: {
-    title: 'Qrders - QR Menü Sistemi',
+    title: 'qrders - QR Menü Sistemi',
     description: 'Modern QR Menü ve Sipariş Yönetim Sistemi',
     url: 'https://qrders.com.tr',
-    siteName: 'Qrders',
+    siteName: 'qrders',
     locale: 'tr_TR',
     type: 'website',
   },

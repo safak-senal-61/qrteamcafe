@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from '@/navigation';
-import { io, Socket } from 'socket.io-client';
-import { API_URL, SOCKET_URL } from '@/lib/api';
+import { API_URL } from '@/lib/api';
 import { Bell, HandPlatter, X } from 'lucide-react';
+import { useAdminSocket } from '@/providers/AdminSocketProvider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -23,7 +23,7 @@ interface WaiterCall {
 export function WaiterCallWidget() {
   const [calls, setCalls] = useState<WaiterCall[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
+  const { socket } = useAdminSocket();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
 
@@ -58,14 +58,9 @@ export function WaiterCallWidget() {
 
     fetchCalls();
 
-    // Socket connection
-    socketRef.current = io(SOCKET_URL || 'http://localhost:3001');
+    if (!socket) return;
 
-    socketRef.current.on('connect', () => {
-      socketRef.current?.emit('joinAdmin', { cafeId });
-    });
-
-    socketRef.current.on('waiterCall', (newCall: WaiterCall) => {
+    const onWaiterCall = (newCall: WaiterCall) => {
       // Play sound
       if (audioRef.current) {
         audioRef.current.play().catch(e => console.log('Audio play failed', e));
@@ -84,12 +79,14 @@ export function WaiterCallWidget() {
         if (prev.some(c => c.id === newCall.id)) return prev;
         return [newCall, ...prev];
       });
-    });
+    };
+
+    socket.on('waiterCall', onWaiterCall);
 
     return () => {
-      socketRef.current?.disconnect();
+      socket.off('waiterCall', onWaiterCall);
     };
-  }, [router]);
+  }, [socket, router]);
 
   const handleComplete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();

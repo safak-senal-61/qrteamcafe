@@ -109,7 +109,7 @@ export default function SuperAdminRegisterPage() {
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                   <Input
                     id="email"
-                    placeholder="admin@qrteam.com"
+                    placeholder="admin@qrders.com"
                     type="email"
                     className="pl-10 h-11 bg-slate-800/50 border-slate-700 focus:border-indigo-500 focus:bg-slate-800 text-slate-100 transition-all placeholder:text-slate-600"
                     required

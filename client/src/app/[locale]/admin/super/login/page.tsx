@@ -97,7 +97,7 @@ export default function SuperAdminLoginPage() {
                     id="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="admin@qrteam.com"
+                    placeholder="admin@qrders.com"
                     type="email"
                     className="pl-10 h-11 bg-slate-800/50 border-slate-700 focus:border-indigo-500 focus:bg-slate-800 text-slate-100 transition-all placeholder:text-slate-600"
                     required

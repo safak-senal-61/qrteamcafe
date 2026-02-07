@@ -26,7 +26,7 @@ async function main() {
 
   try {
     // 1. Create Super Admin
-    const superAdminEmail = 'admin@qrteamcafe.com';
+    const superAdminEmail = 'admin@qrders.com';
     const superAdminPassword = await bcrypt.hash('admin123', 10);
     
     await prisma.superAdmin.upsert({
@@ -84,7 +84,7 @@ async function main() {
         data: {
           cafeId: cafe.id,
           name: 'Demo Yöneticisi',
-          email: 'demo@qrteamcafe.com',
+          email: 'demo@qrders.com',
           passwordHash: cafeAdminPassword,
           isActive: true,
           isApproved: true,
@@ -348,7 +348,7 @@ async function main() {
         data: Array.from({ length: 10 }, (_, i) => ({
           cafeId: cafeId!,
           tableNumber: i + 1,
-          qrCode: `https://qrteamcafe.com/menu/${demoCafeSlug}?table=${i + 1}`,
+          qrCode: `https://qrders.com/menu/${demoCafeSlug}?table=${i + 1}`,
         })),
       });
       console.log('Tables created');

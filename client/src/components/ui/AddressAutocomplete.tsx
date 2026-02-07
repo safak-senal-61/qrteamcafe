@@ -55,7 +55,7 @@ export default function AddressAutocomplete({ onAddressSelect, defaultValue = ''
 
   // Sync internal value if defaultValue changes externally
   useEffect(() => {
-    if (defaultValue && defaultValue !== query) {
+    if (defaultValue) {
       setQuery(defaultValue);
     }
   }, [defaultValue]);

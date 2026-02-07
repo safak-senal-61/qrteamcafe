@@ -11,7 +11,7 @@ export default function HomeScreen() {
         <View style={styles.iconContainer}>
             <Coffee color="#000" size={40} />
         </View>
-        <Text style={styles.title}>QR Team Cafe</Text>
+        <Text style={styles.title}>qrders</Text>
         <Text style={styles.subtitle}>Lezzete hızlı ulaşın</Text>
       </View>
       

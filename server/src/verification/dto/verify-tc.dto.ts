@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsNumber, IsString, Length, Max, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Length,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class VerifyTcDto {
   @IsNotEmpty()

@@ -154,7 +154,7 @@ export default function Home() {
               <QrCode className="h-7 w-7" />
             </motion.div>
             <span className="font-bold text-2xl tracking-tight text-white">
-              QR Team <span className="text-amber-500">Cafe</span>
+              QrDers
             </span>
           </Link>
           <nav className="flex items-center gap-4">
@@ -193,7 +193,7 @@ export default function Home() {
                           <QrCode className="h-6 w-6" />
                         </div>
                         <span className="font-bold text-xl tracking-tight text-white">
-                          QR Team <span className="text-amber-500">Cafe</span>
+                          QrDers
                         </span>
                       </SheetTitle>
                     </SheetHeader>
@@ -242,7 +242,7 @@ export default function Home() {
                       {/* Footer Info */}
                       <div className="mt-auto pt-6 border-t border-white/10 text-center">
                         <p className="text-xs text-white/40">
-                          &copy; {new Date().getFullYear()} QR Team Cafe
+                          &copy; {new Date().getFullYear()} qrders
                         </p>
                       </div>
                     </div>

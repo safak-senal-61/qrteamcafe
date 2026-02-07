@@ -19,7 +19,9 @@ import {
   CheckCircle2, 
   XCircle, 
   ChefHat,
-  MessageSquare
+  MessageSquare,
+  MapPin,
+  Network
 } from 'lucide-react';
 import {
   Sheet,
@@ -70,6 +72,7 @@ interface CartSheetProps {
   activeOrders?: Order[];
   onOrderSuccess?: () => void;
   onCancelOrder?: (orderId: string) => void;
+  themeConfig?: string | null;
 }
 
 export function CartSheet({ 
@@ -79,7 +82,8 @@ export function CartSheet({
   onOpenChange, 
   activeOrders = [], 
   onOrderSuccess, 
-  onCancelOrder 
+  onCancelOrder,
+  themeConfig
 }: CartSheetProps) {
   // Internal state for uncontrolled mode if needed, though we prefer controlled from MenuPage
   const [internalOpen, setInternalOpen] = useState(false);
@@ -112,7 +116,110 @@ export function CartSheet({
     }
   }, [open, items.length, activeOrders.length]);
 
+  // Geolocation Helper
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  };
+
+  const checkSecurity = async (): Promise<boolean> => {
+    if (!themeConfig) return true;
+    
+    try {
+      let config;
+      try {
+        config = typeof themeConfig === 'string' ? JSON.parse(themeConfig) : themeConfig;
+      } catch (e) {
+        console.warn('Theme config parse error:', e);
+        return true;
+      }
+
+      if (!config) return true;
+
+      let isValid = true;
+
+      // 1. IP Check
+      if (config.ipCheckEnabled && config.allowedIp) {
+        try {
+          const res = await fetch('https://api.ipify.org?format=json');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.ip !== config.allowedIp) {
+              toast.error('Güvenlik Uyarısı: Sipariş vermek için lütfen işletmenin Wi-Fi ağına bağlanınız.', {
+                duration: 5000,
+                icon: <Network className="h-5 w-5 text-red-500" />
+              });
+              isValid = false;
+            }
+          }
+        } catch (e) {
+          console.warn('IP check failed', e);
+          // Fail safe: if IP check fails (api down), we usually allow or warn.
+        }
+      }
+
+      if (!isValid) return false;
+
+      // 2. Geolocation Check
+      if (config.geolocationEnabled) {
+        if (!navigator.geolocation) {
+          toast.error('Tarayıcınız konum servisini desteklemiyor. Sipariş için konuma izin vermelisiniz.');
+          return false;
+        }
+
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        }).catch(() => null);
+
+        if (!position) {
+          toast.error('Konum alınamadı. Sipariş vermek için konum izni vermelisiniz.');
+          return false;
+        }
+
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
+        const cafeLat = parseFloat(config.cafeLat);
+        const cafeLng = parseFloat(config.cafeLng);
+        const maxRange = parseFloat(config.maxRange) || 500;
+
+        if (!isNaN(cafeLat) && !isNaN(cafeLng)) {
+          const distance = calculateDistance(userLat, userLng, cafeLat, cafeLng);
+          if (distance > maxRange) {
+             toast.error(`İşletmeden çok uzaktasınız (${Math.round(distance)}m). Sipariş vermek için işletmeye yaklaşmalısınız (Max: ${maxRange}m).`, {
+               duration: 5000,
+               icon: <MapPin className="h-5 w-5 text-red-500" />
+             });
+             return false;
+          }
+        }
+      }
+
+      return true;
+    } catch (e) {
+      console.error(e);
+      return true;
+    }
+  };
+
   const handleCheckout = async () => {
+    // Security Checks
+    setLoading(true);
+    const isSecure = await checkSecurity();
+    if (!isSecure) {
+      setLoading(false);
+      return;
+    }
+
     if (!customer && !isGuest) {
       toast.info('Sipariş vermek için lütfen giriş yapınız veya misafir olarak devam ediniz');
       // setOpen(false); // Keep cart open so user can continue easily after auth dialog closes

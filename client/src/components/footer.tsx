@@ -15,7 +15,7 @@ export default function Footer() {
               <div className="bg-white/10 p-2 rounded-lg">
                 <QrCode className="h-6 w-6 text-white" />
               </div>
-              <span className="font-bold text-xl text-white">QR Team Cafe</span>
+              <span className="font-bold text-xl text-white">qrders</span>
             </Link>
             <p className="text-sm text-zinc-400 leading-relaxed max-w-sm font-medium">
               {t('description')}

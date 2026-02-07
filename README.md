@@ -1,4 +1,4 @@
-# 🍽️ QR Team Cafe (Gunibirlik)
+# 🍽️ qrders (qrders)
 
 > **Modern, Hızlı ve Akıllı QR Menü Sistemi**
 > 
@@ -12,7 +12,7 @@
 
 ## 📖 Proje Hakkında
 
-**QR Team Cafe**, işletmelerin kağıt menü maliyetlerinden kurtulmasını, sipariş süreçlerini hızlandırmasını ve müşteri deneyimini üst seviyeye taşımasını sağlayan kapsamlı bir SaaS (Software as a Service) çözümüdür.
+**qrders**, işletmelerin kağıt menü maliyetlerinden kurtulmasını, sipariş süreçlerini hızlandırmasını ve müşteri deneyimini üst seviyeye taşımasını sağlayan kapsamlı bir SaaS (Software as a Service) çözümüdür.
 
 Müşteriler masadaki QR kodu okutarak saniyeler içinde menüye ulaşır, garson beklemeden sipariş verir ve hatta hesabı öder. İşletme sahipleri ise gelişmiş yönetim paneli ile tüm operasyonu tek ekrandan yönetir.
 
@@ -66,8 +66,8 @@ Projeyi yerel ortamınızda çalıştırmak için aşağıdaki adımları izleyi
 
 ### 1. Repoyu Klonlayın
 ```bash
-git clone https://github.com/safak-senal-61/qrteamcafe.git
-cd qrteamcafe
+git clone https://github.com/safak-senal-61/qrders.git
+cd qrders
 ```
 
 ### 2. Backend (Server) Kurulumu

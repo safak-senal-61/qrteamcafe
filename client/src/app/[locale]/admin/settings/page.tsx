@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2, Save, Store, User, Settings2, Upload, Palette, Wifi, Share2, BellRing, Power, Shield } from 'lucide-react';
+import { Loader2, Save, Store, User, Settings2, Upload, Palette, Wifi, Share2, BellRing, Power, Shield, MapPin, Navigation, Network } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SecuritySettings from './components/SecuritySettings';
 import Image from 'next/image';
@@ -122,6 +122,16 @@ export default function SettingsPage() {
     autoApproveReviews: false,
     isMaintenanceMode: false,
     createdAt: '',
+    
+    // Security - Geolocation
+    geolocationEnabled: false,
+    maxRange: '500',
+    cafeLat: '',
+    cafeLng: '',
+
+    // Security - IP Restriction
+    ipCheckEnabled: false,
+    allowedIp: '',
   });
 
   const paymentOptions = [
@@ -149,12 +159,19 @@ export default function SettingsPage() {
     if (!cafeId) return;
 
     try {
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = {
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache'
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch(`${API_URL}/cafes/${cafeId}`, {
         cache: 'no-store',
-        headers: {
-          'Pragma': 'no-cache',
-          'Cache-Control': 'no-cache'
-        }
+        headers
       });
       if (res.ok) {
         const data = await res.json();
@@ -185,6 +202,12 @@ export default function SettingsPage() {
           coverImageUrl: getFullUrl(data.coverImageUrl),
           brandColor: data.brandColor || '#000000',
           theme: data.themeConfig ? JSON.parse(data.themeConfig).theme || 'default' : 'default',
+          geolocationEnabled: data.themeConfig ? JSON.parse(data.themeConfig).geolocationEnabled || false : false,
+          maxRange: data.themeConfig ? JSON.parse(data.themeConfig).maxRange || '500' : '500',
+          cafeLat: data.themeConfig ? JSON.parse(data.themeConfig).cafeLat || '' : '',
+          cafeLng: data.themeConfig ? JSON.parse(data.themeConfig).cafeLng || '' : '',
+          ipCheckEnabled: data.themeConfig ? JSON.parse(data.themeConfig).ipCheckEnabled || false : false,
+          allowedIp: data.themeConfig ? JSON.parse(data.themeConfig).allowedIp || '' : '',
           menuViewMode: data.menuViewMode || 'card',
           welcomeMessage: data.welcomeMessage || '',
 
@@ -329,8 +352,14 @@ export default function SettingsPage() {
     formDataUpload.append('file', file);
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
       const res = await fetch(`${API_URL}/cafes/${cafeId}/cover-image`, {
         method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formDataUpload,
       });
 
@@ -366,12 +395,30 @@ export default function SettingsPage() {
         ...rest,
         paymentMethods: JSON.stringify(formData.paymentMethods),
         waiterCallOptions: JSON.stringify(formData.waiterCallOptions),
-        themeConfig: JSON.stringify({ theme: formData.theme }),
+        themeConfig: JSON.stringify({ 
+          theme: formData.theme,
+          geolocationEnabled: formData.geolocationEnabled,
+          maxRange: formData.maxRange,
+          cafeLat: formData.cafeLat,
+          cafeLng: formData.cafeLng,
+          ipCheckEnabled: formData.ipCheckEnabled,
+          allowedIp: formData.allowedIp
+        }),
       };
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Oturum süreniz dolmuş olabilir. Lütfen tekrar giriş yapın.');
+        setSaving(false);
+        return;
+      }
 
       const res = await fetch(`${API_URL}/cafes/${cafeId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload),
       });
 
@@ -820,6 +867,195 @@ export default function SettingsPage() {
 
           {/* 6. Güvenlik */}
           <TabsContent value="security">
+            {/* Geolocation Card */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Konum Doğrulama
+                </CardTitle>
+                <CardDescription>
+                  Sadece işletmenize fiziksel olarak yakın olan müşterilerin sipariş vermesine izin verin.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2 border p-4 rounded-lg">
+                  <Switch
+                    id="geolocationEnabled"
+                    checked={formData.geolocationEnabled}
+                    onCheckedChange={(checked) => setFormData({ ...formData, geolocationEnabled: checked })}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label htmlFor="geolocationEnabled" className="text-base font-medium">
+                      Konum Kontrolünü Etkinleştir
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Aktif edildiğinde, sipariş vermek isteyen müşterilerin konumu kontrol edilir.
+                    </p>
+                  </div>
+                </div>
+
+                {formData.geolocationEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="maxRange">Maksimum Mesafe (Metre)</Label>
+                      <Input
+                        id="maxRange"
+                        type="number"
+                        value={formData.maxRange}
+                        onChange={(e) => setFormData({ ...formData, maxRange: e.target.value })}
+                        placeholder="Örn: 500"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Müşterinin sipariş verebilmesi için işletmeye olan maksimum uzaklığı.
+                      </p>
+                    </div>
+                    
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                        <Label htmlFor="cafeLat">Enlem (Latitude)</Label>
+                        <div className="relative">
+                          <Input
+                            id="cafeLat"
+                            value={formData.cafeLat}
+                            onChange={(e) => setFormData({ ...formData, cafeLat: e.target.value })}
+                            placeholder="Örn: 41.0082"
+                          />
+                          <Navigation className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cafeLng">Boylam (Longitude)</Label>
+                        <div className="relative">
+                          <Input
+                            id="cafeLng"
+                            value={formData.cafeLng}
+                            onChange={(e) => setFormData({ ...formData, cafeLng: e.target.value })}
+                            placeholder="Örn: 28.9784"
+                          />
+                          <Navigation className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="col-span-1 md:col-span-2">
+                       <Button 
+                         type="button" 
+                         variant="outline" 
+                         onClick={() => {
+                           if (!window.isSecureContext) {
+                             toast.error('Konum servisi sadece HTTPS veya localhost üzerinde çalışır. Bu IP adresinde çalışmayabilir.');
+                             // We still try, but warn first
+                           }
+
+                           if (navigator.geolocation) {
+                             navigator.geolocation.getCurrentPosition(
+                               (position) => {
+                                 setFormData({
+                                   ...formData,
+                                   cafeLat: position.coords.latitude.toString(),
+                                   cafeLng: position.coords.longitude.toString()
+                                 });
+                                 toast.success('Mevcut konumunuz alındı.');
+                               },
+                               (error) => {
+                                 console.warn('Geolocation error:', error);
+                                 let errorMsg = 'Konum alınamadı.';
+                                 if (error.code === 1) errorMsg = 'Konum izni reddedildi.';
+                                 if (error.code === 2) errorMsg = 'Konum bilgisi kullanılamıyor.';
+                                 if (error.code === 3) errorMsg = 'Konum isteği zaman aşımına uğradı.';
+                                 
+                                 if (!window.isSecureContext) {
+                                   errorMsg += ' (HTTPS gerekli olabilir)';
+                                 }
+                                 
+                                 toast.error(errorMsg);
+                               }
+                             );
+                           } else {
+                             toast.error('Tarayıcınız konum servisini desteklemiyor.');
+                           }
+                         }}
+                         className="w-full md:w-auto"
+                       >
+                         <MapPin className="mr-2 h-4 w-4" />
+                         Mevcut Konumumu Kullan
+                       </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* IP Restriction Card */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Network className="h-5 w-5 text-primary" />
+                  IP Kısıtlaması (Wi-Fi Zorunluluğu)
+                </CardTitle>
+                <CardDescription>
+                  Müşterilerin sadece işletmenizin internet ağına (Wi-Fi) bağlıyken sipariş vermesini sağlar.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2 border p-4 rounded-lg">
+                  <Switch
+                    id="ipCheckEnabled"
+                    checked={formData.ipCheckEnabled}
+                    onCheckedChange={(checked) => setFormData({ ...formData, ipCheckEnabled: checked })}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label htmlFor="ipCheckEnabled" className="text-base font-medium">
+                      IP Kontrolünü Etkinleştir
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Aktif edildiğinde, müşterinin IP adresi kontrol edilir ve sadece izin verilen IP&apos;den sipariş kabul edilir.
+                    </p>
+                  </div>
+                </div>
+
+                {formData.ipCheckEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="allowedIp">İşletme Dış IP Adresi</Label>
+                      <Input
+                        id="allowedIp"
+                        value={formData.allowedIp}
+                        onChange={(e) => setFormData({ ...formData, allowedIp: e.target.value })}
+                        placeholder="Örn: 88.254.12.34"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        İşletmenizin internet çıkış IP adresi. Müşteriler Wi-Fi&apos;ye bağlandığında bu IP ile görünürler.
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-end">
+                       <Button 
+                         type="button" 
+                         variant="outline" 
+                         onClick={async () => {
+                           try {
+                             const res = await fetch('https://api.ipify.org?format=json');
+                             const data = await res.json();
+                             setFormData({ ...formData, allowedIp: data.ip });
+                             toast.success(`IP Adresiniz alındı: ${data.ip}`);
+                           } catch (error) {
+                             console.error(error);
+                             toast.error('IP adresi alınamadı.');
+                           }
+                         }}
+                         className="w-full md:w-auto"
+                       >
+                         <Network className="mr-2 h-4 w-4" />
+                         Mevcut IP Adresimi Getir
+                       </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <SecuritySettings />
           </TabsContent>
         </Tabs>

@@ -164,7 +164,11 @@ export class SuperAdminService {
     const now = new Date();
     let newEndDate = now;
 
-    if (cafe.isSubscriptionActive && cafe.subscriptionEndsAt && cafe.subscriptionEndsAt > now) {
+    if (
+      cafe.isSubscriptionActive &&
+      cafe.subscriptionEndsAt &&
+      cafe.subscriptionEndsAt > now
+    ) {
       // If active, extend from the current end date
       newEndDate = new Date(cafe.subscriptionEndsAt);
     }

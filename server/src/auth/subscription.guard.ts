@@ -31,7 +31,7 @@ export class SubscriptionGuard implements CanActivate {
     if (user.role !== 'CAFE_ADMIN' || !user.cafeId) {
       // If not cafe admin (e.g. customer), maybe allow or deny?
       // Assuming this guard is only for Cafe Admin routes.
-      return true; 
+      return true;
     }
 
     const cafe = await this.prisma.cafe.findUnique({
@@ -56,7 +56,10 @@ export class SubscriptionGuard implements CanActivate {
 
     // Check subscription
     // Allow access if subscription is active OR if the paid period hasn't ended yet
-    if ((cafe.isSubscriptionActive || (cafe.subscriptionEndsAt && cafe.subscriptionEndsAt > now))) {
+    if (
+      cafe.isSubscriptionActive ||
+      (cafe.subscriptionEndsAt && cafe.subscriptionEndsAt > now)
+    ) {
       return true;
     }
 

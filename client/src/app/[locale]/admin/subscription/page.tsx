@@ -242,7 +242,7 @@ export default function SubscriptionPage() {
             <div className="flex flex-col md:flex-row gap-8">
               <div className="space-y-1">
                 <span className="text-sm text-muted-foreground">{t('labels.planType')}</span>
-                <p className="text-2xl font-bold">QR Team Pro</p>
+                <p className="text-2xl font-bold">QrDers Pro</p>
                 <Badge variant={isExpired ? "destructive" : (!subscription.isSubscriptionActive ? "secondary" : "default")} className="mt-1">
                   {isExpired ? t('status.expired') : (!subscription.isSubscriptionActive ? t('status.cancelled') : t('status.active'))}
                 </Badge>

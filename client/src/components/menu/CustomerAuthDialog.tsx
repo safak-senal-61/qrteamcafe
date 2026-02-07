@@ -378,7 +378,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
               <div className={cn("p-3 rounded-2xl backdrop-blur-md mb-3 shadow-lg", styles.iconBox)}>
                 <UtensilsCrossed className={cn("h-8 w-8", styles.iconColor)} />
               </div>
-              <h2 className={cn("text-2xl font-bold tracking-tight", styles.titleColor)}>QR Team Cafe</h2>
+              <h2 className={cn("text-2xl font-bold tracking-tight", styles.titleColor)}>qrders</h2>
               {view === 'welcome' && (
                 <p className={cn("text-sm mt-1 font-medium", styles.textColor)}>Lezzetin Adresi</p>
               )}

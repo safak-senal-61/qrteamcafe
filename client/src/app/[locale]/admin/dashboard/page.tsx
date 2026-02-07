@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -31,7 +31,7 @@ import { Link, useRouter, usePathname } from '@/navigation';
 import { useSearchParams } from 'next/navigation';
 import { API_URL } from '@/lib/api';
 import Image from 'next/image';
-import { Socket } from 'socket.io-client';
+import { useAdminSocket } from '@/providers/AdminSocketProvider';
 
 // Sayfanın dinamik olmasını zorla (Cache sorunlarını önlemek için)
 export const dynamic = 'force-dynamic';
@@ -85,9 +85,6 @@ interface DashboardStats {
   };
 }
 
-import { io } from 'socket.io-client';
-import { useRef } from 'react';
-
 import {
   Dialog,
   DialogContent,
@@ -96,18 +93,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 export default function DashboardPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { socket, activeTablesCount, isConnected } = useAdminSocket();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [cafeId, setCafeId] = useState<string | null>(null);
   const [newOrderCount, setNewOrderCount] = useState(0);
-  const [isConnected, setIsConnected] = useState(false);
   
   // Payment Success Dialog State
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
@@ -269,7 +265,18 @@ export default function DashboardPage() {
     }
   };
 
-  // WebSocket connection for real-time active tables
+  // Sync active tables from context
+  useEffect(() => {
+    setStats((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        activeTables: activeTablesCount,
+      };
+    });
+  }, [activeTablesCount]);
+
+  // WebSocket event listeners
   useEffect(() => {
     // LocalStorage'dan sayaç durumunu yükle
     const savedCount = localStorage.getItem('newOrderCount');
@@ -277,113 +284,83 @@ export default function DashboardPage() {
       setNewOrderCount(parseInt(savedCount));
     }
 
-    let socket: Socket | undefined;
+    if (!socket) return;
 
-    if (cafeId) {
-      console.log('Connecting to websocket with cafeId:', cafeId);
-      socket = io(API_URL, {
-        transports: ['websocket'],
-        reconnection: true,
-      });
+    const onNewOrder = (order: DashboardOrder) => {
+      console.log('New order received:', order);
+        
+      // Ses çalma işlemi - DB ayarını ve LocalStorage'ı kontrol et
+      const isEnabledLocal = localStorage.getItem('soundEnabled') !== 'false';
+      const shouldPlay = soundEnabledRef.current && isEnabledLocal;
+      
+      console.log('Sound check -> Ref:', soundEnabledRef.current, 'Local:', isEnabledLocal, 'Decision:', shouldPlay);
 
-      socket.on('connect', () => {
-        console.log('Admin connected to websocket');
-        setIsConnected(true);
-        socket?.emit('joinAdmin', { cafeId });
-      });
-
-      socket.on('disconnect', () => {
-        console.log('Admin disconnected from websocket');
-        setIsConnected(false);
-      });
-
-      socket.on('activeTablesUpdate', (count: number) => {
-        console.log('Active tables update:', count);
-        setStats((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            activeTables: count,
-          };
+      if (shouldPlay && audio) {
+        audio.play().catch(e => {
+          console.log('Audio play failed:', e);
+          // Sadece gerçekten bir hata varsa uyar, kullanıcı henüz etkileşime girmemiş olabilir
         });
+      }
+
+      toast.success(`Masa ${order.table?.tableNumber || '?'} yeni sipariş verdi!`, {
+        duration: 5000,
+        action: {
+          label: 'Görüntüle',
+          onClick: () => router.push('/admin/orders'),
+        },
+      });
+      
+      setNewOrderCount((prev) => {
+        const newCount = prev + 1;
+        localStorage.setItem('newOrderCount', newCount.toString());
+        return newCount;
       });
 
-      socket.on('newOrder', (order: DashboardOrder) => {
-        console.log('New order received:', order);
+      // Sipariş sayısını ve listesini güncelle
+      setStats((prev) => {
+        if (!prev) return null;
+        // Yeni siparişi listenin başına ekle
+        const updatedRecentOrders = [order, ...prev.recentOrders].slice(0, 10);
         
-        // Ses çalma işlemi - DB ayarını ve LocalStorage'ı kontrol et
-        const isEnabledLocal = localStorage.getItem('soundEnabled') !== 'false';
-        const shouldPlay = soundEnabledRef.current && isEnabledLocal;
-        
-        console.log('Sound check -> Ref:', soundEnabledRef.current, 'Local:', isEnabledLocal, 'Decision:', shouldPlay);
-
-        if (shouldPlay && audio) {
-          audio.play().catch(e => {
-            console.log('Audio play failed:', e);
-            // Sadece gerçekten bir hata varsa uyar, kullanıcı henüz etkileşime girmemiş olabilir
-          });
-        }
-
-        toast.success(`Masa ${order.table?.tableNumber || '?'} yeni sipariş verdi!`, {
-          duration: 5000,
-          action: {
-            label: 'Görüntüle',
-            onClick: () => router.push('/admin/orders'),
-          },
-        });
-        
-        setNewOrderCount((prev) => {
-          const newCount = prev + 1;
-          localStorage.setItem('newOrderCount', newCount.toString());
-          return newCount;
-        });
-
-        // Sipariş sayısını ve listesini güncelle
-        setStats((prev) => {
-          if (!prev) return null;
-          // Yeni siparişi listenin başına ekle
-          const updatedRecentOrders = [order, ...prev.recentOrders].slice(0, 10);
-          
-          return {
-            ...prev,
-            totalOrders: prev.totalOrders + 1,
-            recentOrders: updatedRecentOrders,
-          };
-        });
+        return {
+          ...prev,
+          totalOrders: prev.totalOrders + 1,
+          recentOrders: updatedRecentOrders,
+        };
       });
+    };
 
-      // Garson Çağırma Bildirimi
-      socket.on('waiterCall', (call: WaiterCall) => {
-        console.log('Waiter call received:', call);
+    const onWaiterCall = (call: WaiterCall) => {
+      console.log('Waiter call received:', call);
         
-        // Ses çalma işlemi - DB ayarını ve LocalStorage'ı kontrol et
-        const isEnabledLocal = localStorage.getItem('soundEnabled') !== 'false';
-        const shouldPlay = soundEnabledRef.current && isEnabledLocal;
-        
-        console.log('Waiter call sound check -> Ref:', soundEnabledRef.current, 'Local:', isEnabledLocal, 'Decision:', shouldPlay);
-        
-        if (shouldPlay && audio) {
-          audio.play().catch(console.error);
-        }
+      // Ses çalma işlemi - DB ayarını ve LocalStorage'ı kontrol et
+      const isEnabledLocal = localStorage.getItem('soundEnabled') !== 'false';
+      const shouldPlay = soundEnabledRef.current && isEnabledLocal;
+      
+      console.log('Waiter call sound check -> Ref:', soundEnabledRef.current, 'Local:', isEnabledLocal, 'Decision:', shouldPlay);
+      
+      if (shouldPlay && audio) {
+        audio.play().catch(console.error);
+      }
 
-        toast.info(`Masa ${call.table?.tableNumber || '?'} garson çağırıyor!`, {
-          duration: 5000,
-          icon: <BellRing className="h-4 w-4" />,
-          action: {
-            label: 'Görüntüle',
-            onClick: () => router.push('/admin/orders'), // veya garson çağrıları sayfasına
-          },
-        });
+      toast.info(`Masa ${call.table?.tableNumber || '?'} garson çağırıyor!`, {
+        duration: 5000,
+        icon: <BellRing className="h-4 w-4" />,
+        action: {
+          label: 'Görüntüle',
+          onClick: () => router.push('/admin/orders'), // veya garson çağrıları sayfasına
+        },
       });
-    }
+    };
+
+    socket.on('newOrder', onNewOrder);
+    socket.on('waiterCall', onWaiterCall);
 
     return () => {
-      if (socket) {
-        console.log('Disconnecting socket...');
-        socket.disconnect();
-      }
+      socket.off('newOrder', onNewOrder);
+      socket.off('waiterCall', onWaiterCall);
     };
-  }, [cafeId, audio, router]); // soundEnabled bağımlılığı kaldırıldı, ref kullanılıyor
+  }, [socket, audio, router]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -464,7 +441,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Aktif Masa',
-      value: stats.activeTables,
+      value: activeTablesCount,
       change: 'Şu an',
       icon: Users,
       color: 'text-purple-600',
@@ -486,7 +463,7 @@ export default function DashboardPage() {
   const getSubscriptionStatus = () => {
     if (!stats.subscription) return null;
 
-    const { plan, subscriptionEndsAt, trialEndsAt, isSubscriptionActive } = stats.subscription;
+    const { subscriptionEndsAt, trialEndsAt, isSubscriptionActive } = stats.subscription;
     const now = new Date();
     
     // Check Pro Subscription first

@@ -47,7 +47,10 @@ export class SuperAdminController {
   }
 
   @Post('cafes/:id/subscription')
-  extendSubscription(@Param('id') id: string, @Body() body: { months: number }) {
+  extendSubscription(
+    @Param('id') id: string,
+    @Body() body: { months: number },
+  ) {
     return this.superAdminService.extendSubscription(id, body.months);
   }
 }

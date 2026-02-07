@@ -4,9 +4,9 @@ import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bell, Check, Clock, Loader2 } from 'lucide-react';
-import { API_URL, SOCKET_URL } from '@/lib/api';
+import { API_URL } from '@/lib/api';
 import { toast } from 'sonner';
-import { io, Socket } from 'socket.io-client';
+import { useAdminSocket } from '@/providers/AdminSocketProvider';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -33,7 +33,7 @@ const OPTION_LABELS: Record<string, string> = {
 export default function WaiterCallsPage() {
   const [calls, setCalls] = useState<WaiterCall[]>([]);
   const [loading, setLoading] = useState(true);
-  const socketRef = useRef<Socket | null>(null);
+  const { socket } = useAdminSocket();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -63,15 +63,9 @@ export default function WaiterCallsPage() {
 
     fetchCalls();
 
-    // Socket connection
-    socketRef.current = io(SOCKET_URL || 'http://localhost:3001');
-    
-    socketRef.current.on('connect', () => {
-      console.log('Connected to socket');
-      socketRef.current?.emit('joinAdmin', { cafeId });
-    });
+    if (!socket) return;
 
-    socketRef.current.on('waiterCall', (newCall: WaiterCall) => {
+    const onWaiterCall = (newCall: WaiterCall) => {
         // Play sound
         if (audioRef.current) {
             audioRef.current.play().catch(e => console.log('Audio play failed', e));
@@ -79,12 +73,14 @@ export default function WaiterCallsPage() {
         const label = newCall.type ? (OPTION_LABELS[newCall.type] || newCall.type) : 'Garson';
         toast.info(`${newCall.table?.tableNumber || '?'} . Masa: ${label}`);
         setCalls(prev => [newCall, ...prev]);
-    });
+    };
+
+    socket.on('waiterCall', onWaiterCall);
 
     return () => {
-      socketRef.current?.disconnect();
+      socket.off('waiterCall', onWaiterCall);
     };
-  }, []);
+  }, [socket]);
 
   const handleComplete = async (id: string) => {
     try {
