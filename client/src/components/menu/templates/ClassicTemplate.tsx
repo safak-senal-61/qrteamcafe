@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { API_URL } from '@/lib/api';
+import { getMediaUrl } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -51,13 +51,6 @@ export function ClassicTemplate({
 }: TemplateProps) {
   const t = useTranslations('Menu');
   const router = useRouter();
-
-  const getImageUrl = (url: string | undefined | null) => {
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const path = url.startsWith('/') ? url : `/${url}`;
-    return `${API_URL}${path}`;
-  };
 
   return (
     <div className="min-h-screen bg-background pb-24 relative font-sans overflow-x-hidden">
@@ -99,7 +92,7 @@ export function ClassicTemplate({
           className="absolute inset-0 w-full h-full"
         >
           <Image
-            src={getImageUrl(cafe.coverImage) || 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=2078&auto=format&fit=crop'}
+            src={getMediaUrl(cafe.coverImage) || 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=2078&auto=format&fit=crop'}
             alt={cafe.name}
             fill
             className="object-cover"
@@ -114,7 +107,7 @@ export function ClassicTemplate({
               className="h-24 w-24 rounded-2xl border-4 border-background overflow-hidden bg-white shadow-2xl relative"
             >
               <Image
-                src={getImageUrl(cafe.logo) || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=200&h=200&auto=format&fit=crop'}
+                src={getMediaUrl(cafe.logo) || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=200&h=200&auto=format&fit=crop'}
                 alt={cafe.name}
                 fill
                 className="object-cover"
@@ -355,8 +348,15 @@ export function ClassicTemplate({
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex flex-col items-center gap-4 pt-4">
               {cafe.logo && (
-                <div className="h-20 w-20 rounded-full overflow-hidden border-4 border-primary/20 relative">
-                   <Image src={getImageUrl(cafe.logo) || ''} alt={cafe.name} fill className="object-cover" />
+                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20">
+                  <Image
+                    src={getMediaUrl(cafe.logo)}
+                    alt={cafe.name}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                    priority
+                  />
                 </div>
               )}
               <span>{t('welcome')}</span>

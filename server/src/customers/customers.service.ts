@@ -61,14 +61,13 @@ export class CustomersService {
         });
         // Return safe object
 
-        /* eslint-disable @typescript-eslint/no-unused-vars */
         const {
           passwordHash: _ph,
           verificationCode: _vc,
           verificationCodeExpires: _vce,
           ...safeCustomer
         } = updated;
-        /* eslint-enable @typescript-eslint/no-unused-vars */
+
         return safeCustomer;
       } catch {
         referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -77,28 +76,26 @@ export class CustomersService {
           data: { referralCode },
         });
 
-        /* eslint-disable @typescript-eslint/no-unused-vars */
         const {
           passwordHash: _ph,
           verificationCode: _vc,
           verificationCodeExpires: _vce,
           ...safeCustomer
         } = updated;
-        /* eslint-enable @typescript-eslint/no-unused-vars */
+
         return safeCustomer;
       }
     }
 
     // Return safe object
 
-    /* eslint-disable @typescript-eslint/no-unused-vars */
     const {
       passwordHash: _ph,
       verificationCode: _vc,
       verificationCodeExpires: _vce,
       ...safeCustomer
     } = customer;
-    /* eslint-enable @typescript-eslint/no-unused-vars */
+
     return safeCustomer;
   }
 

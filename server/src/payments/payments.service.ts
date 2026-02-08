@@ -1,9 +1,30 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import type { Cafe } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 const Iyzipay = require('iyzipay');
+
+const toSafeString = (value: unknown, fallback = ''): string => {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return fallback;
+  if (value instanceof Error) return value.message || fallback;
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return `${value}`;
+  }
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+};
 
 @Injectable()
 export class PaymentsService {
@@ -81,7 +102,11 @@ export class PaymentsService {
             (err: any, result: any) => {
               if (err) reject(err);
               else if (result.status !== 'success')
-                reject(new Error(result.errorMessage));
+                reject(
+                  new Error(
+                    toSafeString(result.errorMessage, 'Iyzico API Error'),
+                  ),
+                );
               else resolve(result);
             },
           );
@@ -253,9 +278,9 @@ export class PaymentsService {
               // API Error (e.g. cardUserKey not found)
               // Treat this as an error so our catch block can handle it
               const error: any = new Error(
-                result.errorMessage || 'Iyzico API Error',
+                toSafeString(result.errorMessage, 'Iyzico API Error'),
               );
-              error.errorMessage = result.errorMessage;
+              error.errorMessage = toSafeString(result.errorMessage);
               error.errorCode = result.errorCode;
               reject(error);
             } else {
@@ -324,7 +349,7 @@ export class PaymentsService {
               result.status === 'success' &&
               result.paymentStatus === 'SUCCESS'
             ) {
-              let cafeId = result.conversationId;
+              let cafeId = toSafeString(result.conversationId);
               let planDuration = 'monthly';
 
               // Extract info from basketId if needed or to get planDuration
@@ -355,7 +380,7 @@ export class PaymentsService {
                           secondLastDashIndex,
                         );
                         if (cafeIdWithPrefix.startsWith('BASKET-')) {
-                          cafeId = cafeIdWithPrefix.substring(7);
+                          cafeId = toSafeString(cafeIdWithPrefix.substring(7));
                         }
                       }
                     }
@@ -415,8 +440,8 @@ export class PaymentsService {
                 try {
                   if (result.paymentId) {
                     await this.refundPayment(
-                      result.paymentId,
-                      result.price || '1.00',
+                      toSafeString(result.paymentId),
+                      toSafeString(result.price, '1.00'),
                       cafeId,
                     );
                   }
@@ -522,7 +547,10 @@ export class PaymentsService {
               this.logger.debug(
                 `Found ${result.cardDetails?.length || 0} cards for cafe ${cafeId}`,
               );
-              resolve(result.cardDetails || []);
+              const cardDetails: any[] = Array.isArray(result.cardDetails)
+                ? result.cardDetails
+                : [];
+              resolve(cardDetails);
             } else {
               // If user not found or no cards, it might return failure or empty list.
               // Usually failure if user key doesn't exist on iyzico side yet.
@@ -600,7 +628,7 @@ export class PaymentsService {
     }
   }
 
-  private async processPaymentForCafe(cafe: any) {
+  private async processPaymentForCafe(cafe: Cafe) {
     // 1. Get Stored Card
     const cards: any = await this.listStoredCards(cafe.id);
     if (!cards || cards.length === 0) {
@@ -743,7 +771,11 @@ export class PaymentsService {
               resolve(result);
             } else {
               // If cancel fails, reject with error message.
-              reject(new Error(result.errorMessage));
+              reject(
+                new Error(
+                  toSafeString(result.errorMessage, 'Iyzico API Error'),
+                ),
+              );
             }
           }
         },

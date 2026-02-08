@@ -555,7 +555,7 @@ export default function SettingsPage() {
                         {formData.logoUrl ? (
                           <div className="relative h-full w-full">
                             <Image 
-                              src={formData.logoUrl} 
+                              src={getFullUrl(formData.logoUrl)} 
                               alt="Logo" 
                               fill
                               className="object-contain p-1"
@@ -584,7 +584,7 @@ export default function SettingsPage() {
                         {formData.coverImageUrl ? (
                           <div className="relative h-full w-full">
                             <Image 
-                              src={formData.coverImageUrl} 
+                              src={getFullUrl(formData.coverImageUrl)} 
                               alt="Cover" 
                               fill
                               className="object-cover"

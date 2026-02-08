@@ -17,7 +17,7 @@ import {
   List
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { API_URL } from '@/lib/api';
+import { API_URL, getMediaUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
@@ -204,9 +204,14 @@ export default function MenuPage() {
         
         if (res.ok) {
           const data = await res.json();
-          // Backend returns relative URLs like /uploads/filename.jpg
-          // We need to prepend API_URL
-          const fullUrls = data.map((img: { url: string }) => `${API_URL}${img.url}`);
+          // Backend returns relative URLs like /uploads/filename.jpg or absolute S3 URLs
+          // We need to prepend API_URL only for relative paths
+          const fullUrls = data.map((img: { url: string }) => {
+            if (img.url.startsWith('http://') || img.url.startsWith('https://')) {
+              return img.url;
+            }
+            return `${API_URL}${img.url}`;
+          });
           setImageCandidates(fullUrls);
         }
       } catch (error) {
@@ -240,6 +245,9 @@ export default function MenuPage() {
   useEffect(() => {
     const saveCategoryOrder = async () => {
       try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
         const items = categories.map((cat, index) => ({
           id: cat.id,
           sortOrder: index
@@ -247,7 +255,10 @@ export default function MenuPage() {
         
         await fetch(`${API_URL}/categories/reorder`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify(items)
         });
         // Silent success or optional toast
@@ -530,6 +541,10 @@ export default function MenuPage() {
     if (!file) return;
 
     const formData = new FormData();
+    // Ürün ismini ekle (varsa), dosya yüklenmeden önce eklenmeli ki server okuyabilsin
+    if (productForm.name) {
+      formData.append('productName', productForm.name);
+    }
     formData.append('file', file);
 
     const token = localStorage.getItem('token');
@@ -763,7 +778,7 @@ export default function MenuPage() {
                           <div className="h-16 w-16 sm:h-12 sm:w-12 rounded-md bg-secondary shrink-0 overflow-hidden relative">
                             {product.imageUrl ? (
                               <Image 
-                                src={product.imageUrl} 
+                                src={getMediaUrl(product.imageUrl)} 
                                 alt={product.name} 
                                 fill
                                 className="object-cover"
@@ -1042,7 +1057,7 @@ export default function MenuPage() {
                       <>
                         <div className="relative h-full w-full">
                           <Image 
-                            src={productForm.imageUrl} 
+                            src={getMediaUrl(productForm.imageUrl)} 
                             alt="Preview" 
                             fill
                             className="object-contain"
@@ -1118,7 +1133,7 @@ export default function MenuPage() {
                             )}
                           >
                             <Image
-                              src={url}
+                              src={getMediaUrl(url)}
                               alt="Önerilen görsel"
                               fill
                               className="object-cover"

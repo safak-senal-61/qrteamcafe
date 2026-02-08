@@ -29,7 +29,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Link, useRouter, usePathname } from '@/navigation';
 import { useSearchParams } from 'next/navigation';
-import { API_URL } from '@/lib/api';
+import { API_URL, getMediaUrl } from '@/lib/api';
 import Image from 'next/image';
 import { useAdminSocket } from '@/providers/AdminSocketProvider';
 
@@ -769,7 +769,7 @@ export default function DashboardPage() {
                     <div className="h-12 w-12 rounded-lg bg-secondary flex items-center justify-center overflow-hidden relative">
                        {product.imageUrl ? (
                          <Image 
-                           src={product.imageUrl} 
+                           src={getMediaUrl(product.imageUrl)} 
                            alt={product.name} 
                            fill
                            className="object-cover"

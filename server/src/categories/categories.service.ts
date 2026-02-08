@@ -1,15 +1,21 @@
 import {
+  Inject,
   Injectable,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
+  ) {}
 
   async create(cafeId: string, createCategoryDto: CreateCategoryDto) {
     const existingCategory = await this.prisma.category.findFirst({
@@ -26,16 +32,25 @@ export class CategoriesService {
       throw new BadRequestException('Bu isimde bir kategori zaten mevcut.');
     }
 
-    return this.prisma.category.create({
+    const created = await this.prisma.category.create({
       data: {
         ...createCategoryDto,
         cafeId,
       },
     });
+    await Promise.all([
+      this.cache.del(`categories:${cafeId}`),
+      this.cache.del(`products:${cafeId}`),
+    ]);
+    return created;
   }
 
   async findAll(cafeId: string) {
-    return this.prisma.category.findMany({
+    const cacheKey = `categories:${cafeId}`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    const categories = await this.prisma.category.findMany({
       where: { cafeId },
       orderBy: { sortOrder: 'asc' },
       include: {
@@ -44,11 +59,20 @@ export class CategoriesService {
         },
       },
     });
+
+    await this.cache.set(cacheKey, categories, 300);
+    return categories;
   }
 
   async reorder(items: { id: string; sortOrder: number }[]) {
+    const affected = await this.prisma.category.findMany({
+      where: { id: { in: items.map((i) => i.id) } },
+      select: { cafeId: true },
+    });
+    const cafeIds = Array.from(new Set(affected.map((c) => c.cafeId)));
+
     // Toplu güncelleme işlemi
-    return this.prisma.$transaction(
+    const result = await this.prisma.$transaction(
       items.map((item) =>
         this.prisma.category.update({
           where: { id: item.id },
@@ -56,6 +80,10 @@ export class CategoriesService {
         }),
       ),
     );
+    await Promise.all(
+      cafeIds.map((cafeId) => this.cache.del(`categories:${cafeId}`)),
+    );
+    return result;
   }
 
   async findOne(id: string) {
@@ -86,16 +114,26 @@ export class CategoriesService {
       }
     }
 
-    return this.prisma.category.update({
+    const updated = await this.prisma.category.update({
       where: { id },
       data: updateCategoryDto,
     });
+    await Promise.all([
+      this.cache.del(`categories:${category.cafeId}`),
+      this.cache.del(`products:${category.cafeId}`),
+    ]);
+    return updated;
   }
 
   async remove(id: string) {
-    await this.findOne(id);
-    return this.prisma.category.delete({
+    const category = await this.findOne(id);
+    const deleted = await this.prisma.category.delete({
       where: { id },
     });
+    await Promise.all([
+      this.cache.del(`categories:${category.cafeId}`),
+      this.cache.del(`products:${category.cafeId}`),
+    ]);
+    return deleted;
   }
 }

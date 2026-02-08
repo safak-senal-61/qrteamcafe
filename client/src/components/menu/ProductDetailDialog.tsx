@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { API_URL } from '@/lib/api';
+import { API_URL, getMediaUrl } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -42,14 +42,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [showReviews, setShowReviews] = useState(false);
 
-  const getImageUrl = (url: string | undefined | null) => {
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const path = url.startsWith('/') ? url : `/${url}`;
-    return `${API_URL}${path}`;
-  };
-
-  const displayImage = getImageUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+  const displayImage = getMediaUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
 
   useEffect(() => {
     if (open && product.id) {
@@ -218,7 +211,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                       <div key={rec.id} className="w-[140px] group cursor-pointer border rounded-xl overflow-hidden hover:border-orange-200 transition-colors bg-white shadow-sm">
                         <div className="relative h-24 w-full bg-zinc-100 overflow-hidden">
                           <Image
-                            src={getImageUrl(rec.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
+                            src={getMediaUrl(rec.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
                             alt={rec.name}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-500"

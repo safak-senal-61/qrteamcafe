@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Shield, KeyRound, Loader2, Smartphone, Laptop, Trash2 } from 'lucide-react';
-import { API_URL } from '@/lib/api';
+import { API_URL, getMediaUrl } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -421,7 +421,7 @@ export default function SecuritySettings() {
                                     {qrCodeUrl && (
                                         <div className="p-4 bg-white rounded-lg shadow-sm border">
                                             <Image 
-                                                src={qrCodeUrl} 
+                                                src={getMediaUrl(qrCodeUrl)} 
                                                 alt="2FA QR Code" 
                                                 width={192} 
                                                 height={192} 

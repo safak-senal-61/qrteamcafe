@@ -1,10 +1,11 @@
 import {
+  Inject,
   Injectable,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -16,21 +17,31 @@ export class ProductsService {
   constructor(
     private prisma: PrismaService,
     private readonly s3Service: S3Service,
+    @Inject(CACHE_MANAGER) private cache: Cache,
   ) {}
 
   async getGalleryImages(query?: string) {
     try {
-      const urls = await this.s3Service.listImages('products');
-      
-      let images = urls.map(url => ({
+      // Changed cache key to invalidate old cache and reflect the scope change (all images)
+      const cacheKey = 's3:list:all'; 
+      let urls = (await this.cache.get(cacheKey)) as string[] | undefined;
+      if (!urls) {
+        // List from root to find manually uploaded files as well
+        urls = await this.s3Service.listImages(''); 
+        await this.cache.set(cacheKey, urls, 60);
+      }
+
+      let images = urls.map((url) => ({
         filename: url.split('/').pop() || '',
-        url: url
+        url: url,
       }));
 
       // Eğer arama sorgusu varsa filtrele
       if (query) {
         const lowerQuery = query.toLowerCase();
-        images = images.filter(img => img.filename.toLowerCase().includes(lowerQuery));
+        images = images.filter((img) =>
+          img.filename.toLowerCase().includes(lowerQuery),
+        );
       }
 
       return images;
@@ -58,6 +69,11 @@ export class ProductsService {
       },
     });
 
+    await Promise.all([
+      this.cache.del(`products:${cafeId}`),
+      this.cache.del(`categories:${cafeId}`),
+    ]);
+
     return {
       ...product,
       imageUrl: getProductImage(
@@ -69,6 +85,10 @@ export class ProductsService {
   }
 
   async findAll(cafeId: string) {
+    const cacheKey = `products:${cafeId}`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
     const products = await this.prisma.product.findMany({
       where: { cafeId },
       include: {
@@ -80,7 +100,7 @@ export class ProductsService {
       orderBy: { sortOrder: 'asc' },
     });
 
-    return products.map((product) => ({
+    const mapped = products.map((product) => ({
       ...product,
       imageUrl: getProductImage(
         product.name,
@@ -88,11 +108,20 @@ export class ProductsService {
         product.imageUrl,
       ),
     }));
+
+    await this.cache.set(cacheKey, mapped, 300);
+    return mapped;
   }
 
   async reorder(items: { id: string; sortOrder: number }[]) {
+    const affected = await this.prisma.product.findMany({
+      where: { id: { in: items.map((i) => i.id) } },
+      select: { cafeId: true },
+    });
+    const cafeIds = Array.from(new Set(affected.map((p) => p.cafeId)));
+
     // Toplu güncelleme işlemi
-    return this.prisma.$transaction(
+    const result = await this.prisma.$transaction(
       items.map((item) =>
         this.prisma.product.update({
           where: { id: item.id },
@@ -100,6 +129,11 @@ export class ProductsService {
         }),
       ),
     );
+
+    await Promise.all(
+      cafeIds.map((cafeId) => this.cache.del(`products:${cafeId}`)),
+    );
+    return result;
   }
 
   async findOne(id: string) {
@@ -159,6 +193,11 @@ export class ProductsService {
       include: { category: true },
     });
 
+    await Promise.all([
+      this.cache.del(`products:${product.cafeId}`),
+      this.cache.del(`categories:${product.cafeId}`),
+    ]);
+
     return {
       ...updatedProduct,
       imageUrl: getProductImage(
@@ -170,8 +209,12 @@ export class ProductsService {
   }
 
   async updateStock(id: string, quantity: number) {
-    await this.findOne(id);
-    return this.prisma.product.update({
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      select: { cafeId: true },
+    });
+    if (!product) throw new NotFoundException('Ürün bulunamadı');
+    const updated = await this.prisma.product.update({
       where: { id },
       data: {
         stock: {
@@ -179,13 +222,24 @@ export class ProductsService {
         },
       },
     });
+    await this.cache.del(`products:${product.cafeId}`);
+    return updated;
   }
 
   async remove(id: string) {
-    await this.findOne(id);
-    return this.prisma.product.delete({
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      select: { cafeId: true },
+    });
+    if (!product) throw new NotFoundException('Ürün bulunamadı');
+    const deleted = await this.prisma.product.delete({
       where: { id },
     });
+    await Promise.all([
+      this.cache.del(`products:${product.cafeId}`),
+      this.cache.del(`categories:${product.cafeId}`),
+    ]);
+    return deleted;
   }
 
   async getRecommendations(productId: string, limit = 3) {
@@ -218,10 +272,16 @@ export class ProductsService {
   }
 
   async toggleChefRecommendation(id: string, isChefRecommended: boolean) {
-    await this.findOne(id);
-    return this.prisma.product.update({
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      select: { cafeId: true },
+    });
+    if (!product) throw new NotFoundException('Ürün bulunamadı');
+    const updated = await this.prisma.product.update({
       where: { id },
       data: { isChefRecommended },
     });
+    await this.cache.del(`products:${product.cafeId}`);
+    return updated;
   }
 }

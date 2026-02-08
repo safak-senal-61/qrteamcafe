@@ -1,5 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+  PutObjectAclCommand,
+} from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -8,7 +14,8 @@ export class S3Service {
   private s3Client: S3Client;
   private readonly logger = new Logger(S3Service.name);
   private readonly bucket = process.env.DO_SPACES_BUCKET || 'qrders-cafe-logo';
-  private readonly endpoint = process.env.DO_SPACES_ENDPOINT || 'https://sfo3.digitaloceanspaces.com';
+  private readonly endpoint =
+    process.env.DO_SPACES_ENDPOINT || 'https://sfo3.digitaloceanspaces.com';
   private readonly cdnEndpoint = process.env.DO_SPACES_CDN_ENDPOINT;
   private readonly region = 'sfo3'; // Usually implied by endpoint
 
@@ -26,8 +33,9 @@ export class S3Service {
   async uploadFile(file: Express.Multer.File, folder: string): Promise<string> {
     try {
       const fileContent = fs.readFileSync(file.path);
-      const fileName = `${folder}/${Date.now()}-${file.filename}`;
-      
+      // Multer already generates a unique filename with timestamp
+      const fileName = `${folder}/${file.filename}`;
+
       const command = new PutObjectCommand({
         Bucket: this.bucket,
         Key: fileName,
@@ -49,9 +57,11 @@ export class S3Service {
       if (this.cdnEndpoint) {
         return `${this.cdnEndpoint}/${fileName}`;
       }
-      
+
       // Fallback to standard URL
-      const endpointUrl = this.endpoint.replace('https://', '').replace('http://', '');
+      const endpointUrl = this.endpoint
+        .replace('https://', '')
+        .replace('http://', '');
       return `https://${this.bucket}.${endpointUrl}/${fileName}`;
     } catch (error) {
       this.logger.error('S3 Upload Error:', error);
@@ -62,20 +72,22 @@ export class S3Service {
   async deleteFile(fileUrl: string): Promise<void> {
     try {
       if (!fileUrl) return;
-      
+
       let key = '';
 
       if (this.cdnEndpoint && fileUrl.startsWith(this.cdnEndpoint)) {
         key = fileUrl.replace(`${this.cdnEndpoint}/`, '');
       } else {
-        const endpointUrl = this.endpoint.replace('https://', '').replace('http://', '');
+        const endpointUrl = this.endpoint
+          .replace('https://', '')
+          .replace('http://', '');
         const baseUrl = `https://${this.bucket}.${endpointUrl}/`;
-        
+
         if (fileUrl.startsWith(baseUrl)) {
-           key = fileUrl.replace(baseUrl, '');
+          key = fileUrl.replace(baseUrl, '');
         }
       }
-      
+
       if (!key) {
         return; // Not an S3 file or different bucket
       }
@@ -92,29 +104,64 @@ export class S3Service {
     }
   }
 
+  async makePublic(key: string): Promise<void> {
+    try {
+      const command = new PutObjectAclCommand({
+        Bucket: this.bucket,
+        Key: key,
+        ACL: 'public-read',
+      });
+      await this.s3Client.send(command);
+    } catch (error) {
+      this.logger.error(`Failed to make public: ${key}`, error);
+    }
+  }
+
   async listImages(folder: string): Promise<string[]> {
     try {
       const command = new ListObjectsV2Command({
         Bucket: this.bucket,
-        Prefix: folder.endsWith('/') ? folder : `${folder}/`,
+        Prefix: folder ? (folder.endsWith('/') ? folder : `${folder}/`) : '',
       });
 
       const response = await this.s3Client.send(command);
-      
+
       if (!response.Contents) {
         return [];
       }
 
-      const baseUrl = this.cdnEndpoint 
-        ? `${this.cdnEndpoint}/` 
+      // Auto-fix permissions for manual uploads (fire and forget)
+      // We don't await this to not slow down the response
+      this.ensurePublicAccess(response.Contents.map(c => c.Key).filter(k => k && !k.endsWith('/')) as string[]);
+
+      const baseUrl = this.cdnEndpoint
+        ? `${this.cdnEndpoint}/`
         : `https://${this.bucket}.${this.endpoint.replace('https://', '').replace('http://', '')}/`;
 
-      return response.Contents
-        .filter(item => item.Key && !item.Key.endsWith('/')) // Filter out folders if any
-        .map(item => `${baseUrl}${item.Key}`);
+      return response.Contents.filter(
+        (item) => item.Key && !item.Key.endsWith('/'),
+      ) // Filter out folders if any
+        .map((item) => `${baseUrl}${item.Key}`);
     } catch (error) {
       this.logger.error('S3 List Error:', error);
       return [];
+    }
+  }
+
+  private async ensurePublicAccess(keys: string[]) {
+    // Process in batches to avoid rate limits
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < keys.length; i += BATCH_SIZE) {
+      const batch = keys.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (key) => {
+          try {
+            await this.makePublic(key);
+          } catch (e) {
+             // Ignore errors, we'll try next time
+          }
+        })
+      );
     }
   }
 }

@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Star, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { getMediaUrl } from '@/lib/api';
 
 interface OrderItem {
   id: string;
@@ -106,13 +107,15 @@ export function ReviewDialog({ isOpen, onClose, orderItems, orderId }: ReviewDia
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {orderItems.map((item) => (
+          {orderItems.map((item) => {
+            const reviewImage = getMediaUrl(item.product.imageUrl);
+            return (
             <div key={item.id} className="border-b pb-4 last:border-0">
               <div className="flex items-center gap-3 mb-3">
                 <div className="relative w-12 h-12 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
-                  {item.product.imageUrl ? (
+                  {reviewImage ? (
                     <Image 
-                      src={item.product.imageUrl} 
+                      src={reviewImage} 
                       alt={item.product.name}
                       fill
                       className="object-cover"
@@ -150,7 +153,8 @@ export function ReviewDialog({ isOpen, onClose, orderItems, orderId }: ReviewDia
                 />
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
 
         <DialogFooter>

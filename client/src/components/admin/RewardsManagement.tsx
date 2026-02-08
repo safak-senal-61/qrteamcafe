@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Gift, Upload, X } from 'lucide-react';
 import Image from 'next/image';
-import { API_URL } from '@/lib/api';
+import { API_URL, getMediaUrl } from '@/lib/api';
 
 interface Cafe {
   id: string;
@@ -229,7 +229,7 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
                       {imageUrl ? (
                         <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
                           <Image 
-                            src={imageUrl} 
+                            src={getMediaUrl(imageUrl)} 
                             alt="Preview" 
                             fill
                             className="object-cover" 

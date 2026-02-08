@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -20,19 +21,38 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
 import { IssueReportsModule } from './issue-reports/issue-reports.module';
 import { VerificationModule } from './verification/verification.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { redisStore } from 'cache-manager-redis-yet';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      useFactory: async () => {
+        const redisUrl = process.env.REDIS_URL;
+        if (!redisUrl) {
+          return {
+            ttl: 300,
+          };
+        }
+
+        return {
+          store: await redisStore({
+            url: redisUrl,
+          }),
+          ttl: 300,
+        };
+      },
+    }),
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 1 minute
         limit: 10, // 10 requests
       },
     ]),
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
     PrismaModule,
     AuthModule,
     CafesModule,

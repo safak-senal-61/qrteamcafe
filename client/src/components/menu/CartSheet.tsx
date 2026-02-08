@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useCustomerStore } from '@/store/customer-store';
 import { useCartStore } from '@/store/cart-store';
-import { api } from '@/lib/api';
+import { api, getMediaUrl } from '@/lib/api';
 import { toast } from 'sonner';
 import { CreateReviewDialog } from './CreateReviewDialog';
 import { 
@@ -350,7 +350,11 @@ export function CartSheet({
                     <div className="px-6 py-4">
                       <AnimatePresence initial={false}>
                         <div className="space-y-4 pb-4">
-                          {items.map((item) => (
+                          {items.map((item) => {
+                            const imageSrc = getMediaUrl(item.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+                            const rawImage = item.image || '';
+                            const isLocalImage = rawImage.includes('localhost') || rawImage.includes('127.0.0.1') || rawImage.startsWith('/uploads/');
+                            return (
                             <motion.div
                               key={item.cartItemId}
                               layout
@@ -361,12 +365,12 @@ export function CartSheet({
                             >
                               <div className="relative h-20 w-20 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">
                                 <Image
-                                  src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
+                                  src={imageSrc}
                                   alt={item.name}
                                   fill
                                   sizes="80px"
                                   className="object-cover transition-transform group-hover:scale-110"
-                                  unoptimized={!!item.image?.includes('localhost') || !!item.image?.includes('127.0.0.1') || !!item.image?.startsWith('/uploads/')}
+                                  unoptimized={isLocalImage}
                                 />
                               </div>
                               <div className="flex-1 min-w-0 py-1">
@@ -415,7 +419,8 @@ export function CartSheet({
                                 <Trash2 className="h-5 w-5" />
                               </Button>
                             </motion.div>
-                          ))}
+                          );
+                          })}
                         </div>
                       </AnimatePresence>
                     </div>

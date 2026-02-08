@@ -8,6 +8,7 @@ import { Search, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { getMediaUrl } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,7 @@ export function MinimalTemplate({
 }: TemplateProps) {
   const t = useTranslations('Menu');
   const router = useRouter();
+  const logoImage = getMediaUrl(cafe.logo) || 'https://images.unsplash.com/photo-1595433707802-6b2626ef1c91?q=80&w=200&h=200&auto=format&fit=crop';
 
   return (
     <div className="min-h-screen bg-white pb-24 relative font-sans text-zinc-900 selection:bg-zinc-100 overflow-x-hidden">
@@ -59,7 +61,7 @@ export function MinimalTemplate({
             className="relative w-20 h-20 rounded-full overflow-hidden border border-zinc-100 shadow-sm"
           >
              <Image
-                src={cafe.logo || 'https://images.unsplash.com/photo-1595433707802-6b2626ef1c91?q=80&w=200&h=200&auto=format&fit=crop'}
+                src={logoImage}
                 alt={cafe.name}
                 fill
                 className="object-cover grayscale hover:grayscale-0 transition-all duration-500"

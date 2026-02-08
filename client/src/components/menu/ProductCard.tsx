@@ -8,7 +8,7 @@ import { useCartStore, Product } from '@/store/cart-store';
 import { Badge } from '@/components/ui/badge';
 import { ProductDetailDialog } from './ProductDetailDialog';
 import { cn } from '@/lib/utils';
-import { API_URL } from '@/lib/api';
+import { getMediaUrl } from '@/lib/api';
 
 import { Star } from 'lucide-react';
 
@@ -26,14 +26,7 @@ export function ProductCard({ product, index, showRating = true, variant = 'card
   const { items } = useCartStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  const getImageUrl = (url: string | undefined | null) => {
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const path = url.startsWith('/') ? url : `/${url}`;
-    return `${API_URL}${path}`;
-  };
-
-  const displayImage = getImageUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+  const displayImage = getMediaUrl(product.image);
   
   // Calculate total quantity of this product (across all variants/notes)
   const totalQuantity = items

@@ -13,7 +13,7 @@ import { Star,
   CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { API_URL } from '@/lib/api';
+import { API_URL, getMediaUrl } from '@/lib/api';
 import axios from 'axios';
 import { cn } from '@/lib/utils';
 import { useCustomerStore } from '@/store/customer-store';
@@ -143,7 +143,7 @@ export function CreateReviewDialog({ open, onOpenChange, orderId, items, existin
                 <div className="flex items-center gap-4 mb-4">
                   <div className="h-16 w-16 rounded-lg bg-gray-100 overflow-hidden shrink-0 relative">
                     <Image 
-                      src={item.product.imageUrl || ''} 
+                      src={getMediaUrl(item.product.imageUrl) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'} 
                       alt={item.product.name} 
                       fill
                       className="object-cover" 

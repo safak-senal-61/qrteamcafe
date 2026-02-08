@@ -83,7 +83,7 @@ export class CafesController {
     if (!file) {
       throw new BadRequestException('Dosya yüklenemedi.');
     }
-    
+
     const logoUrl = await this.s3Service.uploadFile(file, 'logos');
     return this.cafesService.update(id, { logoUrl });
   }
@@ -128,7 +128,7 @@ export class CafesController {
     if (!file) {
       throw new BadRequestException('Dosya yüklenemedi.');
     }
-    
+
     const coverImageUrl = await this.s3Service.uploadFile(file, 'covers');
     return this.cafesService.update(id, { coverImageUrl });
   }

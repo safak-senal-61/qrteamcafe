@@ -17,6 +17,80 @@ export const getApiUrl = () => {
 export const API_URL = getApiUrl();
 export const SOCKET_URL = API_URL;
 
+export const getMediaUrl = (url?: string | null): string => {
+  if (!url || url.trim() === '') {
+    return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+  }
+
+  // Fix: Handle double URL prefix (e.g. http://localhost:3001https://...) caused by DB data corruption
+  if (url.includes('http') && url.lastIndexOf('http') > 0) {
+    const lastHttpIndex = url.lastIndexOf('http');
+    // Eğer http://localhost:3001/https://... gibi slash varsa onu da atla
+    // Ancak lastIndexOf 'http' bulduğu için, eğer önünde / varsa onu dahil etmemek gerek.
+    // url.substring(lastHttpIndex) direkt https://... kısmını alır.
+    const potentialUrl = url.substring(lastHttpIndex);
+    
+    // Validasyon yap, eğer geçerli URL ise döndür
+    try {
+      new URL(potentialUrl);
+      return potentialUrl;
+    } catch {
+       // Eğer URL validasyonu başarısız olursa, belki slash sorunu vardır veya başka bir şey.
+       // Bu durumda devam et (aşağıdaki bloklara düşecek)
+    }
+  }
+
+  try {
+    // Eski IP/Domain ile kaydedilmiş resimleri düzelt (sadece uploads klasörü için)
+    if (url.startsWith('http') && url.includes('/uploads/')) {
+      try {
+        const urlObj = new URL(url);
+        // Sadece pathname'i al (örn: /uploads/products/xyz.jpg)
+        const pathName = urlObj.pathname;
+        
+        // Eğer bu pathname zaten API_URL ile başlıyorsa (ki olmamalı ama kontrol edelim)
+        // API_URL sonundaki slash'ı temizle
+        const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+        return `${baseUrl}${pathName}`;
+      } catch {}
+    }
+
+    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) {
+      // Validate URL format
+      try {
+        new URL(url);
+        return url;
+      } catch {
+        // Try encoding if it contains spaces or special chars
+        try {
+          const encoded = encodeURI(url);
+          new URL(encoded);
+          return encoded;
+        } catch {
+          // Still invalid, return placeholder
+          console.error('Invalid URL encountered:', url);
+          return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+        }
+      }
+    }
+
+    const path = url.startsWith('/') ? url : `/${url}`;
+    const fullUrl = `${API_URL}${path}`;
+    
+    // Validate constructed URL
+    try {
+      new URL(fullUrl);
+      return fullUrl;
+    } catch {
+      console.error('Invalid constructed URL:', fullUrl);
+      return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+    }
+  } catch (error) {
+    console.error('Error in getMediaUrl:', error);
+    return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+  }
+};
+
 export const api = axios.create({
   baseURL: API_URL,
   headers: {

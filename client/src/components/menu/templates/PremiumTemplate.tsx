@@ -8,6 +8,7 @@ import { Search, User, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { getMediaUrl } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,9 @@ export function PremiumTemplate({
 }: TemplateProps) {
   const t = useTranslations('Menu');
   const router = useRouter();
+  const coverImage = getMediaUrl(cafe.coverImage) || 'https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop';
+  const logoImage = getMediaUrl(cafe.logo);
+  const productFallback = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] pb-24 relative font-serif selection:bg-[#c6a355] selection:text-black overflow-x-hidden">
@@ -60,7 +64,7 @@ export function PremiumTemplate({
             className="absolute inset-0 w-full h-full"
          >
             <Image
-              src={cafe.coverImage || 'https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=2070&auto=format&fit=crop'}
+              src={coverImage}
               alt={cafe.name}
               fill
               className="object-cover"
@@ -107,9 +111,9 @@ export function PremiumTemplate({
                animate={{ y: 0, opacity: 1 }}
                transition={{ delay: 0.5, duration: 0.8 }}
             >
-               {cafe.logo && (
+               {logoImage && (
                  <div className="w-24 h-24 mx-auto mb-6 rounded-full border-2 border-[#c6a355]/50 p-1 relative">
-                    <Image src={cafe.logo} alt={cafe.name} fill className="rounded-full object-cover" />
+                    <Image src={logoImage} alt={cafe.name} fill className="rounded-full object-cover" />
                  </div>
                )}
                <h1 className="text-5xl md:text-7xl font-serif text-[#c6a355] mb-4 tracking-tight drop-shadow-2xl">
@@ -242,11 +246,9 @@ export function PremiumTemplate({
                    {categoryProducts.map((product, index) => (
                       <div key={product.id} className="group flex gap-4 items-start">
                          {/* Image with Gold Border effect */}
-                         {product.imageUrl && (
-                           <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-sm border border-[#c6a355]/20 group-hover:border-[#c6a355] transition-colors duration-500">
-                              <Image src={product.imageUrl} alt={product.name} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
-                           </div>
-                         )}
+                         <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-sm border border-[#c6a355]/20 group-hover:border-[#c6a355] transition-colors duration-500">
+                            <Image src={getMediaUrl(product.imageUrl) || productFallback} alt={product.name} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                         </div>
                          <div className="flex-1">
                             <div className="flex justify-between items-baseline border-b border-[#222] pb-2 mb-2 group-hover:border-[#c6a355]/30 transition-colors duration-500">
                                <h3 className="text-lg font-serif text-[#e5e5e5] group-hover:text-[#c6a355] transition-colors">{product.name}</h3>

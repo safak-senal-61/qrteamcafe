@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateCafeDto } from './dto/update-cafe.dto';
 
 @Injectable()
 export class CafesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
+  ) {}
 
   async findOne(idOrSlug: string) {
     // Check if it's a valid UUID
@@ -12,6 +17,10 @@ export class CafesService {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
         idOrSlug,
       );
+
+    const cacheKey = isUuid ? `cafe:id:${idOrSlug}` : `cafe:slug:${idOrSlug}`;
+    const cachedCafe = await this.cache.get(cacheKey);
+    if (cachedCafe) return cachedCafe;
 
     let cafe;
     if (isUuid) {
@@ -25,19 +34,25 @@ export class CafesService {
     }
 
     if (!cafe) throw new NotFoundException('Cafe bulunamadı');
+    await this.cache.set(cacheKey, cafe, 300);
     return cafe;
   }
 
   async findBySlug(slug: string) {
+    const cacheKey = `cafe:slug:${slug}`;
+    const cachedCafe = await this.cache.get(cacheKey);
+    if (cachedCafe) return cachedCafe;
+
     const cafe = await this.prisma.cafe.findUnique({
       where: { slug },
     });
     if (!cafe) throw new NotFoundException('Cafe bulunamadı');
+    await this.cache.set(cacheKey, cafe, 300);
     return cafe;
   }
 
   async update(id: string, data: UpdateCafeDto) {
-    return this.prisma.cafe.update({
+    const updatedCafe = await this.prisma.cafe.update({
       where: { id },
       data: {
         name: data.name,
@@ -77,9 +92,20 @@ export class CafesService {
         themeConfig: data.themeConfig,
       },
     });
+
+    await Promise.all([
+      this.cache.del(`cafe:id:${id}`),
+      updatedCafe.slug ? this.cache.del(`cafe:slug:${updatedCafe.slug}`) : null,
+    ]);
+
+    return updatedCafe;
   }
 
   async getDashboardStats(cafeId: string) {
+    const cacheKey = `dashboardStats:${cafeId}`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -175,7 +201,7 @@ export class CafesService {
       })
       .filter(Boolean);
 
-    return {
+    const result = {
       totalOrders,
       dailyRevenue: dailyRevenue._sum.totalAmount || 0,
       activeTables,
@@ -190,5 +216,8 @@ export class CafesService {
         isSubscriptionActive: cafeSettings?.isSubscriptionActive,
       },
     };
+
+    await this.cache.set(cacheKey, result, 10);
+    return result;
   }
 }

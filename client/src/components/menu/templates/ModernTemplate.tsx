@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { getMediaUrl } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,9 @@ export function ModernTemplate({
 }: TemplateProps) {
   const t = useTranslations('Menu');
   const router = useRouter();
+  const coverImage = getMediaUrl(cafe.coverImage) || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop';
+  const logoImage = getMediaUrl(cafe.logo);
+  const productFallback = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 pb-24 relative font-sans selection:bg-primary selection:text-primary-foreground overflow-x-hidden">
@@ -85,7 +89,7 @@ export function ModernTemplate({
           className="absolute inset-0"
         >
           <Image
-            src={cafe.coverImage || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop'}
+            src={coverImage}
             alt={cafe.name}
             fill
             className="object-cover opacity-60"
@@ -101,9 +105,9 @@ export function ModernTemplate({
               transition={{ delay: 0.3 }}
               className="flex flex-col items-center text-center space-y-4"
             >
-                {cafe.logo && (
+                {logoImage && (
                     <div className="relative w-24 h-24 rounded-full border-2 border-white/20 shadow-2xl overflow-hidden mb-2">
-                        <Image src={cafe.logo} alt={cafe.name} fill className="object-cover" />
+                        <Image src={logoImage} alt={cafe.name} fill className="object-cover" />
                     </div>
                 )}
               <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white drop-shadow-lg">{cafe.name}</h1>
@@ -189,7 +193,7 @@ export function ModernTemplate({
               {chefProducts.map((product, index) => (
                 <div key={product.id} className="group relative overflow-hidden rounded-3xl bg-slate-900 border border-white/5 hover:border-primary/50 transition-all duration-500">
                     <div className="relative aspect-video w-full overflow-hidden">
-                        <Image src={product.imageUrl || ''} alt={product.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <Image src={getMediaUrl(product.imageUrl) || productFallback} alt={product.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90" />
                     <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -248,7 +252,7 @@ export function ModernTemplate({
                 {categoryProducts.map((product, index) => (
                   <div key={product.id} className="bg-slate-900 rounded-2xl p-4 border border-white/5 hover:bg-slate-800/50 transition-colors flex gap-4">
                       <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0">
-                          <Image src={product.imageUrl || ''} alt={product.name} fill className="object-cover" />
+                          <Image src={getMediaUrl(product.imageUrl) || productFallback} alt={product.name} fill className="object-cover" />
                       </div>
                       <div className="flex-1 flex flex-col justify-between">
                           <div>

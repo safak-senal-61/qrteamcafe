@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { API_URL } from '@/lib/api';
+import { API_URL, getMediaUrl } from '@/lib/api';
 import { toast } from 'sonner';
 import {
   Table,
@@ -216,7 +216,7 @@ export default function AdminReviewsPage() {
                       <div className="relative w-10 h-10 rounded overflow-hidden bg-gray-100">
                         {review.product.imageUrl ? (
                           <Image 
-                            src={review.product.imageUrl} 
+                            src={getMediaUrl(review.product.imageUrl)} 
                             alt={review.product.name}
                             fill
                             className="object-cover"
@@ -318,7 +318,7 @@ export default function AdminReviewsPage() {
                   <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted shrink-0">
                     {review.product.imageUrl ? (
                       <Image 
-                        src={review.product.imageUrl} 
+                        src={getMediaUrl(review.product.imageUrl)} 
                         alt={review.product.name}
                         fill
                         className="object-cover"

@@ -6,14 +6,21 @@ import {
   UseGuards,
   Request,
   Get,
-  Query,
   Delete,
   Param,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
-import type { Response } from 'express';
+import type { Request as ExpressRequest, Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+type PaymentRequestUser = {
+  cafeId: string;
+  email: string;
+  name?: string | null;
+};
+
+type PaymentRequest = ExpressRequest & { user: PaymentRequestUser };
 
 @Controller('payments')
 export class PaymentsController {
@@ -22,17 +29,13 @@ export class PaymentsController {
   @UseGuards(JwtAuthGuard)
   @Post('initialize')
   async initializePayment(
-    @Request() req: any,
+    @Request() req: PaymentRequest,
     @Body() body: InitializePaymentDto,
   ) {
-    // req.user is populated by JwtAuthGuard
-    // req.user: { id, email, name, role, cafeId }
-
     const { cafeId, email, name } = req.user;
 
-    // Construct base URL from request to support dynamic IPs (e.g. 10.133.x.x)
     const protocol = req.protocol;
-    const host = req.get('host');
+    const host = req.get('host') ?? 'localhost:3001';
     const baseUrl = `${protocol}://${host}`;
 
     return this.paymentsService.initializePayment(
@@ -47,29 +50,38 @@ export class PaymentsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('cards')
-  async listCards(@Request() req: any) {
+  async listCards(@Request() req: PaymentRequest) {
     const { cafeId } = req.user;
     return this.paymentsService.listStoredCards(cafeId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete('cards/:cardToken')
-  async deleteCard(@Request() req: any, @Param('cardToken') cardToken: string) {
+  async deleteCard(
+    @Request() req: PaymentRequest,
+    @Param('cardToken') cardToken: string,
+  ) {
     const { cafeId } = req.user;
     return this.paymentsService.deleteStoredCard(cafeId, cardToken);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('cancel-subscription')
-  async cancelSubscription(@Request() req: any) {
+  async cancelSubscription(@Request() req: PaymentRequest) {
     const { cafeId } = req.user;
     return this.paymentsService.cancelSubscription(cafeId);
   }
 
   @Post('callback')
-  async callback(@Body() body: any, @Res() res: Response, @Request() req: any) {
-    // Iyzico sends token in body for POST callback
-    const { token } = body;
+  async callback(
+    @Body() body: { token?: string },
+    @Res() res: Response,
+    @Request() req: ExpressRequest,
+  ) {
+    const token = body.token;
+    if (!token) {
+      return res.status(400).send('Invalid token');
+    }
 
     // Construct frontend URL dynamically if possible, or fallback to ENV/localhost
     // Ideally FRONTEND_URL should be set, but we can try to infer from referer if available (unreliable)
@@ -77,8 +89,8 @@ export class PaymentsController {
     // Assuming frontend is on port 3000 and same hostname as API (which is on 3001 usually).
 
     const protocol = req.protocol;
-    const host = req.get('host'); // e.g. 10.133.193.253:3001
-    const hostname = host.split(':')[0]; // 10.133.193.253
+    const host = req.get('host') ?? 'localhost:3001';
+    const hostname = host.split(':')[0] || 'localhost';
     const frontendUrl =
       process.env.FRONTEND_URL || `${protocol}://${hostname}:3000`;
 

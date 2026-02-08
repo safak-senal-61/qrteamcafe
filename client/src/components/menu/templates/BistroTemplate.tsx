@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { getMediaUrl } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,8 @@ export function BistroTemplate({
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
+  const coverImage = getMediaUrl(cafe.coverImage) || 'https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1974&auto=format&fit=crop';
+  const logoImage = getMediaUrl(cafe.logo) || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=200&auto=format&fit=crop';
 
   return (
     <div className="min-h-screen bg-[#f8f5e6] text-stone-800 pb-24 relative font-serif selection:bg-orange-200 overflow-x-hidden">
@@ -90,7 +93,7 @@ export function BistroTemplate({
           className="absolute inset-0 w-full h-full"
         >
           <Image
-            src={cafe.coverImage || 'https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1974&auto=format&fit=crop'}
+            src={coverImage}
             alt={cafe.name}
             fill
             className="object-cover sepia-[.2]"
@@ -104,7 +107,7 @@ export function BistroTemplate({
             className="w-32 h-32 rounded-full border-4 border-[#f8f5e6] shadow-2xl overflow-hidden mb-6 bg-[#f8f5e6] relative"
           >
             <Image
-              src={cafe.logo || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=200&auto=format&fit=crop'}
+              src={logoImage}
               alt={cafe.name}
               fill
               className="object-cover"

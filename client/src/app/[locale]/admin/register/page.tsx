@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Coffee, User, Mail, Phone, Lock, Store, ArrowRight, Loader2, CheckCircle2, Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { API_URL } from '@/lib/api';
+import { API_URL, getMediaUrl } from '@/lib/api';
 import Cropper, { Area } from 'react-easy-crop';
 import getCroppedImg from '@/lib/imageUtils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -268,7 +268,7 @@ export default function RegisterPage() {
                           {logoPreview ? (
                             <div className="relative w-full h-full">
                               <Image 
-                                src={logoPreview} 
+                                src={getMediaUrl(logoPreview)} 
                                 alt="Logo Preview" 
                                 fill
                                 className="object-cover"

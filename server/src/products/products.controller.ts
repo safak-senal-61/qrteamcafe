@@ -22,6 +22,32 @@ import { S3Service } from '../common/s3.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SubscriptionGuard } from '../auth/subscription.guard';
 
+const sanitizeFilename = (name: string): string => {
+  const trMap: { [key: string]: string } = {
+    ç: 'c',
+    Ç: 'C',
+    ğ: 'g',
+    Ğ: 'G',
+    ı: 'i',
+    I: 'i',
+    İ: 'i',
+    ö: 'o',
+    Ö: 'O',
+    ş: 's',
+    Ş: 'S',
+    ü: 'u',
+    Ü: 'U',
+  };
+  return name
+    .split('')
+    .map((char) => trMap[char] || char)
+    .join('')
+    .replace(/[^a-zA-Z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase();
+};
+
 @Controller('products')
 export class ProductsController {
   constructor(
@@ -37,15 +63,37 @@ export class ProductsController {
       storage: diskStorage({
         destination: './uploads/products',
         filename: (req, file, callback) => {
+          const ext = extname(file.originalname);
+
+          if (req.body && typeof req.body.productName === 'string') {
+            const sanitized = sanitizeFilename(req.body.productName);
+            if (sanitized.length > 0) {
+              // Kullanıcı sadece ürün adını istediği için timestamp eklemiyoruz
+              callback(null, `${sanitized}${ext}`);
+              return;
+            }
+          }
+
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          callback(null, `${uniqueSuffix}${ext}`);
+          callback(null, `product-${uniqueSuffix}${ext}`);
         },
       }),
     }),
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: any,
+  ) {
+    // Override filename if product name is present (fallback for Multer ordering issues)
+    if (file && body && typeof body.productName === 'string') {
+      const sanitized = sanitizeFilename(body.productName);
+      if (sanitized.length > 0) {
+        const ext = extname(file.originalname);
+        file.filename = `${sanitized}${ext}`;
+      }
+    }
+
     // Process image (resize, transparent bg logic)
     if (file) {
       await this.imageService.processProductImage(file);
