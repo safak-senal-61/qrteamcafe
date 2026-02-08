@@ -42,6 +42,15 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [showReviews, setShowReviews] = useState(false);
 
+  const getImageUrl = (url: string | undefined | null) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const path = url.startsWith('/') ? url : `/${url}`;
+    return `${API_URL}${path}`;
+  };
+
+  const displayImage = getImageUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+
   useEffect(() => {
     if (open && product.id) {
       // Fetch reviews only if showRating is true
@@ -120,20 +129,20 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-4xl p-0 gap-0 overflow-hidden bg-white border-none shadow-2xl h-[90vh] sm:h-[80vh] flex flex-col sm:flex-row rounded-xl sm:rounded-2xl">
+      <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-4xl p-0 gap-0 overflow-hidden bg-white border-none shadow-2xl h-[90dvh] sm:h-[80vh] flex flex-col sm:flex-row rounded-xl sm:rounded-2xl">
         
         {/* Left Side - Image */}
-        <div className="relative h-[40vh] sm:h-full w-full sm:w-[55%] bg-zinc-100 shrink-0 overflow-hidden">
+        <div className="relative h-[35dvh] sm:h-full w-full sm:w-[55%] bg-white shrink-0 overflow-hidden">
           <Image
-            src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
+            src={displayImage}
             alt={product.name}
             fill
-            className="object-cover transition-transform hover:scale-105 duration-700"
+            className="object-contain sm:object-cover transition-transform hover:scale-105 duration-700"
             priority
             unoptimized={true}
           />
           
-          <DialogClose className="absolute top-4 right-4 z-50 rounded-full bg-white/10 hover:bg-white/20 text-white p-2 transition-all backdrop-blur-md border border-white/20 shadow-lg sm:hidden">
+          <DialogClose className="absolute top-4 right-4 z-50 rounded-full bg-white/90 hover:bg-white text-zinc-800 p-2 transition-all border border-zinc-200 shadow-sm sm:hidden">
             <X className="h-5 w-5" />
             <span className="sr-only">Kapat</span>
           </DialogClose>
@@ -149,7 +158,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
         </div>
 
         {/* Right Side - Content */}
-        <div className="flex flex-col h-full w-full sm:w-[45%] bg-white relative">
+        <div className="flex flex-col flex-1 min-h-0 w-full sm:w-[45%] bg-white relative">
           <DialogClose className="hidden sm:flex absolute top-4 right-4 z-50 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900 p-2 transition-all">
             <X className="h-5 w-5" />
             <span className="sr-only">Kapat</span>
@@ -209,7 +218,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                       <div key={rec.id} className="w-[140px] group cursor-pointer border rounded-xl overflow-hidden hover:border-orange-200 transition-colors bg-white shadow-sm">
                         <div className="relative h-24 w-full bg-zinc-100 overflow-hidden">
                           <Image
-                            src={rec.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
+                            src={getImageUrl(rec.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
                             alt={rec.name}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -333,8 +342,8 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
 
           {!isReadOnly && (
             <div className="p-6 pt-2 bg-white border-t border-zinc-100">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center bg-zinc-100 rounded-xl p-1 shrink-0">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                <div className="flex items-center justify-center bg-zinc-100 rounded-xl p-1 shrink-0 w-full sm:w-auto">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -357,7 +366,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                 </div>
                 
                 <Button 
-                  className="flex-1 h-12 rounded-xl font-bold text-base bg-orange-600 hover:bg-orange-700 text-white shadow-orange-200 shadow-lg hover:shadow-xl transition-all" 
+                  className="w-full sm:flex-1 h-12 rounded-xl font-bold text-base bg-orange-600 hover:bg-orange-700 text-white shadow-orange-200 shadow-lg hover:shadow-xl transition-all" 
                   onClick={handleAddToCart}
                   disabled={product.stock <= 0}
                 >

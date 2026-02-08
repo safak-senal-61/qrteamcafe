@@ -18,9 +18,14 @@ import { UpdateCafeDto } from './dto/update-cafe.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SubscriptionGuard } from '../auth/subscription.guard';
 
+import { S3Service } from '../common/s3.service';
+
 @Controller('cafes')
 export class CafesController {
-  constructor(private readonly cafesService: CafesService) {}
+  constructor(
+    private readonly cafesService: CafesService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   @Get('slug/:slug')
   findBySlug(@Param('slug') slug: string) {
@@ -78,8 +83,8 @@ export class CafesController {
     if (!file) {
       throw new BadRequestException('Dosya yüklenemedi.');
     }
-    // API URL should be dynamic based on environment, but for now assuming standard setup
-    const logoUrl = `/uploads/logos/${file.filename}`;
+    
+    const logoUrl = await this.s3Service.uploadFile(file, 'logos');
     return this.cafesService.update(id, { logoUrl });
   }
 
@@ -123,8 +128,8 @@ export class CafesController {
     if (!file) {
       throw new BadRequestException('Dosya yüklenemedi.');
     }
-    // API URL should be dynamic based on environment, but for now assuming standard setup
-    const coverImageUrl = `/uploads/covers/${file.filename}`;
+    
+    const coverImageUrl = await this.s3Service.uploadFile(file, 'covers');
     return this.cafesService.update(id, { coverImageUrl });
   }
 

@@ -8,6 +8,7 @@ import { useCartStore, Product } from '@/store/cart-store';
 import { Badge } from '@/components/ui/badge';
 import { ProductDetailDialog } from './ProductDetailDialog';
 import { cn } from '@/lib/utils';
+import { API_URL } from '@/lib/api';
 
 import { Star } from 'lucide-react';
 
@@ -24,6 +25,15 @@ interface ProductCardProps {
 export function ProductCard({ product, index, showRating = true, variant = 'card', hideImage = false, className, isReadOnly = false }: ProductCardProps) {
   const { items } = useCartStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  const getImageUrl = (url: string | undefined | null) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const path = url.startsWith('/') ? url : `/${url}`;
+    return `${API_URL}${path}`;
+  };
+
+  const displayImage = getImageUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
   
   // Calculate total quantity of this product (across all variants/notes)
   const totalQuantity = items
@@ -60,7 +70,7 @@ export function ProductCard({ product, index, showRating = true, variant = 'card
             {!hideImage && (
               <div className="relative h-20 w-20 shrink-0 rounded-lg overflow-hidden bg-secondary/30">
                  <Image
-                  src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
+                  src={displayImage}
                   alt={product.name}
                   fill
                   sizes="80px"
@@ -146,7 +156,7 @@ export function ProductCard({ product, index, showRating = true, variant = 'card
         >
           <div className="relative h-40 sm:h-56 w-full overflow-hidden group">
             <Image
-              src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
+              src={displayImage}
               alt={product.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

@@ -3,14 +3,42 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { getProductImage } from './product-images.util';
+import { S3Service } from '../common/s3.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly s3Service: S3Service,
+  ) {}
+
+  async getGalleryImages(query?: string) {
+    try {
+      const urls = await this.s3Service.listImages('products');
+      
+      let images = urls.map(url => ({
+        filename: url.split('/').pop() || '',
+        url: url
+      }));
+
+      // Eğer arama sorgusu varsa filtrele
+      if (query) {
+        const lowerQuery = query.toLowerCase();
+        images = images.filter(img => img.filename.toLowerCase().includes(lowerQuery));
+      }
+
+      return images;
+    } catch (error) {
+      console.error('Error listing S3 images:', error);
+      return [];
+    }
+  }
 
   async create(cafeId: string, createProductDto: CreateProductDto) {
     const { recommendationIds, ...rest } = createProductDto;

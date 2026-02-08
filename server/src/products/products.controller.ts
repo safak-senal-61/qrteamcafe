@@ -18,6 +18,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { ImageService } from '../common/image.service';
+import { S3Service } from '../common/s3.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SubscriptionGuard } from '../auth/subscription.guard';
 
@@ -26,6 +27,7 @@ export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,
     private readonly imageService: ImageService,
+    private readonly s3Service: S3Service,
   ) {}
 
   @Post('upload')
@@ -33,7 +35,7 @@ export class ProductsController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads',
+        destination: './uploads/products',
         filename: (req, file, callback) => {
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -49,10 +51,10 @@ export class ProductsController {
       await this.imageService.processProductImage(file);
     }
 
-    // Return relative path to allow frontend proxying (rewrites) to handle it
-    // This ensures images work on all devices (localhost, LAN, production)
+    const s3Url = await this.s3Service.uploadFile(file, 'products');
+
     return {
-      url: `/uploads/${file.filename}`,
+      url: s3Url,
     };
   }
 
@@ -75,6 +77,12 @@ export class ProductsController {
   reorder(@Body() items: { id: string; sortOrder: number }[]) {
     // Reorder products
     return this.productsService.reorder(items);
+  }
+
+  @Get('gallery-images')
+  @UseGuards(JwtAuthGuard)
+  getGalleryImages(@Query('q') query?: string) {
+    return this.productsService.getGalleryImages(query);
   }
 
   @Get(':id')

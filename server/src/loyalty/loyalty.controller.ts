@@ -19,9 +19,14 @@ import type { RequestWithUser } from '../auth/interfaces';
 
 import { CreateRewardDto } from './dto/create-reward.dto';
 
+import { S3Service } from '../common/s3.service';
+
 @Controller('loyalty')
 export class LoyaltyController {
-  constructor(private readonly loyaltyService: LoyaltyService) {}
+  constructor(
+    private readonly loyaltyService: LoyaltyService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Get('history')
@@ -63,9 +68,10 @@ export class LoyaltyController {
       }),
     }),
   )
-  uploadImage(@UploadedFile() file: Express.Multer.File) {
+  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+    const s3Url = await this.s3Service.uploadFile(file, 'rewards');
     return {
-      url: `/uploads/${file.filename}`,
+      url: s3Url,
     };
   }
 

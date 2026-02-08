@@ -19,9 +19,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 
+import { S3Service } from '../common/s3.service';
+
 @Controller('customers')
 export class CustomersController {
-  constructor(private readonly customersService: CustomersService) {}
+  constructor(
+    private readonly customersService: CustomersService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   @Post()
   create(@Body() createCustomerDto: CreateCustomerDto) {
@@ -73,9 +78,10 @@ export class CustomersController {
       }),
     }),
   )
-  uploadAvatar(@UploadedFile() file: Express.Multer.File) {
+  async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
+    const s3Url = await this.s3Service.uploadFile(file, 'avatars');
     return {
-      url: `/uploads/${file.filename}`,
+      url: s3Url,
     };
   }
 

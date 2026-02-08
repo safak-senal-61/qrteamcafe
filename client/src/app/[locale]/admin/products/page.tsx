@@ -117,6 +117,9 @@ export default function MenuPage() {
     recommendationIds: [] as string[]
   });
   const [uploading, setUploading] = useState(false);
+  const [imageSearch, setImageSearch] = useState('');
+  const [imageResultCount, setImageResultCount] = useState(12);
+  const [imageCandidates, setImageCandidates] = useState<string[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -181,6 +184,47 @@ export default function MenuPage() {
 
     setViewProducts(filtered);
   }, [products, selectedCategoryId, searchTerm]);
+
+  const selectedCategoryName = categories.find(c => c.id === productForm.categoryId)?.name || '';
+  const imageQueryRaw = imageSearch.trim() || productForm.name.trim() || selectedCategoryName.trim();
+  const imageQuery = imageQueryRaw.trim();
+
+  // Fetch gallery images from backend
+  useEffect(() => {
+    const fetchImages = async () => {
+      // Eğer query boşsa bile tüm resimleri getirmesini isteyebiliriz veya hiç getirmemesini.
+      // Kullanıcı "uploads klasöründeki görselleri" görmek istiyor.
+      // Query boşsa tümünü getirsin.
+      
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_URL}/products/gallery-images?q=${encodeURIComponent(imageQuery)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          // Backend returns relative URLs like /uploads/filename.jpg
+          // We need to prepend API_URL
+          const fullUrls = data.map((img: { url: string }) => `${API_URL}${img.url}`);
+          setImageCandidates(fullUrls);
+        }
+      } catch (error) {
+        console.error('Failed to fetch gallery images', error);
+        setImageCandidates([]);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchImages();
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [imageQuery]);
+
+  useEffect(() => {
+    setImageResultCount(12);
+  }, [imageQuery]);
 
   // --- Category Actions ---
 
@@ -896,11 +940,13 @@ export default function MenuPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Ürün Adı</Label>
+                  <Label htmlFor="product-name">Ürün Adı</Label>
                   <Input 
+                    id="product-name"
                     value={productForm.name} 
                     onChange={e => setProductForm({ ...productForm, name: e.target.value })}
                     required
+                    autoComplete="off"
                   />
                   {productForm.categoryId && (
                     <div className="flex flex-wrap gap-2 pt-2">
@@ -1007,8 +1053,12 @@ export default function MenuPage() {
                           type="button"  
                           variant="destructive" 
                           size="icon" 
-                          className="absolute top-2 right-2 h-6 w-6"
-                          onClick={() => setProductForm({ ...productForm, imageUrl: '' })}
+                          className="absolute top-2 right-2 h-6 w-6 z-10"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setProductForm({ ...productForm, imageUrl: '' });
+                          }}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -1022,7 +1072,7 @@ export default function MenuPage() {
                     <Input 
                       type="file" 
                       accept="image/*" 
-                      className="absolute inset-0 opacity-0 cursor-pointer" 
+                      className="absolute inset-0 h-full w-full opacity-0 cursor-pointer" 
                       onChange={handleFileChange}
                       disabled={uploading}
                     />
@@ -1032,6 +1082,67 @@ export default function MenuPage() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Önerilen Görseller</Label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input 
+                      value={imageSearch}
+                      onChange={e => setImageSearch(e.target.value)}
+                      placeholder="Örn: Su, Latte, Cheesecake"
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => {
+                        setImageSearch(productForm.name);
+                        setImageResultCount(12);
+                      }}
+                      disabled={!productForm.name.trim()}
+                    >
+                      Ürün Adını Kullan
+                    </Button>
+                  </div>
+                  {imageCandidates.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {imageCandidates.slice(0, imageResultCount).map((url) => (
+                          <button
+                            key={url}
+                            type="button"
+                            onClick={() => setProductForm({ ...productForm, imageUrl: url })}
+                            className={cn(
+                              "relative aspect-square rounded-lg overflow-hidden border bg-muted/5 hover:border-primary/50 transition-colors",
+                              productForm.imageUrl === url && "ring-2 ring-primary border-primary"
+                            )}
+                          >
+                            <Image
+                              src={url}
+                              alt="Önerilen görsel"
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      {imageCandidates.length > imageResultCount && (
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => setImageResultCount(count => count + 12)}
+                        >
+                          Daha Fazla Göster
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {imageQuery ? 'Aranan kriterlere uygun görsel bulunamadı.' : 'Ürün adı girince veya arama yapınca öneriler görünecek.'}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-3 pt-2">
