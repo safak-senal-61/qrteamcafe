@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import Image from 'next/image';
 import { useCustomerStore } from '@/store/customer-store';
 import { type Product as CartProduct } from '@/store/cart-store';

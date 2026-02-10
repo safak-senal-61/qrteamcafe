@@ -3,7 +3,7 @@
 import { motion, Variants } from 'framer-motion';
 import { Users, Target, Heart, Coffee, Lightbulb, Shield, Globe, Award, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
 
 export default function AboutPage() {

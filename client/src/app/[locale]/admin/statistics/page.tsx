@@ -157,9 +157,18 @@ export default function StatisticsPage() {
     const finalQuantity = isAdding ? quantity : -quantity;
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Oturum süreniz dolmuş.');
+        return;
+      }
+
       const res = await fetch(`${API_URL}/products/${selectedProduct.id}/stock`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ quantity: finalQuantity })
       });
       

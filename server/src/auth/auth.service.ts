@@ -18,6 +18,7 @@ import { generateSecret, generateURI, verify } from 'otplib';
 import { toDataURL } from 'qrcode';
 import { randomBytes } from 'crypto';
 import { Prisma } from '@prisma/client';
+import { S3Service } from '../common/s3.service';
 
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 
@@ -27,6 +28,7 @@ export class AuthService {
     private prisma: PrismaService,
     private mailService: MailService,
     private jwtService: JwtService,
+    private s3Service: S3Service,
   ) {}
 
   async registerCustomer(dto: RegisterCustomerDto) {
@@ -106,9 +108,10 @@ export class AuthService {
 
     // Send verification email
     if (customer.email) {
-      await this.mailService.sendVerificationEmail(
+      await this.mailService.sendCustomerVerificationEmail(
         customer.email,
         verificationCode,
+        customer.name || '',
       );
     }
 
@@ -311,7 +314,7 @@ export class AuthService {
     throw new NotFoundException('Kullanıcı bulunamadı.');
   }
 
-  async sendCafeRegistrationVerificationCode(email: string) {
+  async sendCafeRegistrationVerificationCode(email: string, cafeName?: string) {
     const normalizedEmail = email.toLowerCase();
 
     // Check if email already registered
@@ -338,11 +341,15 @@ export class AuthService {
       create: { email: normalizedEmail, code, expiresAt },
     });
 
-    await this.mailService.sendVerificationEmail(normalizedEmail, code);
+    await this.mailService.sendCafeVerificationEmail(
+      normalizedEmail,
+      code,
+      cafeName || 'Yeni İşletme',
+    );
     return { message: 'Doğrulama kodu gönderildi.' };
   }
 
-  async registerCafe(dto: RegisterCafeDto) {
+  async registerCafe(dto: RegisterCafeDto, file?: Express.Multer.File) {
     const email = dto.email.toLowerCase();
     const existingCafeAdmin = await this.prisma.cafeAdmin.findUnique({
       where: { email },
@@ -391,6 +398,16 @@ export class AuthService {
       .replace(/[^\w-]+/g, '');
 
     const result = await this.prisma.$transaction(async (prisma) => {
+      let logoUrl = null;
+      if (file) {
+        try {
+          logoUrl = await this.s3Service.uploadFile(file, 'logos');
+        } catch (error) {
+          console.error('Logo upload failed during registration:', error);
+          // Continue without logo if upload fails
+        }
+      }
+
       const cafe = await prisma.cafe.create({
         data: {
           name: dto.cafeName,
@@ -400,6 +417,7 @@ export class AuthService {
           // 30 days trial
           trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           plan: 'trial',
+          logoUrl,
         },
       });
 
@@ -537,6 +555,7 @@ export class AuthService {
     const email = dto.email.toLowerCase();
     const admin = await this.prisma.cafeAdmin.findUnique({
       where: { email },
+      include: { cafe: true },
     });
 
     if (!admin) {
@@ -556,7 +575,11 @@ export class AuthService {
       },
     });
 
-    await this.mailService.sendPasswordResetEmail(admin.email, code);
+    await this.mailService.sendCafePasswordResetEmail(
+      admin.email,
+      code,
+      admin.cafe?.name,
+    );
 
     return { message: 'Şifre sıfırlama kodu e-posta adresinize gönderildi.' };
   }
@@ -636,7 +659,11 @@ export class AuthService {
     });
 
     if (customer.email) {
-      await this.mailService.sendPasswordResetEmail(customer.email, code);
+      await this.mailService.sendCustomerPasswordResetEmail(
+        customer.email,
+        code,
+        customer.name || 'Değerli Müşterimiz',
+      );
     }
 
     return { message: 'Şifre sıfırlama kodu e-posta adresinize gönderildi.' };

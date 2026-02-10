@@ -70,7 +70,10 @@ export default function TablesPage() {
 
   const fetchTables = async (id: string) => {
     try {
-      const res = await fetch(`${API_URL}/tables?cafeId=${id}`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/tables?cafeId=${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) {
         setTables(await res.json());
       }
@@ -126,9 +129,13 @@ export default function TablesPage() {
     if (!cafeId) return;
 
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch(`${API_URL}/tables?cafeId=${cafeId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ tableNumber: parseInt(tableNumber) }),
       });
 
@@ -151,7 +158,11 @@ export default function TablesPage() {
     if (!confirm('Bu masayı silmek istediğinize emin misiniz?')) return;
 
     try {
-      const res = await fetch(`${API_URL}/tables/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/tables/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) {
         toast.success('Masa silindi.');
         if (cafeId) fetchTables(cafeId);
@@ -165,8 +176,10 @@ export default function TablesPage() {
   const handleCompleteCall = async (e: React.MouseEvent, callId: string) => {
     e.stopPropagation();
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch(`${API_URL}/waiter-calls/${callId}/complete`, {
         method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         toast.success('Çağrı tamamlandı.');

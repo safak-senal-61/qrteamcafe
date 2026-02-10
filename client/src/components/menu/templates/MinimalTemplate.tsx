@@ -1,5 +1,5 @@
 import { TemplateProps } from './types';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { ProductCard } from '@/components/menu/ProductCard';
 import { CartSheet } from '@/components/menu/CartSheet';
 import { CallWaiterButton } from '@/components/menu/CallWaiterButton';

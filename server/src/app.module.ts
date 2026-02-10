@@ -20,6 +20,7 @@ import { CustomersModule } from './customers/customers.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { IssueReportsModule } from './issue-reports/issue-reports.module';
 import { VerificationModule } from './verification/verification.module';
+import { ContactModule } from './contact/contact.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { redisStore } from 'cache-manager-redis-yet';
 
@@ -69,6 +70,7 @@ import { redisStore } from 'cache-manager-redis-yet';
     LoyaltyModule,
     IssueReportsModule,
     VerificationModule,
+    ContactModule,
   ],
   controllers: [AppController],
   providers: [AppService],

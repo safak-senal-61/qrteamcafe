@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { motion, Variants } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Globe } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Globe, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,9 +10,49 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import LottieAnimation from '@/components/ui/LottieAnimation';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { getApiUrl } from '@/lib/api';
 
 export default function ContactPage() {
   const t = useTranslations('ContactPage');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      await axios.post(`${getApiUrl()}/contact`, formData);
+      setIsSuccess(true);
+      toast.success('Mesajınız başarıyla gönderildi!');
+    } catch (error: unknown) {
+      console.error('Contact form error:', error);
+      let errorMessage = 'Bir hata oluştu. Lütfen tekrar deneyiniz.';
+      
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      // If message is array (validation errors), join them
+      const displayMessage = Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage;
+      toast.error(typeof displayMessage === 'string' ? displayMessage : 'Bir hata oluştu');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -136,36 +177,96 @@ export default function ContactPage() {
                     {t('formTitle')}
                   </h2>
                   
-                  <form className="space-y-6">
-                    <div className="grid sm:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">{t('formName')}</Label>
-                        <Input id="name" placeholder="John Doe" className="bg-background/50 border-border/50 focus:border-primary transition-colors h-12" />
+                  {isSuccess ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 animate-in fade-in zoom-in duration-500">
+                      <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
+                        <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">{t('formEmail')}</Label>
-                        <Input id="email" type="email" placeholder="john@example.com" className="bg-background/50 border-border/50 focus:border-primary transition-colors h-12" />
+                      <h3 className="text-2xl font-bold text-foreground">Mesajınız Alındı!</h3>
+                      <p className="text-muted-foreground max-w-sm">
+                        Bizimle iletişime geçtiğiniz için teşekkür ederiz. Ekibimiz mesajınızı inceleyip en kısa sürede size dönüş yapacaktır.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setIsSuccess(false);
+                          setFormData({ name: '', email: '', subject: '', message: '' });
+                        }}
+                        className="mt-6"
+                      >
+                        Yeni Mesaj Gönder
+                      </Button>
+                    </div>
+                  ) : (
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">{t('formName')}</Label>
+                          <Input 
+                            id="name" 
+                            required
+                            value={formData.name}
+                            onChange={handleChange}
+                            placeholder="John Doe" 
+                            className="bg-background/50 border-border/50 focus:border-primary transition-colors h-12" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">{t('formEmail')}</Label>
+                          <Input 
+                            id="email" 
+                            type="email" 
+                            required
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="john@example.com" 
+                            className="bg-background/50 border-border/50 focus:border-primary transition-colors h-12" 
+                          />
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="subject">{t('formSubject')}</Label>
-                      <Input id="subject" placeholder={t('formSubjectPlaceholder')} className="bg-background/50 border-border/50 focus:border-primary transition-colors h-12" />
-                    </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="subject">{t('formSubject')}</Label>
+                        <Input 
+                          id="subject" 
+                          required
+                          value={formData.subject}
+                          onChange={handleChange}
+                          placeholder={t('formSubjectPlaceholder')} 
+                          className="bg-background/50 border-border/50 focus:border-primary transition-colors h-12" 
+                        />
+                      </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="message">{t('formMessage')}</Label>
-                      <Textarea 
-                        id="message" 
-                        placeholder={t('formMessagePlaceholder')} 
-                        className="min-h-[150px] resize-none bg-background/50 border-border/50 focus:border-primary transition-colors"
-                      />
-                    </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="message">{t('formMessage')}</Label>
+                        <Textarea 
+                          id="message" 
+                          required
+                          value={formData.message}
+                          onChange={handleChange}
+                          placeholder={t('formMessagePlaceholder')} 
+                          className="min-h-[150px] resize-none bg-background/50 border-border/50 focus:border-primary transition-colors"
+                        />
+                      </div>
 
-                    <Button className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
-                      {t('formSubmit')} <Send className="w-5 h-5 ml-2" />
-                    </Button>
-                  </form>
+                      <Button 
+                        type="submit" 
+                        disabled={isLoading}
+                        className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            Gönderiliyor...
+                          </>
+                        ) : (
+                          <>
+                            {t('formSubmit')} <Send className="w-5 h-5 ml-2" />
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  )}
                 </CardContent>
               </Card>
 

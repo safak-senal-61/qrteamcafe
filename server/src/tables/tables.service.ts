@@ -6,10 +6,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTableDto } from './dto/create-table.dto';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class TablesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventsGateway: EventsGateway,
+  ) {}
 
   async create(cafeId: string, createTableDto: CreateTableDto) {
     const existingTable = await this.prisma.table.findUnique({
@@ -95,6 +99,14 @@ export class TablesService {
         where: { id: toTableId },
         data: { isOccupied: true },
       });
+
+      // Notify clients about the move
+      this.eventsGateway.notifyTableMove(
+        cafeId,
+        fromTableId,
+        toTableId,
+        targetTable.tableNumber,
+      );
 
       return { message: 'Masa başarıyla taşındı' };
     });

@@ -67,7 +67,9 @@
     "contact": "Contact",
     "privacy": "Privacy Policy",
     "terms": "Terms of Use",
-    "kvkk": "KVKK"
+    "kvkk": "KVKK",
+    "distanceSales": "Distance Sales Agreement",
+    "returnPolicy": "Return Policy"
   },
   "Footer": {
     "product": "Product",

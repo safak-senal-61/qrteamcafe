@@ -306,7 +306,14 @@ export default function DashboardPage() {
         duration: 5000,
         action: {
           label: 'Görüntüle',
-          onClick: () => router.push('/admin/orders'),
+          onClick: () => {
+             // Force navigation to avoid locale duplication issues
+             // Use a relative path or a known clean path logic
+             // But since we are in a component, we can't easily get the "raw" router without locale if next-intl adds it.
+             // We'll use window.location as a fallback to ensure correctness.
+             const locale = window.location.pathname.split('/')[1];
+             window.location.href = `/${locale}/admin/orders`;
+          },
         },
       });
       

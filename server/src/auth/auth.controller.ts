@@ -7,6 +7,8 @@ import {
   Delete,
   Param,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterCafeDto } from './dto/register-cafe.dto';
@@ -18,9 +20,14 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import type { RequestWithUser } from './interfaces';
+import { SendVerificationCodeDto } from './dto/send-verification-code.dto';
 
 @UseGuards(ThrottlerGuard)
 @Controller('auth')
@@ -63,13 +70,41 @@ export class AuthController {
   }
 
   @Post('send-verification-code')
-  async sendVerificationCode(@Body() dto: ForgotPasswordDto) {
-    return this.authService.sendCafeRegistrationVerificationCode(dto.email);
+  async sendVerificationCode(@Body() dto: SendVerificationCodeDto) {
+    return this.authService.sendCafeRegistrationVerificationCode(
+      dto.email,
+      dto.cafeName,
+    );
   }
 
   @Post('register')
-  async register(@Body() dto: RegisterCafeDto) {
-    return this.authService.registerCafe(dto);
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const uploadPath = './uploads/temp';
+          if (!existsSync(uploadPath)) {
+            mkdirSync(uploadPath, { recursive: true });
+          }
+          cb(null, uploadPath);
+        },
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `cafe-logo-${uniqueSuffix}${ext}`);
+        },
+      }),
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+      },
+    }),
+  )
+  async register(
+    @Body() dto: RegisterCafeDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.authService.registerCafe(dto, file);
   }
 
   @Post('login')

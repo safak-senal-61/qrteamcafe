@@ -103,11 +103,27 @@ export default function RegisterPage() {
 
     try {
       if (step === 'form') {
+        // Validate password before sending verification code
+        const passwordRegex = /((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/;
+        if (formData.password.length < 8) {
+            toast.error('Şifre en az 8 karakter olmalıdır.');
+            setIsLoading(false);
+            return;
+        }
+        if (!passwordRegex.test(formData.password)) {
+            toast.error('Şifre en az 1 büyük harf, 1 küçük harf ve 1 rakam veya özel karakter içermelidir.');
+            setIsLoading(false);
+            return;
+        }
+
         // Step 1: Send verification code
         const response = await fetch(`${API_URL}/auth/send-verification-code`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email }),
+          body: JSON.stringify({ 
+            email: formData.email,
+            cafeName: formData.cafeName 
+          }),
         });
 
         if (response.ok) {
@@ -119,33 +135,24 @@ export default function RegisterPage() {
         }
       } else {
         // Step 2: Register with code
+        const formDataUpload = new FormData();
+        formDataUpload.append('cafeName', formData.cafeName);
+        formDataUpload.append('fullName', formData.fullName);
+        formDataUpload.append('phone', formData.phone);
+        formDataUpload.append('email', formData.email);
+        formDataUpload.append('password', formData.password);
+        formDataUpload.append('verificationCode', verificationCode);
+        
+        if (selectedFile) {
+            formDataUpload.append('file', selectedFile);
+        }
+
         const response = await fetch(`${API_URL}/auth/register`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            cafeName: formData.cafeName,
-            fullName: formData.fullName,
-            phone: formData.phone,
-            email: formData.email,
-            password: formData.password,
-            verificationCode,
-          }),
+          body: formDataUpload,
         });
 
         if (response.ok) {
-          const data = await response.json();
-          
-          // If logo is selected, upload it
-          if (selectedFile && data.cafeId) {
-              const formDataUpload = new FormData();
-              formDataUpload.append('file', selectedFile);
-
-              await fetch(`${API_URL}/cafes/${data.cafeId}/logo`, {
-                  method: 'PATCH',
-                  body: formDataUpload,
-              });
-          }
-
           setIsSuccess(true);
           toast.success(t('register.successTitle'));
         } else {
@@ -268,7 +275,7 @@ export default function RegisterPage() {
                           {logoPreview ? (
                             <div className="relative w-full h-full">
                               <Image 
-                                src={getMediaUrl(logoPreview)} 
+                                src={logoPreview.startsWith('blob:') ? logoPreview : getMediaUrl(logoPreview)} 
                                 alt="Logo Preview" 
                                 fill
                                 className="object-cover"

@@ -119,6 +119,19 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.emitActiveTablesUpdate(cafeId);
   }
 
+  notifyTableMove(
+    cafeId: string,
+    fromTableId: string,
+    toTableId: string,
+    toTableNumber: number,
+  ) {
+    this.server.to(`table_${fromTableId}`).emit('tableMoved', {
+      oldTableId: fromTableId,
+      newTableId: toTableId,
+      newTableNumber: toTableNumber,
+    });
+  }
+
   @SubscribeMessage('joinAdmin')
   async handleJoinAdmin(client: Socket, payload: { cafeId: string }) {
     const { cafeId } = payload;

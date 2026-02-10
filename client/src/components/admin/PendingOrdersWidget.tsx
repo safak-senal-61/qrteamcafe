@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from '@/navigation';
+import { usePathname } from '@/navigation';
 import { API_URL } from '@/lib/api';
 import { Bell, Receipt, X } from 'lucide-react';
 import { useAdminSocket } from '@/providers/AdminSocketProvider';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocale } from 'next-intl';
 
 interface PendingOrder {
   id: string;
@@ -22,9 +23,11 @@ interface PendingOrder {
 export function PendingOrdersWidget() {
   const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
   const { socket } = useAdminSocket();
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const router = useRouter();
+  const pathname = usePathname();
+  const locale = useLocale();
 
   useEffect(() => {
     // Notification sound
@@ -69,7 +72,15 @@ export function PendingOrdersWidget() {
         audioRef.current.play().catch(e => console.log('Audio play failed', e));
       }
       
-      toast.info(`Masa ${newOrder.table?.tableNumber || '?'} yeni sipariş verdi!`);
+      toast.info(`Masa ${newOrder.table?.tableNumber || '?'} yeni sipariş verdi!`, {
+        action: {
+          label: 'Görüntüle',
+          onClick: () => {
+            // Force navigation to the correct URL to avoid duplicate locales
+            window.location.href = `/${locale}/admin/orders`;
+          }
+        }
+      });
       
       setPendingOrders(prev => {
         // Prevent duplicates
@@ -95,9 +106,32 @@ export function PendingOrdersWidget() {
       socket.off('newOrder', onNewOrder);
       socket.off('orderStatusUpdate', onOrderStatusUpdate);
     };
-  }, [socket]);
+  }, [socket, locale]);
 
   if (pendingOrders.length === 0) return null;
+
+  // Hide if on orders page
+  if (pathname === '/admin/orders' || pathname?.includes('/admin/orders')) return null;
+
+  // Hide if all orders are seen and popup is closed
+  const hasUnseen = pendingOrders.some(o => !seenIds.has(o.id));
+  if (!hasUnseen && !isOpen) return null;
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      // Mark current orders as seen when opening
+      const newSeen = new Set(seenIds);
+      pendingOrders.forEach(o => newSeen.add(o.id));
+      setSeenIds(newSeen);
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const handleNavigateToOrders = () => {
+    setIsOpen(false);
+    // Force navigation to the correct URL to avoid duplicate locales
+    window.location.href = `/${locale}/admin/orders`;
+  };
 
   return (
     <>
@@ -108,7 +142,7 @@ export function PendingOrdersWidget() {
         className="fixed bottom-6 right-20 z-50"
       >
         <Button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={handleToggle}
           className={`rounded-full h-14 w-14 shadow-lg ${isOpen ? 'bg-secondary text-secondary-foreground' : 'bg-red-600 hover:bg-red-700 text-white animate-pulse'}`}
         >
           <Receipt className="h-6 w-6" />
@@ -131,7 +165,7 @@ export function PendingOrdersWidget() {
               <div className="p-4 border-b bg-red-50 dark:bg-red-950/20 flex justify-between items-center sticky top-0 backdrop-blur-md">
                 <h3 
                   className="font-bold text-red-700 dark:text-red-400 flex items-center gap-2 cursor-pointer hover:underline"
-                  onClick={() => router.push('/admin/orders')}
+                  onClick={handleNavigateToOrders}
                 >
                   <Bell className="h-4 w-4" />
                   Bekleyen Siparişler ({pendingOrders.length})
@@ -147,8 +181,8 @@ export function PendingOrdersWidget() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    className="p-3 bg-muted/50 rounded-lg flex items-center justify-between group"
-                    onClick={() => router.push(`/${window.location.pathname.split('/')[1]}/admin/orders`)}
+                    className="p-3 bg-muted/50 rounded-lg flex items-center justify-between group cursor-pointer hover:bg-muted"
+                    onClick={handleNavigateToOrders}
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">

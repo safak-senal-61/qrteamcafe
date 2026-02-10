@@ -132,7 +132,11 @@ export class S3Service {
 
       // Auto-fix permissions for manual uploads (fire and forget)
       // We don't await this to not slow down the response
-      this.ensurePublicAccess(response.Contents.map(c => c.Key).filter(k => k && !k.endsWith('/')) as string[]);
+      void this.ensurePublicAccess(
+        response.Contents.map((c) => c.Key).filter(
+          (k) => k && !k.endsWith('/'),
+        ) as string[],
+      );
 
       const baseUrl = this.cdnEndpoint
         ? `${this.cdnEndpoint}/`
@@ -158,9 +162,9 @@ export class S3Service {
           try {
             await this.makePublic(key);
           } catch (e) {
-             // Ignore errors, we'll try next time
+            // Ignore errors, we'll try next time
           }
-        })
+        }),
       );
     }
   }

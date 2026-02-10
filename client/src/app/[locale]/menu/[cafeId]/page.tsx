@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { useCustomerStore } from '@/store/customer-store';
 import { Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -66,6 +67,7 @@ const sortCategoriesByTime = (categories: Category[]) => {
 export default function MenuPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const cafeId = params.cafeId as string;
   const tableNumber = searchParams.get('table');
   const { customer, setAuthDialogOpen, isGuest, isAuthDialogOpen } = useCustomerStore();
@@ -128,6 +130,25 @@ export default function MenuPage() {
         socket?.emit('joinTable', { cafeId, tableId: currentTableId });
       });
 
+      socket.on('tableMoved', (data: { oldTableId: string; newTableId: string; newTableNumber: number }) => {
+        console.log('Table moved:', data);
+        if (data.oldTableId === currentTableId) {
+          toast.info(`Masanız ${data.newTableNumber} numaralı masaya taşındı.`);
+          
+          // Update local storage
+          const storageKey = `cafe_${cafeId}_tableId`;
+          localStorage.setItem(storageKey, data.newTableId);
+
+          // Update state
+          setCurrentTableId(data.newTableId);
+          
+          // Update URL
+          const newSearchParams = new URLSearchParams(searchParams.toString());
+          newSearchParams.set('table', data.newTableNumber.toString());
+          router.replace(`/menu/${cafeId}?${newSearchParams.toString()}`);
+        }
+      });
+
       socket.on('orderStatusUpdate', (updatedOrder: Order) => {
           console.log('Order status update received:', updatedOrder);
           setActiveOrders(prev => prev.map(o => o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o));
@@ -159,7 +180,7 @@ export default function MenuPage() {
     return () => {
       if (socket) socket.disconnect();
     };
-  }, [cafeId, currentTableId]);
+  }, [cafeId, currentTableId, router, searchParams]);
 
   // Resolve Table ID independently
   useEffect(() => {

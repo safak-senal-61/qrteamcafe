@@ -67,7 +67,9 @@
     "contact": "İletişim",
     "privacy": "Gizlilik Politikası",
     "terms": "Kullanım Şartları",
-    "kvkk": "KVKK"
+    "kvkk": "KVKK",
+    "distanceSales": "Uzaktan Satış Sözleşmesi",
+    "returnPolicy": "İade Politikası"
   },
   "Footer": {
     "product": "Ürün",

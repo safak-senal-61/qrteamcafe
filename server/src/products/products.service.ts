@@ -22,12 +22,12 @@ export class ProductsService {
 
   async getGalleryImages(query?: string) {
     try {
-      // Changed cache key to invalidate old cache and reflect the scope change (all images)
-      const cacheKey = 's3:list:all'; 
+      // Cache key changed to reflect 'manual' folder source
+      const cacheKey = 's3:list:products:manual';
       let urls = (await this.cache.get(cacheKey)) as string[] | undefined;
       if (!urls) {
-        // List from root to find manually uploaded files as well
-        urls = await this.s3Service.listImages(''); 
+        // List only from products/manual folder for curated suggestions
+        urls = await this.s3Service.listImages('products/manual');
         await this.cache.set(cacheKey, urls, 60);
       }
 
@@ -39,9 +39,18 @@ export class ProductsService {
       // Eğer arama sorgusu varsa filtrele
       if (query) {
         const lowerQuery = query.toLowerCase();
-        images = images.filter((img) =>
-          img.filename.toLowerCase().includes(lowerQuery),
-        );
+        images = images.filter((img) => {
+          // Dosya adını parçalara ayır (boşluk, tire, alt çizgi, nokta)
+          // Örn: "su-sisesi.jpg" -> ["su", "sisesi", "jpg"]
+          // Örn: "tremisu.jpg" -> ["tremisu", "jpg"]
+          const tokens = img.filename.toLowerCase().split(/[-_.\s]+/);
+
+          // Herhangi bir parça aranan kelime ile BAŞLIYOR mu kontrol et
+          // "su" araması -> "su" ile başlar (Match)
+          // "su" araması -> "sutlac" ile başlar (Match)
+          // "su" araması -> "tremisu" ile başlamaz (No Match)
+          return tokens.some((token) => token.startsWith(lowerQuery));
+        });
       }
 
       return images;

@@ -46,6 +46,8 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-zinc-400">
               <li><Link href="/privacy" className="hover:text-white transition-colors font-medium">{nav('privacy')}</Link></li>
               <li><Link href="/terms" className="hover:text-white transition-colors font-medium">{nav('terms')}</Link></li>
+              <li><Link href="/distance-sales-agreement" className="hover:text-white transition-colors font-medium">{nav('distanceSales')}</Link></li>
+              <li><Link href="/return-policy" className="hover:text-white transition-colors font-medium">{nav('returnPolicy')}</Link></li>
               <li><Link href="/kvkk" className="hover:text-white transition-colors font-medium">{nav('kvkk')}</Link></li>
             </ul>
           </div>

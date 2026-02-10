@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from '@/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -142,6 +143,7 @@ const TEMPLATES = [
 ];
 
 export default function TemplatesPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState('classic');
@@ -268,7 +270,7 @@ export default function TemplatesPage() {
                     Ayarlar sayfasından marka renginizi, logonuzu ve kapak görselinizi düzenleyerek seçtiğiniz şablonu markanıza uygun hale getirebilirsiniz.
                 </p>
             </div>
-            <Button variant="outline" className="ml-auto" onClick={() => window.location.href = '/admin/settings'}>
+            <Button variant="outline" className="ml-auto" onClick={() => router.push('/admin/settings')}>
                 Ayarlara Git
             </Button>
         </CardContent>

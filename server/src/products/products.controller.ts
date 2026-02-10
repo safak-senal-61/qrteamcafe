@@ -62,11 +62,11 @@ export class ProductsController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: './uploads/products',
-        filename: (req, file, callback) => {
+        filename: (req: any, file, callback) => {
           const ext = extname(file.originalname);
 
           if (req.body && typeof req.body.productName === 'string') {
-            const sanitized = sanitizeFilename(req.body.productName);
+            const sanitized = sanitizeFilename(req.body.productName as string);
             if (sanitized.length > 0) {
               // Kullanıcı sadece ürün adını istediği için timestamp eklemiyoruz
               callback(null, `${sanitized}${ext}`);
@@ -87,7 +87,7 @@ export class ProductsController {
   ) {
     // Override filename if product name is present (fallback for Multer ordering issues)
     if (file && body && typeof body.productName === 'string') {
-      const sanitized = sanitizeFilename(body.productName);
+      const sanitized = sanitizeFilename(body.productName as string);
       if (sanitized.length > 0) {
         const ext = extname(file.originalname);
         file.filename = `${sanitized}${ext}`;
@@ -99,7 +99,8 @@ export class ProductsController {
       await this.imageService.processProductImage(file);
     }
 
-    const s3Url = await this.s3Service.uploadFile(file, 'products');
+    // Upload to 'products/personel' as user-generated content
+    const s3Url = await this.s3Service.uploadFile(file, 'products/personel');
 
     return {
       url: s3Url,
@@ -154,8 +155,8 @@ export class ProductsController {
 
   @Patch(':id/stock')
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
-  updateStock(@Param('id') id: string, @Body('stock') stock: number) {
-    return this.productsService.updateStock(id, stock);
+  updateStock(@Param('id') id: string, @Body('quantity') quantity: number) {
+    return this.productsService.updateStock(id, quantity);
   }
 
   @Patch(':id')
