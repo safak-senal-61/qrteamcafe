@@ -49,7 +49,7 @@ export function MinimalTemplate({
 
   return (
     <div className="min-h-screen bg-white pb-24 relative font-sans text-zinc-900 selection:bg-zinc-100 overflow-x-hidden">
-      <CustomerAuthDialog variant="minimal" />
+      <CustomerAuthDialog variant="default" />
       
       {/* Minimal Header */}
       <div className="pt-8 pb-4 px-6 bg-white border-b border-zinc-100">
@@ -275,7 +275,7 @@ export function MinimalTemplate({
         />
       )}
 
-      <CustomerAuthDialog variant="minimal" />
+      <CustomerAuthDialog variant="default" />
       
       <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
         <DialogContent className="sm:max-w-md text-center border-none shadow-none bg-white">

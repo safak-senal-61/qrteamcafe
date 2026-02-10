@@ -55,7 +55,7 @@ export function ClassicTemplate({
   return (
     <div className="min-h-screen bg-background pb-24 relative font-sans overflow-x-hidden">
       {/* Dialogs */}
-      <CustomerAuthDialog variant="classic" />
+      <CustomerAuthDialog variant="default" />
 
 
       {/* Header Image */}
@@ -372,7 +372,7 @@ export function ClassicTemplate({
           </div>
         </DialogContent>
       </Dialog>
-      <CustomerAuthDialog variant="classic" />
+      <CustomerAuthDialog variant="default" />
     </div>
   );
 }

@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Product, useCartStore } from '@/store/cart-store';
+import { Product, useCartStore, CartItem } from '@/store/cart-store';
 import { toast } from 'sonner';
 
 interface ProductDetailDialogProps {
@@ -23,6 +23,8 @@ interface ProductDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   showRating?: boolean;
   isReadOnly?: boolean;
+  cartItem?: CartItem;
+  mode?: 'add' | 'edit';
 }
 
 interface Review {
@@ -34,28 +36,47 @@ interface Review {
   createdAt: string;
 }
 
-export function ProductDetailDialog({ product, open, onOpenChange, showRating = true, isReadOnly = false }: ProductDetailDialogProps) {
-  const { addItem } = useCartStore();
+export function ProductDetailDialog({ product, open, onOpenChange, showRating = true, isReadOnly = false, cartItem, mode = 'add' }: ProductDetailDialogProps) {
+  const { addItem, updateItem } = useCartStore();
+  const [activeProduct, setActiveProduct] = useState<Product>(product);
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
   const [reviews, setReviews] = useState<Review[]>([]);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [showReviews, setShowReviews] = useState(false);
 
-  const displayImage = getMediaUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+  const isOriginalProduct = activeProduct.id === product.id;
+  const currentMode = isOriginalProduct ? mode : 'add';
+  const currentCartItem = isOriginalProduct ? cartItem : undefined;
+
+  const displayImage = getMediaUrl(activeProduct.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
 
   useEffect(() => {
-    if (open && product.id) {
+    if (open) {
+       setActiveProduct(product);
+    }
+  }, [open, product]);
+
+  useEffect(() => {
+    if (open) {
+        if (currentMode === 'edit' && currentCartItem) {
+            setQuantity(currentCartItem.quantity);
+            setNote(currentCartItem.note || '');
+        } else {
+            setQuantity(1);
+            setNote('');
+        }
+
       // Fetch reviews only if showRating is true
-      if (showRating) {
-        fetch(`${API_URL}/reviews?productId=${product.id}`)
+      if (showRating && activeProduct.id) {
+        fetch(`${API_URL}/reviews?productId=${activeProduct.id}`)
           .then(res => res.json())
           .then(data => setReviews(data))
           .catch(err => console.error('Error fetching reviews:', err));
       }
         
       // Fetch recommendations
-      fetch(`${API_URL}/products/${product.id}/recommendations`)
+      fetch(`${API_URL}/products/${activeProduct.id}/recommendations`)
         .then(res => res.json())
         .then(data => {
           // Map API response to Product type
@@ -71,7 +92,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
         })
         .catch(err => console.error('Error fetching recommendations:', err));
     }
-  }, [open, product.id, showRating]);
+  }, [open, activeProduct.id, showRating, currentMode, currentCartItem]);
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
@@ -88,9 +109,16 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
   const handleAddToCart = () => {
     // Customer check removed to allow guest cart building. Login enforced at checkout.
     
-    if (product.stock && quantity > product.stock) {
-      toast.error(`Stok yetersiz. En fazla ${product.stock} adet ekleyebilirsiniz.`);
+    if (activeProduct.stock && quantity > activeProduct.stock) {
+      toast.error(`Stok yetersiz. En fazla ${activeProduct.stock} adet ekleyebilirsiniz.`);
       return;
+    }
+
+    if (currentMode === 'edit' && currentCartItem) {
+        updateItem(currentCartItem.cartItemId, { quantity, note });
+        toast.success('Sepet güncellendi');
+        onOpenChange(false);
+        return;
     }
 
     // Add item with note logic...
@@ -99,18 +127,20 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
     // cart-store addItem signature: (product: Product, note?: string) => void
     // It adds 1 item. So loop is correct.
     for (let i = 0; i < quantity; i++) {
-      addItem(product, note);
+      addItem(activeProduct, note);
     }
     
-    toast.success(`${quantity} adet ${product.name} sepete eklendi.`);
+    toast.success(`${quantity} adet ${activeProduct.name} sepete eklendi.`);
     onOpenChange(false);
     setQuantity(1);
     setNote('');
   };
 
   const incrementQuantity = () => {
-    if (quantity < product.stock) {
+    if (activeProduct.stock && quantity < activeProduct.stock) {
       setQuantity(q => q + 1);
+    } else if (!activeProduct.stock) {
+       setQuantity(q => q + 1);
     }
   };
 
@@ -128,7 +158,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
         <div className="relative h-[35dvh] sm:h-full w-full sm:w-[55%] bg-white shrink-0 overflow-hidden">
           <Image
             src={displayImage}
-            alt={product.name}
+            alt={activeProduct.name}
             fill
             className="object-contain sm:object-cover transition-transform hover:scale-105 duration-700"
             priority
@@ -140,7 +170,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
             <span className="sr-only">Kapat</span>
           </DialogClose>
 
-          {product.isChefRecommended && (
+          {activeProduct.isChefRecommended && (
             <div className="absolute top-4 left-4 z-10">
               <Badge className="bg-orange-500/90 hover:bg-orange-600 text-white border-none gap-1.5 px-3 py-1.5 shadow-lg backdrop-blur-sm">
                 <ChefHat className="w-4 h-4" />
@@ -162,30 +192,30 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
             <div className="space-y-3 pt-4">
               <div className="flex justify-between items-start gap-4">
                 <DialogTitle className="text-2xl sm:text-3xl font-bold leading-tight text-foreground text-left tracking-tight pr-8">
-                  {product.name}
+                  {activeProduct.name}
                 </DialogTitle>
               </div>
               
               <div className="flex items-end justify-between">
                 <div className="flex flex-col">
-                  {showRating && Number(product.averageRating) > 0 && (
+                  {showRating && Number(activeProduct.averageRating) > 0 && (
                     <div className="flex items-center gap-1.5 mb-1">
                       <div className="flex items-center gap-0.5">
                         <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
-                        <span className="font-bold text-foreground">{Number(product.averageRating).toFixed(1)}</span>
+                        <span className="font-bold text-foreground">{Number(activeProduct.averageRating).toFixed(1)}</span>
                       </div>
-                      <span className="text-muted-foreground text-sm">({product.reviewCount})</span>
+                      <span className="text-muted-foreground text-sm">({activeProduct.reviewCount})</span>
                     </div>
                   )}
                 </div>
                 
                 <div className="flex flex-col items-end shrink-0">
-                  {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
+                  {activeProduct.originalPrice && Number(activeProduct.originalPrice) > Number(activeProduct.price) && (
                     <span className="text-muted-foreground line-through text-base decoration-muted-foreground/50 mb-0.5">
-                      {Number(product.originalPrice).toFixed(2)} ₺
+                      {Number(activeProduct.originalPrice).toFixed(2)} ₺
                     </span>
                   )}
-                  <span className="text-3xl sm:text-4xl font-black text-orange-600 tracking-tight">{Number(product.price).toFixed(2)} ₺</span>
+                  <span className="text-3xl sm:text-4xl font-black text-orange-600 tracking-tight">{Number(activeProduct.price).toFixed(2)} ₺</span>
                 </div>
               </div>
             </div>
@@ -195,7 +225,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
             <div className="space-y-3">
               <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-widest">ÜRÜN DETAYI</h4>
               <p id="product-description" className="text-sm text-foreground/80 leading-relaxed font-medium">
-                {product.description || 'Açıklama bulunmuyor.'}
+                {activeProduct.description || 'Açıklama bulunmuyor.'}
               </p>
             </div>
 
@@ -208,7 +238,11 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                 <ScrollArea className="w-full whitespace-nowrap -mx-6 px-6 pb-2">
                   <div className="flex w-max space-x-3">
                     {recommendations.map((rec) => (
-                      <div key={rec.id} className="w-[140px] group cursor-pointer border rounded-xl overflow-hidden hover:border-orange-200 transition-colors bg-white shadow-sm">
+                      <div 
+                        key={rec.id} 
+                        className="w-[140px] group cursor-pointer border rounded-xl overflow-hidden hover:border-orange-200 transition-colors bg-white shadow-sm"
+                        onClick={() => setActiveProduct(rec)}
+                      >
                         <div className="relative h-24 w-full bg-zinc-100 overflow-hidden">
                           <Image
                             src={getMediaUrl(rec.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'}
@@ -220,7 +254,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                           {!isReadOnly && (
                             <Button 
                               size="icon" 
-                              className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-white/90 text-orange-600 hover:bg-orange-600 hover:text-white shadow-sm opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100"
+                              className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-white/90 text-orange-600 hover:bg-orange-600 hover:text-white shadow-sm opacity-100 transition-all active:scale-90"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 addItem({
@@ -235,7 +269,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                                 });
                                 toast.success(`${rec.name} sepete eklendi.`);
                               }}
-                              disabled={rec.stock <= 0}
+                              disabled={rec.stock !== undefined && rec.stock <= 0}
                             >
                               <Plus className="h-4 w-4" />
                             </Button>
@@ -364,7 +398,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                   disabled={product.stock <= 0}
                 >
                   <ShoppingBasket className="w-5 h-5 mr-2" />
-                  <span className="flex-1 text-left">Sepete Ekle</span>
+                  <span className="flex-1 text-left">{mode === 'edit' ? 'Sepeti Güncelle' : 'Sepete Ekle'}</span>
                   <span className="bg-white/20 px-2 py-0.5 rounded text-sm">
                     {(product.price * quantity).toFixed(2)} ₺
                   </span>

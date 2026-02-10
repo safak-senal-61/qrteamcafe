@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useCustomerStore } from '@/store/customer-store';
-import { useCartStore } from '@/store/cart-store';
+import { useCartStore, CartItem } from '@/store/cart-store';
 import { api, getMediaUrl } from '@/lib/api';
 import { toast } from 'sonner';
 import { CreateReviewDialog } from './CreateReviewDialog';
+import { ProductDetailDialog } from './ProductDetailDialog';
 import { 
   ShoppingBag, 
   Trash2, 
@@ -97,6 +98,9 @@ export function CartSheet({
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedOrderForReview, setSelectedOrderForReview] = useState<Order | null>(null);
   
+  const [editingItem, setEditingItem] = useState<CartItem | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   const { items, removeItem, updateQuantity, clearCart, getTotalPrice, getTotalItems } = useCartStore();
   const { customer, setAuthDialogOpen, isGuest } = useCustomerStore();
 
@@ -259,17 +263,33 @@ export function CartSheet({
         customerId: customer?.id,
       };
 
-      await api.post(`/orders?cafeId=${cafeId}`, orderData);
+      const res = await api.post(`/orders?cafeId=${cafeId}`, orderData);
+      const createdOrder = res.data;
+
+      // Store order ID in session for visibility
+      if (createdOrder && createdOrder.id) {
+          try {
+              const sessionKey = `session_orders_${cafeId}`;
+              const existing = JSON.parse(sessionStorage.getItem(sessionKey) || '[]');
+              if (!existing.includes(createdOrder.id)) {
+                  existing.push(createdOrder.id);
+                  sessionStorage.setItem(sessionKey, JSON.stringify(existing));
+              }
+          } catch (e) {
+              console.error('Session storage error', e);
+          }
+      }
 
       toast.success('Siparişiniz başarıyla alındı!');
       clearCart();
       
-      if (onOrderSuccess) {
-        onOrderSuccess();
-      }
-      
-      // Switch to orders tab
-      setActiveTab('orders');
+      // Small delay to ensure DB consistency before refetch
+      setTimeout(() => {
+        if (onOrderSuccess) {
+          onOrderSuccess();
+        }
+        setActiveTab('orders');
+      }, 500);
     } catch (error: unknown) {
       console.error('Order error:', error);
       const apiError = error as { response?: { data?: { message?: string } } };
@@ -361,7 +381,11 @@ export function CartSheet({
                               initial={{ opacity: 0, x: 20 }}
                               animate={{ opacity: 1, x: 0 }}
                               exit={{ opacity: 0, x: -100 }}
-                              className="group flex items-center space-x-4 bg-white p-3 rounded-2xl shadow-sm border border-border/50 hover:shadow-md transition-all"
+                              className="group flex items-center space-x-4 bg-white p-3 rounded-2xl shadow-sm border border-border/50 hover:shadow-md transition-all cursor-pointer"
+                              onClick={() => {
+                                setEditingItem(item);
+                                setIsEditDialogOpen(true);
+                              }}
                             >
                               <div className="relative h-20 w-20 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">
                                 <Image
@@ -383,7 +407,7 @@ export function CartSheet({
                                 <p className="text-primary font-extrabold text-lg">
                                   {(item.price * item.quantity).toFixed(2)} ₺
                                 </p>
-                                <div className="flex items-center mt-2 space-x-1">
+                                <div className="flex items-center mt-2 space-x-1" onClick={(e) => e.stopPropagation()}>
                                   <Button
                                     variant="secondary"
                                     size="icon"
@@ -414,7 +438,10 @@ export function CartSheet({
                                 variant="ghost"
                                 size="icon"
                                 className="text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-xl h-10 w-10 transition-all"
-                                onClick={() => removeItem(item.cartItemId)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeItem(item.cartItemId);
+                                }}
                               >
                                 <Trash2 className="h-5 w-5" />
                               </Button>
@@ -557,6 +584,20 @@ export function CartSheet({
              </ScrollArea>
           </TabsContent>
         </Tabs>
+        
+        {editingItem && (
+          <ProductDetailDialog
+            product={editingItem}
+            open={isEditDialogOpen}
+            onOpenChange={(open) => {
+              setIsEditDialogOpen(open);
+              if (!open) setTimeout(() => setEditingItem(null), 300); // Delay clear to allow close animation
+            }}
+            mode="edit"
+            cartItem={editingItem}
+            showRating={false}
+          />
+        )}
       </SheetContent>
 
       <CreateReviewDialog 

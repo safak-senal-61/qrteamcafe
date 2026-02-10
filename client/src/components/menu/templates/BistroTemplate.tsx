@@ -323,7 +323,7 @@ export function BistroTemplate({
       )}
 
       {/* Dialogs */}
-      <CustomerAuthDialog variant="bistro" />
+      <CustomerAuthDialog variant="default" />
       <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
         <DialogContent className="sm:max-w-md bg-[#f8f5e6] border-2 border-stone-800">
           <DialogHeader>

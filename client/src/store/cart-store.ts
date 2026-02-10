@@ -26,6 +26,7 @@ interface CartState {
   addItem: (product: Product, note?: string) => void;
   removeItem: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
+  updateItem: (cartItemId: string, updates: Partial<Pick<CartItem, 'quantity' | 'note'>>) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -72,6 +73,13 @@ export const useCartStore = create<CartState>()(
         set({
           items: get().items.map((item) =>
             item.cartItemId === cartItemId ? { ...item, quantity } : item
+          ),
+        });
+      },
+      updateItem: (cartItemId, updates) => {
+        set({
+          items: get().items.map((item) =>
+            item.cartItemId === cartItemId ? { ...item, ...updates } : item
           ),
         });
       },

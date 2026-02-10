@@ -75,20 +75,22 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
 
   const theme = {
     default: {
-      gradient: "bg-gradient-to-br from-primary to-primary/80",
-      contentBg: "bg-white/75",
-      titleColor: "text-gray-900",
-      textColor: "text-gray-500",
-      labelColor: "text-gray-700",
-      inputBg: "bg-white/50",
-      inputBorder: "border-gray-200",
+      gradient: "bg-white",
+      contentBg: "bg-white",
+      headerTitleColor: "text-primary text-3xl",
+      headerTextColor: "text-muted-foreground/80",
+      titleColor: "text-foreground",
+      textColor: "text-muted-foreground",
+      labelColor: "text-foreground/80",
+      inputBg: "bg-secondary/30",
+      inputBorder: "border-border/40",
       inputFocus: "focus:border-primary focus:ring-primary",
-      primaryBtn: "bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20 hover:shadow-primary/30",
-      secondaryBtn: "border-primary/20 hover:bg-primary/10 hover:text-primary hover:border-primary/30 bg-white/50 text-primary",
-      link: "text-primary hover:text-primary/80",
-      iconBox: "bg-white/20 border-white/10",
-      iconColor: "text-primary-foreground",
-      divider: "bg-white/50 text-gray-400",
+      primaryBtn: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-xl shadow-primary/20 rounded-xl h-12",
+      secondaryBtn: "bg-white text-foreground hover:bg-secondary/50 border border-input/50 rounded-xl h-12",
+      link: "text-primary font-medium hover:text-primary/80",
+      iconBox: "bg-primary/5 border-primary/10",
+      iconColor: "text-primary",
+      divider: "bg-border/40 text-muted-foreground/60",
       successIconBg: "bg-primary/10",
       successIconColor: "text-primary"
     },
@@ -185,6 +187,8 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
   };
 
   const styles = theme[variant] || theme.default;
+  const headerTitleColor = (styles as any).headerTitleColor || styles.titleColor;
+  const headerTextColor = (styles as any).headerTextColor || styles.textColor;
 
   const handleGuestContinue = () => {
     setGuest(true);
@@ -378,9 +382,9 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
               <div className={cn("p-3 rounded-2xl backdrop-blur-md mb-3 shadow-lg", styles.iconBox)}>
                 <UtensilsCrossed className={cn("h-8 w-8", styles.iconColor)} />
               </div>
-              <h2 className={cn("text-2xl font-bold tracking-tight", styles.titleColor)}>qrders</h2>
+              <h2 className={cn("text-2xl font-bold tracking-tight", headerTitleColor)}>qrders</h2>
               {view === 'welcome' && (
-                <p className={cn("text-sm mt-1 font-medium", styles.textColor)}>Lezzetin Adresi</p>
+                <p className={cn("text-sm mt-1 font-medium", headerTextColor)}>Lezzetin Adresi</p>
               )}
             </motion.div>
           </div>

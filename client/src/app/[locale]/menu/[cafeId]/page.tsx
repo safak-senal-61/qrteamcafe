@@ -14,7 +14,12 @@ import { ModernTemplate } from '@/components/menu/templates/ModernTemplate';
 import { MinimalTemplate } from '@/components/menu/templates/MinimalTemplate';
 import { PremiumTemplate } from '@/components/menu/templates/PremiumTemplate';
 import { BistroTemplate } from '@/components/menu/templates/BistroTemplate';
-import { TemplateProps, Cafe, Category, Product, Order } from '@/components/menu/templates/types';
+import { TemplateProps, Cafe, Category, Product, Order as BaseOrder } from '@/components/menu/templates/types';
+
+interface Order extends BaseOrder {
+  tableId?: string;
+  customerId?: string;
+}
 
 interface Table {
   id: string;
@@ -227,26 +232,42 @@ export default function MenuPage() {
   }, [cafeId, tableNumber]);
 
   const fetchActiveOrders = useCallback(async () => {
-      if (!cafeId || !currentTableId) return;
+      if (!cafeId) return;
+      // if (!currentTableId && !customer) return; // Allow fetching if we have session orders
+
       try {
           const ordersRes = await fetch(`${API_URL}/orders?cafeId=${cafeId}`);
           if (ordersRes.ok) {
               const allOrders: Order[] = await ordersRes.json();
-              // Sadece bu masaya ait ve ödenmemiş siparişleri al
-              const tableOrders = allOrders.filter((o) => o.tableId === currentTableId && o.status !== 'PAID');
-              setActiveOrders(tableOrders);
+              
+              // Get session orders
+              let sessionOrderIds: string[] = [];
+              try {
+                  const sessionKey = `session_orders_${cafeId}`;
+                  sessionOrderIds = JSON.parse(sessionStorage.getItem(sessionKey) || '[]');
+              } catch (e) {
+                  console.error('Session storage parse error', e);
+              }
+
+              const relevantOrders = allOrders.filter((o) => {
+                  const isTableOrder = currentTableId ? o.tableId === currentTableId : false;
+                  const isCustomerOrder = customer ? o.customerId === customer.id : false;
+                  const isSessionOrder = sessionOrderIds.includes(o.id);
+                  
+                  return (isTableOrder || isCustomerOrder || isSessionOrder) && o.status !== 'PAID';
+              });
+              
+              setActiveOrders(relevantOrders);
           }
       } catch (error) {
           console.error("Siparişler çekilemedi", error);
       }
-  }, [cafeId, currentTableId]);
+  }, [cafeId, currentTableId, customer]);
 
-  // Fetch orders when table is resolved
+  // Fetch orders when table is resolved or customer is present or on load (to check session)
   useEffect(() => {
-    if (currentTableId) {
-      fetchActiveOrders();
-    }
-  }, [currentTableId, fetchActiveOrders]);
+    fetchActiveOrders();
+  }, [currentTableId, customer, fetchActiveOrders]);
 
   useEffect(() => {
     const isDemo = searchParams.get('demo') === 'true';
