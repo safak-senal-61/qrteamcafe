@@ -35,7 +35,7 @@ export default function BackToHomeButton() {
   if (pathname === '/') return null;
 
   // Don't show on admin or menu pages
-  if (pathname.startsWith('/admin') || pathname.startsWith('/menu') || pathname.startsWith('/super')) {
+  if (pathname.startsWith('/admin') || pathname.startsWith('/menu') || pathname.startsWith('/super') || pathname.startsWith('/waiter')) {
     return null;
   }
 

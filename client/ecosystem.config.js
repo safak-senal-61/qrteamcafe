@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'qrteamcafe-client',
+      name: 'qrders-client',
       script: 'npm',
       args: 'start',
       cwd: './',

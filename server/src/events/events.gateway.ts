@@ -182,7 +182,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   notifyNewWaiterRegistration(cafeId: string, waiter: any) {
-    this.server.to(`cafe_${cafeId}_admin`).emit('newWaiterRegistration', waiter);
+    this.server
+      .to(`cafe_${cafeId}_admin`)
+      .emit('newWaiterRegistration', waiter);
   }
 
   notifySuspiciousAction(cafeId: string, log: any) {

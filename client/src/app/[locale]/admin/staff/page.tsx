@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import {
   Card,
@@ -21,13 +21,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Check, X, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Loader2, Check, X, Shield } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus } from 'lucide-react';
 
 interface Waiter {
   id: string;
@@ -44,13 +49,21 @@ export default function StaffPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchWaiters = async () => {
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    role: 'WAITER',
+  });
+
+  const fetchWaiters = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await api.get('/waiters');
       setWaiters(res.data);
-    } catch (error) {
-      console.error('Waiters fetch error:', error);
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Hata',
@@ -59,11 +72,38 @@ export default function StaffPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchWaiters();
-  }, []);
+  }, [fetchWaiters]);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.post('/waiters/invite', inviteForm);
+      toast({
+        title: 'Başarılı',
+        description: 'Davet gönderildi.',
+      });
+      setIsInviteOpen(false);
+      setInviteForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        role: 'WAITER',
+      });
+      fetchWaiters();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast({
+        variant: 'destructive',
+        title: 'Hata',
+        description: err.response?.data?.message || 'Davet gönderilemedi.',
+      });
+    }
+  };
 
   const handleUpdateStatus = async (id: string, status: string, role?: string) => {
     try {
@@ -73,7 +113,7 @@ export default function StaffPage() {
         description: 'Personel durumu güncellendi.',
       });
       fetchWaiters();
-    } catch (error) {
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Hata',
@@ -82,14 +122,50 @@ export default function StaffPage() {
     }
   };
 
-  const pendingWaiters = waiters.filter((w) => w.status === 'PENDING_APPROVAL');
-  const activeWaiters = waiters.filter((w) => w.status === 'ACTIVE' || w.status === 'INACTIVE');
+  const handleResendInvitation = async (id: string) => {
+    try {
+      await api.post(`/waiters/${id}/resend-invitation`);
+      toast({
+        title: 'Başarılı',
+        description: 'Davet tekrar gönderildi.',
+      });
+      fetchWaiters();
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'Hata',
+        description: 'Davet gönderilemedi.',
+      });
+    }
+  };
+
+  const handleDeleteInvitation = async (id: string) => {
+    if (!confirm('Bu daveti/başvuruyu silmek istediğinize emin misiniz?')) return;
+    try {
+      await api.delete(`/waiters/${id}`);
+      toast({
+        title: 'Başarılı',
+        description: 'Davet silindi.',
+      });
+      fetchWaiters();
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'Hata',
+        description: 'Silme işlemi başarısız.',
+      });
+    }
+  };
+
+  const pendingWaiters = waiters.filter((w) => ['PENDING_APPROVAL', 'INVITED'].includes(w.status));
+  const activeWaiters = waiters.filter((w) => ['ACTIVE', 'INACTIVE'].includes(w.status));
 
   const getRoleLabel = (role: string | null) => {
     switch (role) {
       case 'WAITER': return 'Garson';
       case 'HEAD_WAITER': return 'Şef Garson';
       case 'CASHIER_WAITER': return 'Kasiyer/Garson';
+      case 'KITCHEN': return 'Mutfak Personeli';
       default: return 'Rol Atanmamış';
     }
   };
@@ -103,6 +179,81 @@ export default function StaffPage() {
             Garson başvurularını yönetin ve yetkilendirin.
           </p>
         </div>
+        <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" /> Davet Gönder
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Personel Davet Et</DialogTitle>
+              <DialogDescription>
+                Yeni bir personel davet etmek için bilgileri girin.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleInvite} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">Ad</Label>
+                  <Input
+                    id="firstName"
+                    value={inviteForm.firstName}
+                    onChange={(e) => setInviteForm({ ...inviteForm, firstName: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Soyad</Label>
+                  <Input
+                    id="lastName"
+                    value={inviteForm.lastName}
+                    onChange={(e) => setInviteForm({ ...inviteForm, lastName: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">E-posta</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={inviteForm.email}
+                  onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefon (Opsiyonel)</Label>
+                <Input
+                  id="phone"
+                  value={inviteForm.phone}
+                  onChange={(e) => setInviteForm({ ...inviteForm, phone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Rol</Label>
+                <Select
+                  value={inviteForm.role}
+                  onValueChange={(value) => setInviteForm({ ...inviteForm, role: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Rol seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WAITER">Garson</SelectItem>
+                    <SelectItem value="KITCHEN">Mutfak Personeli</SelectItem>
+                    <SelectItem value="HEAD_WAITER">Şef Garson</SelectItem>
+                    <SelectItem value="CASHIER_WAITER">Kasiyer/Garson</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button type="submit">Davet Gönder</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Tabs defaultValue="active" className="w-full">
@@ -149,8 +300,12 @@ export default function StaffPage() {
                           <Badge variant="outline">{getRoleLabel(waiter.role)}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={waiter.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                            {waiter.status === 'ACTIVE' ? 'Aktif' : 'Pasif'}
+                          <Badge variant={
+                            waiter.status === 'ACTIVE' ? 'default' : 
+                            waiter.status === 'INVITED' ? 'outline' : 'secondary'
+                          }>
+                            {waiter.status === 'ACTIVE' ? 'Aktif' : 
+                             waiter.status === 'INVITED' ? 'Davet Edildi' : 'Pasif'}
                           </Badge>
                         </TableCell>
                         <TableCell>{waiter.phone}</TableCell>
@@ -206,7 +361,7 @@ export default function StaffPage() {
             <CardHeader>
               <CardTitle>Onay Bekleyen Başvurular</CardTitle>
               <CardDescription>
-                Sisteme kayıt olan ve onayınızı bekleyen garson adayları.
+                Davet edilen veya başvuru yapan personeller.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -223,7 +378,8 @@ export default function StaffPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Ad Soyad</TableHead>
-                      <TableHead>Telefon</TableHead>
+                      <TableHead>Rol</TableHead>
+                      <TableHead>Durum</TableHead>
                       <TableHead>Başvuru Tarihi</TableHead>
                       <TableHead className="text-right">İşlemler</TableHead>
                     </TableRow>
@@ -234,25 +390,53 @@ export default function StaffPage() {
                         <TableCell className="font-medium">
                           {waiter.firstName} {waiter.lastName}
                         </TableCell>
-                        <TableCell>{waiter.phone}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{getRoleLabel(waiter.role)}</Badge>
+                        </TableCell>
+                         <TableCell>
+                          <Badge variant={waiter.status === 'INVITED' ? 'outline' : 'secondary'}>
+                            {waiter.status === 'INVITED' ? 'Davet Edildi' : 'Onay Bekliyor'}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           {new Date(waiter.createdAt).toLocaleDateString('tr-TR')}
                         </TableCell>
                         <TableCell className="text-right space-x-2">
-                          <Button 
-                            size="sm" 
-                            variant="default"
-                            onClick={() => handleUpdateStatus(waiter.id, 'ACTIVE', 'WAITER')}
-                          >
-                            <Check className="w-4 h-4 mr-1" /> Onayla
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="destructive"
-                            onClick={() => handleUpdateStatus(waiter.id, 'REJECTED')}
-                          >
-                            <X className="w-4 h-4 mr-1" /> Reddet
-                          </Button>
+                          {waiter.status === 'INVITED' ? (
+                            <>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleResendInvitation(waiter.id)}
+                              >
+                                Tekrar Gönder
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => handleDeleteInvitation(waiter.id)}
+                              >
+                                <X className="w-4 h-4 mr-1" /> İptal Et
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button 
+                                size="sm" 
+                                variant="default"
+                                onClick={() => handleUpdateStatus(waiter.id, 'ACTIVE', 'WAITER')}
+                              >
+                                <Check className="w-4 h-4 mr-1" /> Onayla
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => handleUpdateStatus(waiter.id, 'REJECTED')}
+                              >
+                                <X className="w-4 h-4 mr-1" /> Reddet
+                              </Button>
+                            </>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

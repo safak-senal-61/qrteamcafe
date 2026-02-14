@@ -11,7 +11,6 @@ import {
   UserCircle2, 
   ArrowRight, 
   ChevronLeft,
-  Coffee,
   MailCheck,
 } from 'lucide-react';
 import { useCustomerStore } from '@/store/customer-store';
@@ -279,8 +278,9 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
       setCustomer(res.data.customer, res.data.token);
       setAuthDialogOpen(false);
       toast.success('Giriş başarılı');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Giriş yapılamadı');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Giriş yapılamadı');
     } finally {
       setLoading(false);
     }
@@ -294,8 +294,9 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
       setView('verification');
       verifyForm.setValue('email', values.email);
       toast.success('Kayıt başarılı, lütfen e-posta adresinizi doğrulayın');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Kayıt yapılamadı');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Kayıt yapılamadı');
     } finally {
       setLoading(false);
     }
@@ -308,8 +309,9 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
       setCustomer(res.data.customer, res.data.token);
       setAuthDialogOpen(false);
       toast.success('Doğrulama başarılı');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Doğrulama başarısız');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Doğrulama başarısız');
     } finally {
       setLoading(false);
     }
@@ -323,8 +325,9 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
       setView('reset-password');
       resetPasswordForm.setValue('email', values.email);
       toast.success('Şifre sıfırlama kodu gönderildi');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'İşlem başarısız');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'İşlem başarısız');
     } finally {
       setLoading(false);
     }
@@ -336,8 +339,9 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
       await api.post('/auth/customer/reset-password', values);
       setView('login');
       toast.success('Şifreniz başarıyla değiştirildi, giriş yapabilirsiniz');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Şifre sıfırlama başarısız');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Şifre sıfırlama başarısız');
     } finally {
       setLoading(false);
     }

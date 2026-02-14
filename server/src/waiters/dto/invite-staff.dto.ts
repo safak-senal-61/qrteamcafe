@@ -1,40 +1,30 @@
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
-  MinLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { WaiterRole } from '../enums/waiter.enum';
 
-export class CreateWaiterDto {
-  @IsNotEmpty()
-  @IsString()
-  firstName: string;
-
-  @IsNotEmpty()
-  @IsString()
-  lastName: string;
-
-  @IsOptional()
-  @IsString()
-  @Transform(({ value }: { value: unknown }) => (value === '' ? null : value))
-  phone?: string;
-
-  @IsNotEmpty()
+export class InviteStaffDto {
   @IsEmail()
   email: string;
 
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
+
+  @IsEnum(WaiterRole)
+  role: WaiterRole;
+
+  @IsString()
   @IsOptional()
-  @IsString()
-  nationalId?: string;
-
-  @IsNotEmpty()
-  @IsString()
-  cafeId: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(6)
-  password: string;
+  @Transform(({ value }: { value: unknown }) => (value === '' ? null : value))
+  phone?: string;
 }

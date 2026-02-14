@@ -83,7 +83,7 @@ export default function AddressAutocomplete({ onAddressSelect, defaultValue = ''
           {
             headers: {
               'Accept-Language': 'tr-TR',
-              'User-Agent': 'QRTeamCafe/1.0'
+              'User-Agent': 'qrders/1.0'
             }
           }
         );

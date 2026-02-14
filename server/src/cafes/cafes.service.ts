@@ -18,15 +18,13 @@ export class CafesService {
       };
 
       if (query) {
-        where.OR = [
-          { name: { contains: query, mode: 'insensitive' } },
-        ];
+        where.OR = [{ name: { contains: query, mode: 'insensitive' } }];
       }
 
       return await this.prisma.cafe.findMany({
         where,
         select: { id: true, name: true, city: true, district: true },
-        take: 20
+        take: 20,
       });
     } catch (error) {
       console.error('CafesService.findAll error:', error);
@@ -57,7 +55,7 @@ export class CafesService {
     }
 
     if (!cafe) throw new NotFoundException('Cafe bulunamadı');
-    await this.cache.set(cacheKey, cafe, 300);
+    await this.cache.set(cacheKey, cafe, 300 * 1000); // 5 dakika
     return cafe;
   }
 
@@ -70,7 +68,7 @@ export class CafesService {
       where: { slug },
     });
     if (!cafe) throw new NotFoundException('Cafe bulunamadı');
-    await this.cache.set(cacheKey, cafe, 300);
+    await this.cache.set(cacheKey, cafe, 300 * 1000); // 5 dakika
     return cafe;
   }
 
@@ -227,73 +225,97 @@ export class CafesService {
     // Waiter Performance (Today)
     const waiters = await this.prisma.waiter.findMany({
       where: { cafeId, status: 'ACTIVE' },
-      select: { id: true, firstName: true, lastName: true }
+      select: { id: true, firstName: true, lastName: true },
     });
 
-    const waiterStats = await Promise.all(waiters.map(async (waiter) => {
-      const orders = await this.prisma.order.findMany({
-        where: {
-          cafeId,
-          waiterId: waiter.id,
-          createdAt: { gte: today },
-          status: 'PAID'
-        },
-        select: {
+    const waiterStats = await Promise.all(
+      waiters.map(async (waiter) => {
+        const orders = await this.prisma.order.findMany({
+          where: {
+            cafeId,
+            waiterId: waiter.id,
+            createdAt: { gte: today },
+            status: 'PAID',
+          },
+          select: {
             totalAmount: true,
             tableId: true,
             createdAt: true,
             deliveredAt: true,
-        }
-      });
+          },
+        });
 
-      const dailySales = orders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
-      const servedTables = new Set(orders.map(o => o.tableId).filter(Boolean)).size;
-      
-      // Avg Service Time (minutes)
-      let totalServiceTime = 0;
-      let serviceTimeCount = 0;
-      orders.forEach(o => {
-        if (o.deliveredAt) {
-          const diff = o.deliveredAt.getTime() - o.createdAt.getTime();
-          totalServiceTime += diff;
-          serviceTimeCount++;
-        }
-      });
-      const avgServiceTime = serviceTimeCount > 0 ? Math.round((totalServiceTime / serviceTimeCount) / 60000) : 0;
+        const dailySales = orders.reduce(
+          (sum, order) => sum + Number(order.totalAmount),
+          0,
+        );
+        const servedTables = new Set(
+          orders.map((o) => o.tableId).filter(Boolean),
+        ).size;
 
-      // Calculate average rating
-            const reviews = await this.prisma.review.findMany({
-              where: {
-                order: {
-                  waiterId: waiter.id,
-                  cafeId: cafeId
-                }
-              },
-              select: {
-                rating: true
-              }
-            });
+        // Avg Service Time (minutes)
+        let totalServiceTime = 0;
+        let serviceTimeCount = 0;
+        orders.forEach((o) => {
+          if (o.deliveredAt) {
+            const diff = o.deliveredAt.getTime() - o.createdAt.getTime();
+            totalServiceTime += diff;
+            serviceTimeCount++;
+          }
+        });
+        const avgServiceTime =
+          serviceTimeCount > 0
+            ? Math.round(totalServiceTime / serviceTimeCount / 60000)
+            : 0;
 
-            const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-            const avgRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : "0.0";
+        // Calculate average rating
+        const reviews = await this.prisma.review.findMany({
+          where: {
+            order: {
+              waiterId: waiter.id,
+              cafeId: cafeId,
+            },
+          },
+          select: {
+            rating: true,
+          },
+        });
 
-            return {
-              id: waiter.id,
-              name: `${waiter.firstName} ${waiter.lastName}`,
-              dailySales,
-              servedTables,
-              avgServiceTime,
-              revenueContribution: "0",
-              avgRating
-            };
-          }));
+        const totalRating = reviews.reduce(
+          (sum, review) => sum + review.rating,
+          0,
+        );
+        const avgRating =
+          reviews.length > 0
+            ? (totalRating / reviews.length).toFixed(1)
+            : '0.0';
+
+        return {
+          id: waiter.id,
+          name: `${waiter.firstName} ${waiter.lastName}`,
+          dailySales,
+          servedTables,
+          avgServiceTime,
+          revenueContribution: '0',
+          avgRating,
+        };
+      }),
+    );
 
     // Calculate revenue contribution
-    const totalWaiterRevenue = waiterStats.reduce((sum, w) => sum + w.dailySales, 0);
-    const waiterPerformance = waiterStats.map(w => ({
-      ...w,
-      revenueContribution: totalWaiterRevenue > 0 ? ((w.dailySales / totalWaiterRevenue) * 100).toFixed(1) : "0"
-    })).sort((a, b) => b.dailySales - a.dailySales);
+    const totalWaiterRevenue = waiterStats.reduce(
+      (sum, w) => sum + w.dailySales,
+      0,
+    );
+    const waiterPerformance = waiterStats
+      .map((w) => ({
+        ...w,
+        revenueContribution:
+          totalWaiterRevenue > 0
+            ? ((w.dailySales / totalWaiterRevenue) * 100).toFixed(1)
+            : '0',
+      }))
+      .sort((a, b) => b.dailySales - a.dailySales);
 
     const result = {
       totalOrders,
@@ -312,7 +334,7 @@ export class CafesService {
       },
     };
 
-    await this.cache.set(cacheKey, result, 10);
+    await this.cache.set(cacheKey, result, 10 * 1000); // 10 saniye
     return result;
   }
 }

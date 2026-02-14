@@ -389,10 +389,11 @@ export default function SettingsPage() {
     try {
       // Exclude read-only fields like createdAt
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { createdAt, ...rest } = formData;
+      const { createdAt, geolocationEnabled, maxRange, cafeLat, cafeLng, ipCheckEnabled, allowedIp, theme, ...rest } = formData;
       
       const payload = {
         ...rest,
+        preparationTime: formData.preparationTime ? Number(formData.preparationTime) : undefined,
         paymentMethods: JSON.stringify(formData.paymentMethods),
         waiterCallOptions: JSON.stringify(formData.waiterCallOptions),
         themeConfig: JSON.stringify({ 

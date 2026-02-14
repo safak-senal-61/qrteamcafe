@@ -156,11 +156,11 @@ export class OrdersService {
 
   async findActive(cafeId: string) {
     const orders = await this.prisma.order.findMany({
-      where: { 
+      where: {
         cafeId,
         status: {
-          in: ['PENDING', 'PREPARING', 'READY', 'DELIVERED']
-        }
+          in: ['PENDING', 'PREPARING', 'READY', 'DELIVERED'],
+        },
       },
       include: {
         table: true,
@@ -218,7 +218,7 @@ export class OrdersService {
           },
           include: { waiter: true },
         });
-        
+
         // Notify Admin
         this.eventsGateway.notifySuspiciousAction(order.cafeId, log);
       }
@@ -325,9 +325,9 @@ export class OrdersService {
     // 3. Masayı boşalt
     await this.prisma.table.update({
       where: { id: tableId },
-      data: { 
+      data: {
         isOccupied: false,
-        lastOccupiedAt: null 
+        lastOccupiedAt: null,
       },
     });
 

@@ -116,49 +116,50 @@ export class TablesService {
   @Cron(CronExpression.EVERY_HOUR)
   async handleTableAutoClose() {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    
+
     const expiredTables = await this.prisma.table.findMany({
       where: {
         isOccupied: true,
         lastOccupiedAt: {
-          lt: twentyFourHoursAgo
-        }
-      }
+          lt: twentyFourHoursAgo,
+        },
+      },
     });
 
     if (expiredTables.length > 0) {
-      console.log(`Found ${expiredTables.length} expired tables. Auto-closing...`);
-      
+      console.log(
+        `Found ${expiredTables.length} expired tables. Auto-closing...`,
+      );
+
       for (const table of expiredTables) {
         try {
           await this.prisma.$transaction([
             // Mark open orders as CANCELLED
             this.prisma.order.updateMany({
-              where: { 
-                tableId: table.id, 
-                status: { not: 'PAID' } 
+              where: {
+                tableId: table.id,
+                status: { not: 'PAID' },
               },
-              data: { 
-                status: 'CANCELLED', 
-                note: 'Sistem tarafından otomatik kapatıldı (24 saat aşımı)' 
-              }
+              data: {
+                status: 'CANCELLED',
+                note: 'Sistem tarafından otomatik kapatıldı (24 saat aşımı)',
+              },
             }),
             // Free the table
             this.prisma.table.update({
               where: { id: table.id },
-              data: { 
-                isOccupied: false, 
-                lastOccupiedAt: null 
-              }
-            })
+              data: {
+                isOccupied: false,
+                lastOccupiedAt: null,
+              },
+            }),
           ]);
-          
+
           // Notify via socket if needed (optional)
           this.eventsGateway.server.to(table.cafeId).emit('tableUpdate', {
-             tableId: table.id,
-             isOccupied: false
+            tableId: table.id,
+            isOccupied: false,
           });
-          
         } catch (error) {
           console.error(`Error auto-closing table ${table.id}:`, error);
         }

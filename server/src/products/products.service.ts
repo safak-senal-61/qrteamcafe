@@ -28,7 +28,7 @@ export class ProductsService {
       if (!urls) {
         // List only from products/manual folder for curated suggestions
         urls = await this.s3Service.listImages('products/manual');
-        await this.cache.set(cacheKey, urls, 60);
+        await this.cache.set(cacheKey, urls, 60 * 1000); // 1 dakika
       }
 
       let images = urls.map((url) => ({
@@ -118,7 +118,7 @@ export class ProductsService {
       ),
     }));
 
-    await this.cache.set(cacheKey, mapped, 300);
+    await this.cache.set(cacheKey, mapped, 300 * 1000); // 5 dakika
     return mapped;
   }
 

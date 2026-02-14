@@ -38,8 +38,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
 
       // Check for single device login
-      if (payload.sessionId && waiter.currentSessionToken !== payload.sessionId) {
-        throw new UnauthorizedException('Hesabınız başka bir cihazda açık veya oturumunuz sonlandırıldı.');
+      if (
+        payload.sessionId &&
+        waiter.currentSessionToken !== payload.sessionId
+      ) {
+        throw new UnauthorizedException(
+          'Hesabınız başka bir cihazda açık veya oturumunuz sonlandırıldı.',
+        );
       }
 
       if (waiter.status !== 'ACTIVE') {

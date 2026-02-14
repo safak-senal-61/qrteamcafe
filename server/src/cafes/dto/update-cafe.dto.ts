@@ -4,7 +4,11 @@ import {
   IsOptional,
   IsString,
   ValidateIf,
+  IsNumber,
+  Min,
+  IsInt,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UpdateCafeDto {
   @IsOptional()
@@ -57,7 +61,10 @@ export class UpdateCafeDto {
   workingHours?: string;
 
   @IsOptional()
-  preparationTime?: string | number;
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  preparationTime?: number;
 
   @IsOptional()
   @IsString()

@@ -1,16 +1,5 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-
-export enum WaiterStatus {
-  ACTIVE = 'ACTIVE',
-  REJECTED = 'REJECTED',
-  INACTIVE = 'INACTIVE',
-}
-
-export enum WaiterRole {
-  WAITER = 'WAITER',
-  CASHIER_WAITER = 'CASHIER_WAITER',
-  HEAD_WAITER = 'HEAD_WAITER',
-}
+import { IsEnum, IsOptional } from 'class-validator';
+import { WaiterStatus, WaiterRole } from '../enums/waiter.enum';
 
 export class UpdateWaiterStatusDto {
   @IsEnum(WaiterStatus)

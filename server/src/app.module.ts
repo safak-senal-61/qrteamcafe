@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
-import { CacheModule } from '@nestjs/cache-manager';
+import { Module, Logger, OnModuleInit, Inject } from '@nestjs/common';
+import { CacheModule, CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -34,19 +35,35 @@ import { redisStore } from 'cache-manager-redis-yet';
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: async () => {
+        const logger = new Logger('RedisCache');
         const redisUrl = process.env.REDIS_URL;
         if (!redisUrl) {
+          logger.warn('Redis URL bulunamadı, hafıza önbelleği kullanılıyor');
           return {
-            ttl: 300,
+            ttl: 300 * 1000, // 5 dakika (ms cinsinden)
           };
         }
 
-        return {
-          store: await redisStore({
+        logger.log(`${redisUrl} adresindeki Redis sunucusuna bağlanılıyor...`);
+        try {
+          const store = await redisStore({
             url: redisUrl,
-          }),
-          ttl: 300,
-        };
+            ttl: 300 * 1000, // 5 dakika (ms cinsinden)
+          });
+          logger.log('Redis sunucusuna başarıyla bağlanıldı');
+          return {
+            store,
+            ttl: 300 * 1000, // 5 dakika (ms cinsinden)
+          };
+        } catch (error) {
+          logger.error(
+            'Redis bağlantısı başarısız, hafıza önbelleği kullanılacak:',
+            error,
+          );
+          return {
+            ttl: 300 * 1000, // 5 dakika (ms cinsinden)
+          };
+        }
       },
     }),
     ThrottlerModule.forRoot([
@@ -77,4 +94,31 @@ import { redisStore } from 'cache-manager-redis-yet';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  private readonly logger = new Logger(AppModule.name);
+
+  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+
+  async onModuleInit() {
+    const redisUrl = process.env.REDIS_URL;
+    if (redisUrl) {
+      try {
+        await this.cacheManager.set('redis_test', 'connected', 10 * 1000); // 10 saniye
+        const value = await this.cacheManager.get('redis_test');
+        if (value === 'connected') {
+          this.logger.log(`✅ Redis bağlantısı BAŞARILI: ${redisUrl}`);
+        } else {
+          this.logger.error(
+            '❌ Redis bağlantısı başarısız: Test verisi okunamadı.',
+          );
+        }
+      } catch (error) {
+        this.logger.error(`❌ Redis bağlantı hatası: ${error.message}`);
+      }
+    } else {
+      this.logger.warn(
+        '⚠️ Redis URL bulunamadı, hafıza (memory) cache kullanılıyor.',
+      );
+    }
+  }
+}

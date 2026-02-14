@@ -1,4 +1,5 @@
 import { toast as sonnerToast } from "sonner"
+import { useCallback } from "react"
 
 type ToastProps = {
   title?: string
@@ -8,13 +9,13 @@ type ToastProps = {
 }
 
 export function useToast() {
-  const toast = ({ title, description, variant, className }: ToastProps) => {
+  const toast = useCallback(({ title, description, variant, className }: ToastProps) => {
     if (variant === "destructive") {
       sonnerToast.error(title, { description, className })
     } else {
       sonnerToast.success(title, { description, className })
     }
-  }
+  }, [])
 
   return { toast }
 }

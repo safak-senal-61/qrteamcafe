@@ -60,7 +60,7 @@ export class CategoriesService {
       },
     });
 
-    await this.cache.set(cacheKey, categories, 300);
+    await this.cache.set(cacheKey, categories, 300 * 1000); // 5 dakika
     return categories;
   }
 

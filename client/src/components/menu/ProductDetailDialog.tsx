@@ -45,7 +45,16 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [showReviews, setShowReviews] = useState(false);
 
-  useEffect(() => {
+  // State for tracking props changes to reset form
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevCartItem, setPrevCartItem] = useState(cartItem);
+  const [prevMode, setPrevMode] = useState(mode);
+
+  if (open !== prevOpen || cartItem !== prevCartItem || mode !== prevMode) {
+    setPrevOpen(open);
+    setPrevCartItem(cartItem);
+    setPrevMode(mode);
+
     if (open) {
       if (mode === 'edit' && cartItem) {
         setQuantity(cartItem.quantity);
@@ -55,7 +64,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
         setNote('');
       }
     }
-  }, [open, mode, cartItem]);
+  }
 
   const currentMode = mode;
   const currentCartItem = cartItem;

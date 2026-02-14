@@ -15,6 +15,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { WaiterSocketProvider } from '@/providers/WaiterSocketProvider';
 
+interface Waiter {
+  id: string;
+  firstName: string;
+  lastName: string;
+  cafeName?: string;
+  email?: string;
+  role?: string;
+}
+
 export default function WaiterLayout({
   children,
 }: {
@@ -22,12 +31,12 @@ export default function WaiterLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [waiter, setWaiter] = useState<any>(null);
+  const [waiter, setWaiter] = useState<Waiter | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Public sayfalar için kontrol yapma
-    if (pathname.includes('/waiter/login') || pathname.includes('/waiter/register')) {
+    if (pathname.includes('/waiter/login') || pathname.includes('/waiter/register') || pathname.includes('/waiter/complete-registration')) {
       setIsLoading(false);
       return;
     }
@@ -65,7 +74,7 @@ export default function WaiterLayout({
   };
 
   // Public sayfalarda layout gösterme, direkt içeriği bas
-  if (pathname.includes('/waiter/login') || pathname.includes('/waiter/register')) {
+  if (pathname.includes('/waiter/login') || pathname.includes('/waiter/register') || pathname.includes('/waiter/complete-registration')) {
     return <>{children}</>;
   }
 
@@ -77,7 +86,7 @@ export default function WaiterLayout({
     <WaiterSocketProvider>
     <div className="min-h-screen bg-background">
       <header className="border-b sticky top-0 z-30 bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between px-4">
+        <div className="w-full flex h-16 items-center justify-between px-4">
           <div className="font-bold text-lg">
             Garson Paneli
           </div>
@@ -107,7 +116,7 @@ export default function WaiterLayout({
           </div>
         </div>
       </header>
-      <main className="container py-6 px-4">
+      <main className="w-full py-6 px-4">
         {children}
       </main>
     </div>

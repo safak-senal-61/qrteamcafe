@@ -256,11 +256,11 @@ export function CartSheet({
         tableId: activeTableId,
         items: items.map((item) => ({
           productId: item.id,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          note: item.note
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.price),
+          note: item.note || undefined
         })),
-        customerId: customer?.id,
+        customerId: customer?.id || undefined,
       };
 
       const res = await api.post(`/orders?cafeId=${cafeId}`, orderData);

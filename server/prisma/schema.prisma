@@ -95,11 +95,14 @@ model Waiter {
   verificationCode String? @map("verification_code")
   verificationCodeExpiresAt DateTime? @map("verification_code_expires_at")
   nationalId   String?  @map("national_id")
-  passwordHash String   @map("password_hash")
+  passwordHash String?   @map("password_hash")
   
-  status       String   @default("PENDING_APPROVAL") // PENDING_APPROVAL, ACTIVE, INACTIVE, REJECTED
-  role         String?  // WAITER, CASHIER_WAITER, HEAD_WAITER
+  status       String   @default("PENDING_APPROVAL") // PENDING_APPROVAL, ACTIVE, INACTIVE, REJECTED, INVITED
+  role         String?  // WAITER, CASHIER_WAITER, HEAD_WAITER, KITCHEN
   
+  invitationToken String? @unique @map("invitation_token")
+  invitationExpiresAt DateTime? @map("invitation_expires_at")
+
   currentSessionToken String? @map("current_session_token")
   
   createdAt    DateTime @default(now()) @map("created_at")

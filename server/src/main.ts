@@ -2,6 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import {
+  apiReference,
+  NestJSReferenceConfiguration,
+} from '@scalar/nestjs-api-reference';
 import { join } from 'path';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
@@ -13,6 +17,26 @@ async function bootstrap() {
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            "'unsafe-eval'",
+            'https://cdn.jsdelivr.net',
+          ],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            'https://cdn.jsdelivr.net',
+            'https://fonts.googleapis.com',
+          ],
+          imgSrc: ["'self'", 'data:', 'https://cdn.jsdelivr.net'],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+          connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+        },
+      },
     }),
   );
 
@@ -28,7 +52,14 @@ async function bootstrap() {
   });
 
   // Enable Global Validation Pipe
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
   // Swagger Configuration
   const config = new DocumentBuilder()
@@ -38,12 +69,18 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
 
-  await app.listen(process.env.PORT ?? 3001);
-  console.log(`Application is running on: ${await app.getUrl()}`);
-  console.log(
-    `Swagger documentation is available at: ${await app.getUrl()}/api`,
+  app.use(
+    '/api',
+    apiReference({
+      spec: {
+        content: document,
+      },
+    } as unknown as NestJSReferenceConfiguration),
   );
+
+  await app.listen(process.env.PORT ?? 3001, '0.0.0.0');
+  console.log(`Application is running on: ${await app.getUrl()}`);
+  console.log(`API documentation is available at: ${await app.getUrl()}/api`);
 }
 void bootstrap();

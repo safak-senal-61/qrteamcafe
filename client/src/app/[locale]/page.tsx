@@ -168,11 +168,6 @@ export default function Home() {
                   {t('login')}
                 </Button>
               </Link>
-              <Link href="/waiter/login">
-                <Button variant="ghost" className="font-medium text-white hover:bg-white/10 hover:text-amber-500 text-base relative overflow-hidden group transition-colors">
-                  {t('waiterLogin')}
-                </Button>
-              </Link>
               <Link href="/menu/2ea6acce-7d77-4a0b-910f-56a05666d89d">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button className="rounded-full shadow-lg hover:shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-white border-0">
@@ -337,10 +332,10 @@ export default function Home() {
           <div className="container mx-auto px-4 md:px-6">
             <div className="text-center mb-20 space-y-4" data-aos="fade-up">
               <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-white">
-                {t('whyQrTeam')}
+                {t('whyqrders')}
               </h2>
               <p className="text-white/60 text-xl max-w-[700px] mx-auto font-light">
-                {t('whyQrTeamDesc')}
+                {t('whyqrdersDesc')}
               </p>
             </div>
             

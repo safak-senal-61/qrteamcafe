@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -55,12 +54,17 @@ export default function WaiterLoginPage() {
         description: `Hoşgeldiniz, ${waiter.firstName} ${waiter.lastName}`,
       });
 
-      router.push('/waiter/dashboard');
-    } catch (error: any) {
+      if (waiter.role === 'KITCHEN') {
+        router.push('/kitchen/dashboard');
+      } else {
+        router.push('/waiter/dashboard');
+      }
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
       toast({
         variant: 'destructive',
         title: 'Giriş Başarısız',
-        description: error.response?.data?.message || 'Giriş yapılırken bir hata oluştu.',
+        description: err.response?.data?.message || 'Giriş yapılırken bir hata oluştu.',
       });
     } finally {
       setIsLoading(false);
@@ -113,13 +117,6 @@ export default function WaiterLoginPage() {
               </Button>
             </form>
           </Form>
-
-          <div className="mt-4 text-center text-sm">
-            Hesabınız yok mu?{' '}
-            <Link href="/waiter/register" className="text-primary hover:underline">
-              Kayıt Ol
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>
