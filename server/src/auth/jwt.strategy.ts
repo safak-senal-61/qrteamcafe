@@ -20,10 +20,35 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: {
     sub: string;
-    email: string;
+    email?: string;
+    phone?: string;
     role: string;
     sessionId?: string;
+    type?: string;
+    cafeId?: string;
   }) {
+    // Waiter logic
+    if (payload.type === 'waiter') {
+      const waiter = await this.prisma.waiter.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!waiter) {
+        throw new UnauthorizedException();
+      }
+
+      // Check for single device login
+      if (payload.sessionId && waiter.currentSessionToken !== payload.sessionId) {
+        throw new UnauthorizedException('Hesabınız başka bir cihazda açık veya oturumunuz sonlandırıldı.');
+      }
+
+      if (waiter.status !== 'ACTIVE') {
+        throw new UnauthorizedException('Hesabınız aktif değil.');
+      }
+
+      return { ...waiter, role: waiter.role || 'WAITER', type: 'waiter' };
+    }
+
     if (payload.role === 'customer') {
       const customer = await this.prisma.customer.findUnique({
         where: { id: payload.sub },

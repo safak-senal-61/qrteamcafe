@@ -70,6 +70,7 @@ model Cafe {
   updatedAt DateTime    @updatedAt @map("updated_at")
 
   admins    CafeAdmin[]
+  waiters   Waiter[]
   categories Category[]
   products  Product[]
   tables    Table[]
@@ -78,8 +79,53 @@ model Cafe {
   rewards     Reward[]
   issueReports IssueReport[]
   reviews     Review[]
+  suspiciousLogs SuspiciousActionLog[]
 
   @@map("cafes")
+}
+
+model Waiter {
+  id           String   @id @default(uuid())
+  cafeId       String   @map("cafe_id")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  phone        String?   @unique
+  email        String    @unique
+  emailVerified Boolean  @default(false) @map("email_verified")
+  verificationCode String? @map("verification_code")
+  verificationCodeExpiresAt DateTime? @map("verification_code_expires_at")
+  nationalId   String?  @map("national_id")
+  passwordHash String   @map("password_hash")
+  
+  status       String   @default("PENDING_APPROVAL") // PENDING_APPROVAL, ACTIVE, INACTIVE, REJECTED
+  role         String?  // WAITER, CASHIER_WAITER, HEAD_WAITER
+  
+  currentSessionToken String? @map("current_session_token")
+  
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  cafe         Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  orders       Order[]
+  assignedTables Table[]
+  logs         SuspiciousActionLog[]
+
+  @@map("waiters")
+}
+
+model SuspiciousActionLog {
+  id          String   @id @default(uuid())
+  cafeId      String   @map("cafe_id")
+  waiterId    String   @map("waiter_id")
+  actionType  String   @map("action_type")
+  relatedId   String?  @map("related_id")
+  details     String?
+  timestamp   DateTime @default(now())
+
+  waiter      Waiter   @relation(fields: [waiterId], references: [id], onDelete: Cascade)
+  cafe        Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  @@map("suspicious_action_logs")
 }
 
 model IssueReport {
@@ -236,6 +282,9 @@ model Table {
   isOccupied  Boolean  @default(false) @map("is_occupied")
   lastOccupiedAt DateTime? @map("last_occupied_at")
   
+  assignedWaiterId String? @map("assigned_waiter_id")
+  assignedWaiter Waiter? @relation(fields: [assignedWaiterId], references: [id])
+
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -288,6 +337,7 @@ model Order {
   cafeId      String   @map("cafe_id")
   tableId     String?  @map("table_id") // Optional for takeaway
   customerId  String?  @map("customer_id") // Optional for guest
+  waiterId    String?  @map("waiter_id")
   
   status      String   @default("PENDING") // PENDING, PREPARING, READY, DELIVERED, COMPLETED, CANCELLED
   paymentStatus String @default("PENDING") // PENDING, PAID, REFUNDED
@@ -303,6 +353,7 @@ model Order {
   cafe     Cafe      @relation(fields: [cafeId], references: [id], onDelete: Cascade)
   table    Table?    @relation(fields: [tableId], references: [id])
   customer Customer? @relation(fields: [customerId], references: [id])
+  waiter   Waiter?   @relation(fields: [waiterId], references: [id])
   items    OrderItem[]
   reviews  Review[]
 

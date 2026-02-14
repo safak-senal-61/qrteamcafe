@@ -8,6 +8,7 @@ import {
   UploadedFile,
   BadRequestException,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { CafesService } from './cafes.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -30,6 +31,11 @@ export class CafesController {
   @Get('slug/:slug')
   findBySlug(@Param('slug') slug: string) {
     return this.cafesService.findBySlug(slug);
+  }
+
+  @Get()
+  findAll(@Query('search') search: string) {
+    return this.cafesService.findAll(search);
   }
 
   @Get(':id')

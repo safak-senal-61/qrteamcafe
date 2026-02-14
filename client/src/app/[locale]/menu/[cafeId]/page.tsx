@@ -70,6 +70,7 @@ const sortCategoriesByTime = (categories: Category[]) => {
 };
 
 export default function MenuPage() {
+  console.log('--- MenuPage Component Rendered ---');
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -279,14 +280,22 @@ export default function MenuPage() {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
+        console.log('Fetching menu data from:', API_URL);
+        
         // Fetch Cafe Details
         const cafeRes = await fetch(`${API_URL}/cafes/${cafeId}`);
-        if (!cafeRes.ok) throw new Error('Cafe not found');
+        if (!cafeRes.ok) {
+          const errorText = await cafeRes.text();
+          throw new Error(`Cafe fetch failed: ${cafeRes.status} ${cafeRes.statusText} - ${errorText}`);
+        }
         const cafeData = await cafeRes.json();
         setCafe(cafeData);
 
         // Fetch Categories
         const catRes = await fetch(`${API_URL}/categories?cafeId=${cafeId}`);
+        if (!catRes.ok) {
+           throw new Error(`Categories fetch failed: ${catRes.status}`);
+        }
         const catData = await catRes.json();
         // Apply time-based sorting
         const sortedCats = sortCategoriesByTime(catData);
@@ -294,12 +303,15 @@ export default function MenuPage() {
 
         // Fetch Products
         const prodRes = await fetch(`${API_URL}/products?cafeId=${cafeId}`);
+        if (!prodRes.ok) {
+           throw new Error(`Products fetch failed: ${prodRes.status}`);
+        }
         const prodData = await prodRes.json();
         setProducts(prodData.filter((p: Product) => p.isAvailable));
 
       } catch (error) {
-        console.error(error);
-        toast.error('Menü yüklenirken bir hata oluştu.');
+        console.error('Menu loading error:', error);
+        toast.error(`Veriler yüklenirken hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
       } finally {
         setLoading(false);
       }
@@ -314,7 +326,7 @@ export default function MenuPage() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [cafeId, fetchActiveOrders]);
+  }, [cafeId]);
 
   const handleCategorySelect = (id: string) => {
     setActiveCategory(id);

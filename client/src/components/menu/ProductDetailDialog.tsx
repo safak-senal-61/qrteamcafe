@@ -38,45 +38,42 @@ interface Review {
 
 export function ProductDetailDialog({ product, open, onOpenChange, showRating = true, isReadOnly = false, cartItem, mode = 'add' }: ProductDetailDialogProps) {
   const { addItem, updateItem } = useCartStore();
-  const [activeProduct, setActiveProduct] = useState<Product>(product);
+  
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
   const [reviews, setReviews] = useState<Review[]>([]);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [showReviews, setShowReviews] = useState(false);
 
-  const isOriginalProduct = activeProduct.id === product.id;
-  const currentMode = isOriginalProduct ? mode : 'add';
-  const currentCartItem = isOriginalProduct ? cartItem : undefined;
-
-  const displayImage = getMediaUrl(activeProduct.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
-
   useEffect(() => {
     if (open) {
-       setActiveProduct(product);
+      if (mode === 'edit' && cartItem) {
+        setQuantity(cartItem.quantity);
+        setNote(cartItem.note || '');
+      } else {
+        setQuantity(1);
+        setNote('');
+      }
     }
-  }, [open, product]);
+  }, [open, mode, cartItem]);
+
+  const currentMode = mode;
+  const currentCartItem = cartItem;
+
+  const displayImage = getMediaUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
 
   useEffect(() => {
     if (open) {
-        if (currentMode === 'edit' && currentCartItem) {
-            setQuantity(currentCartItem.quantity);
-            setNote(currentCartItem.note || '');
-        } else {
-            setQuantity(1);
-            setNote('');
-        }
-
       // Fetch reviews only if showRating is true
-      if (showRating && activeProduct.id) {
-        fetch(`${API_URL}/reviews?productId=${activeProduct.id}`)
+      if (showRating && product.id) {
+        fetch(`${API_URL}/reviews?productId=${product.id}`)
           .then(res => res.json())
           .then(data => setReviews(data))
           .catch(err => console.error('Error fetching reviews:', err));
       }
         
       // Fetch recommendations
-      fetch(`${API_URL}/products/${activeProduct.id}/recommendations`)
+      fetch(`${API_URL}/products/${product.id}/recommendations`)
         .then(res => res.json())
         .then(data => {
           // Map API response to Product type
@@ -92,7 +89,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
         })
         .catch(err => console.error('Error fetching recommendations:', err));
     }
-  }, [open, activeProduct.id, showRating, currentMode, currentCartItem]);
+  }, [open, product.id, showRating]);
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
@@ -109,8 +106,8 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
   const handleAddToCart = () => {
     // Customer check removed to allow guest cart building. Login enforced at checkout.
     
-    if (activeProduct.stock && quantity > activeProduct.stock) {
-      toast.error(`Stok yetersiz. En fazla ${activeProduct.stock} adet ekleyebilirsiniz.`);
+    if (product.stock && quantity > product.stock) {
+      toast.error(`Stok yetersiz. En fazla ${product.stock} adet ekleyebilirsiniz.`);
       return;
     }
 
@@ -127,19 +124,19 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
     // cart-store addItem signature: (product: Product, note?: string) => void
     // It adds 1 item. So loop is correct.
     for (let i = 0; i < quantity; i++) {
-      addItem(activeProduct, note);
+      addItem(product, note);
     }
     
-    toast.success(`${quantity} adet ${activeProduct.name} sepete eklendi.`);
+    toast.success(`${quantity} adet ${product.name} sepete eklendi.`);
     onOpenChange(false);
     setQuantity(1);
     setNote('');
   };
 
   const incrementQuantity = () => {
-    if (activeProduct.stock && quantity < activeProduct.stock) {
+    if (product.stock && quantity < product.stock) {
       setQuantity(q => q + 1);
-    } else if (!activeProduct.stock) {
+    } else if (!product.stock) {
        setQuantity(q => q + 1);
     }
   };
@@ -158,7 +155,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
         <div className="relative h-[35dvh] sm:h-full w-full sm:w-[55%] bg-white shrink-0 overflow-hidden">
           <Image
             src={displayImage}
-            alt={activeProduct.name}
+            alt={product.name}
             fill
             className="object-contain sm:object-cover transition-transform hover:scale-105 duration-700"
             priority
@@ -170,7 +167,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
             <span className="sr-only">Kapat</span>
           </DialogClose>
 
-          {activeProduct.isChefRecommended && (
+          {product.isChefRecommended && (
             <div className="absolute top-4 left-4 z-10">
               <Badge className="bg-orange-500/90 hover:bg-orange-600 text-white border-none gap-1.5 px-3 py-1.5 shadow-lg backdrop-blur-sm">
                 <ChefHat className="w-4 h-4" />
@@ -192,30 +189,30 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
             <div className="space-y-3 pt-4">
               <div className="flex justify-between items-start gap-4">
                 <DialogTitle className="text-2xl sm:text-3xl font-bold leading-tight text-foreground text-left tracking-tight pr-8">
-                  {activeProduct.name}
+                  {product.name}
                 </DialogTitle>
               </div>
               
               <div className="flex items-end justify-between">
                 <div className="flex flex-col">
-                  {showRating && Number(activeProduct.averageRating) > 0 && (
+                  {showRating && Number(product.averageRating) > 0 && (
                     <div className="flex items-center gap-1.5 mb-1">
                       <div className="flex items-center gap-0.5">
                         <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
-                        <span className="font-bold text-foreground">{Number(activeProduct.averageRating).toFixed(1)}</span>
+                        <span className="font-bold text-foreground">{Number(product.averageRating).toFixed(1)}</span>
                       </div>
-                      <span className="text-muted-foreground text-sm">({activeProduct.reviewCount})</span>
+                      <span className="text-muted-foreground text-sm">({product.reviewCount})</span>
                     </div>
                   )}
                 </div>
                 
                 <div className="flex flex-col items-end shrink-0">
-                  {activeProduct.originalPrice && Number(activeProduct.originalPrice) > Number(activeProduct.price) && (
+                  {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
                     <span className="text-muted-foreground line-through text-base decoration-muted-foreground/50 mb-0.5">
-                      {Number(activeProduct.originalPrice).toFixed(2)} ₺
+                      {Number(product.originalPrice).toFixed(2)} ₺
                     </span>
                   )}
-                  <span className="text-3xl sm:text-4xl font-black text-orange-600 tracking-tight">{Number(activeProduct.price).toFixed(2)} ₺</span>
+                  <span className="text-3xl sm:text-4xl font-black text-orange-600 tracking-tight">{Number(product.price).toFixed(2)} ₺</span>
                 </div>
               </div>
             </div>
@@ -225,7 +222,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
             <div className="space-y-3">
               <h4 className="font-semibold text-xs text-muted-foreground uppercase tracking-widest">ÜRÜN DETAYI</h4>
               <p id="product-description" className="text-sm text-foreground/80 leading-relaxed font-medium">
-                {activeProduct.description || 'Açıklama bulunmuyor.'}
+                {product.description || 'Açıklama bulunmuyor.'}
               </p>
             </div>
 
@@ -241,7 +238,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                       <div 
                         key={rec.id} 
                         className="w-[140px] group cursor-pointer border rounded-xl overflow-hidden hover:border-orange-200 transition-colors bg-white shadow-sm"
-                        onClick={() => setActiveProduct(rec)}
+                        // onClick removed to prevent error
                       >
                         <div className="relative h-24 w-full bg-zinc-100 overflow-hidden">
                           <Image
@@ -386,7 +383,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                     size="icon"
                     className="h-10 w-10 rounded-lg hover:bg-white hover:shadow-sm hover:text-green-600 transition-all"
                     onClick={incrementQuantity}
-                    disabled={quantity >= product.stock}
+                    disabled={quantity >= (product.stock || 99999)}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -395,7 +392,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, showRating = 
                 <Button 
                   className="w-full sm:flex-1 h-12 rounded-xl font-bold text-base bg-orange-600 hover:bg-orange-700 text-white shadow-orange-200 shadow-lg hover:shadow-xl transition-all" 
                   onClick={handleAddToCart}
-                  disabled={product.stock <= 0}
+                  disabled={product.stock !== undefined && product.stock <= 0}
                 >
                   <ShoppingBasket className="w-5 h-5 mr-2" />
                   <span className="flex-1 text-left">{mode === 'edit' ? 'Sepeti Güncelle' : 'Sepete Ekle'}</span>

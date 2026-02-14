@@ -46,6 +46,16 @@ interface PopularProduct {
   };
 }
 
+interface WaiterPerformance {
+  id: string;
+  name: string;
+  dailySales: number;
+  servedTables: number;
+  avgServiceTime: number;
+  revenueContribution: string;
+  avgRating: string;
+}
+
 interface Order {
   id: string;
   status: string;
@@ -64,6 +74,7 @@ interface DashboardStats {
   totalProducts: number;
   recentOrders: Order[];
   popularProducts: PopularProduct[];
+  waiterPerformance: WaiterPerformance[];
 }
 
 interface ProductWithCategory {
@@ -294,6 +305,55 @@ export default function StatisticsPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Waiter Performance */}
+          <Card className="border-none shadow-sm">
+            <CardHeader>
+              <CardTitle>Garson Performansı</CardTitle>
+              <CardDescription>
+                Bugünkü personel satış ve hizmet metrikleri.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Personel</TableHead>
+                    <TableHead>Günlük Satış</TableHead>
+                    <TableHead>Masa Sayısı</TableHead>
+                    <TableHead>Ort. Servis</TableHead>
+                    <TableHead>Ciro Katkısı</TableHead>
+                    <TableHead>Ort. Puan</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {stats.waiterPerformance?.length ? (
+                    stats.waiterPerformance.map((waiter) => (
+                      <TableRow key={waiter.id}>
+                        <TableCell className="font-medium">{waiter.name}</TableCell>
+                        <TableCell>₺{Number(waiter.dailySales).toFixed(2)}</TableCell>
+                        <TableCell>{waiter.servedTables} Masa</TableCell>
+                        <TableCell>{waiter.avgServiceTime} dk</TableCell>
+                        <TableCell>%{waiter.revenueContribution}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold">{waiter.avgRating}</span>
+                            <span className="text-xs text-muted-foreground">/ 5</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
+                        Henüz veri yok
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             {/* Popular Products Chart */}

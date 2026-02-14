@@ -23,6 +23,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  InputOTPSeparator,
+} from "@/components/ui/input-otp";
+import {
   Form,
   FormControl,
   FormField,
@@ -67,13 +73,35 @@ interface CustomerAuthDialogProps {
   variant?: 'default' | 'premium' | 'bistro' | 'modern' | 'classic' | 'minimal';
 }
 
+interface ThemeStyle {
+  headerTitleColor?: string;
+  headerTextColor?: string;
+  titleColor: string;
+  textColor: string;
+  labelColor: string;
+  inputBg: string;
+  inputBorder: string;
+  inputFocus: string;
+  primaryBtn: string;
+  secondaryBtn: string;
+  link: string;
+  iconBox: string;
+  iconColor: string;
+  divider: string;
+  successIconBg: string;
+  successIconColor: string;
+  gradient: string;
+  contentBg: string;
+  [key: string]: string | undefined;
+}
+
 export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogProps) {
   const { isAuthDialogOpen, setAuthDialogOpen, setCustomer, setGuest } = useCustomerStore();
   const [view, setView] = useState<AuthView>('welcome');
   const [loading, setLoading] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
 
-  const theme = {
+  const theme: Record<string, ThemeStyle> = {
     default: {
       gradient: "bg-white",
       contentBg: "bg-white",
@@ -94,107 +122,113 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
       successIconBg: "bg-primary/10",
       successIconColor: "text-primary"
     },
-    classic: {
-      gradient: "bg-gradient-to-br from-blue-600 to-indigo-700",
-      contentBg: "bg-white",
-      titleColor: "text-gray-900",
-      textColor: "text-gray-600",
-      labelColor: "text-gray-700",
-      inputBg: "bg-white",
-      inputBorder: "border-gray-200",
-      inputFocus: "focus:border-blue-500 focus:ring-blue-500",
-      primaryBtn: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 hover:shadow-blue-500/30",
-      secondaryBtn: "border-blue-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 bg-white text-blue-600",
-      link: "text-blue-600 hover:text-blue-700",
-      iconBox: "bg-white/20 border-white/10",
-      iconColor: "text-white",
-      divider: "bg-gray-100 text-gray-400",
-      successIconBg: "bg-blue-50",
-      successIconColor: "text-blue-600"
-    },
-    minimal: {
-      gradient: "bg-zinc-50 border-b border-zinc-200",
-      contentBg: "bg-white",
-      titleColor: "text-zinc-900",
-      textColor: "text-zinc-500",
-      labelColor: "text-zinc-700",
-      inputBg: "bg-white",
-      inputBorder: "border-zinc-200",
-      inputFocus: "focus:border-zinc-400 focus:ring-zinc-200 text-zinc-900",
-      primaryBtn: "bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/10",
-      secondaryBtn: "border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900 hover:border-zinc-300 bg-white text-zinc-600",
-      link: "text-zinc-900 hover:text-zinc-600",
-      iconBox: "bg-zinc-200 text-zinc-700",
-      iconColor: "text-zinc-700",
-      divider: "bg-zinc-100 text-zinc-400",
-      successIconBg: "bg-zinc-100",
-      successIconColor: "text-zinc-900"
-    },
-    modern: {
-      gradient: "bg-gradient-to-br from-slate-900 to-slate-950 border-b border-white/10",
-      contentBg: "bg-slate-950 border border-white/10",
+    premium: {
+      gradient: "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900",
+      contentBg: "bg-slate-900/95 border-slate-700/50",
+      headerTitleColor: "text-white text-3xl",
+      headerTextColor: "text-slate-400",
       titleColor: "text-white",
       textColor: "text-slate-400",
       labelColor: "text-slate-300",
-      inputBg: "bg-slate-900",
-      inputBorder: "border-white/10",
-      inputFocus: "focus:border-white/30 focus:ring-white/20 text-white",
-      primaryBtn: "bg-white text-black hover:bg-slate-200 shadow-lg shadow-white/10",
-      secondaryBtn: "border-white/10 hover:bg-white/10 hover:text-white text-slate-300 bg-transparent",
-      link: "text-white hover:text-slate-300",
-      iconBox: "bg-white/10 border-white/10",
-      iconColor: "text-white",
-      divider: "bg-white/10 text-slate-600",
-      successIconBg: "bg-white/10",
-      successIconColor: "text-white"
-    },
-    premium: {
-      gradient: "bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-b border-[#c6a355]/20",
-      contentBg: "bg-[#111]/95 border border-[#c6a355]/20",
-      titleColor: "text-[#c6a355]",
-      textColor: "text-zinc-400",
-      labelColor: "text-zinc-300",
-      inputBg: "bg-zinc-900/50",
-      inputBorder: "border-zinc-800",
-      inputFocus: "focus:border-[#c6a355] focus:ring-[#c6a355] text-[#e5e5e5]",
-      primaryBtn: "bg-[#c6a355] hover:bg-[#d4b060] text-black shadow-[#c6a355]/20 hover:shadow-[#c6a355]/30",
-      secondaryBtn: "border-[#c6a355]/30 hover:bg-[#c6a355]/10 hover:text-[#c6a355] hover:border-[#c6a355] bg-transparent text-[#c6a355]",
-      link: "text-[#c6a355] hover:text-[#d4b060]",
-      iconBox: "bg-[#c6a355]/10 border-[#c6a355]/20",
-      iconColor: "text-[#c6a355]",
-      divider: "bg-zinc-800 text-zinc-500",
-      successIconBg: "bg-[#c6a355]/20",
-      successIconColor: "text-[#c6a355]"
+      inputBg: "bg-slate-800/50",
+      inputBorder: "border-slate-700",
+      inputFocus: "focus:border-amber-500/50 focus:ring-amber-500/20",
+      primaryBtn: "bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-900/20 rounded-xl h-12",
+      secondaryBtn: "bg-transparent text-slate-300 hover:bg-slate-800/50 border border-slate-700 rounded-xl h-12",
+      link: "text-amber-500 font-medium hover:text-amber-400",
+      iconBox: "bg-amber-500/10 border-amber-500/20",
+      iconColor: "text-amber-500",
+      divider: "bg-slate-700 text-slate-500",
+      successIconBg: "bg-amber-500/10",
+      successIconColor: "text-amber-500"
     },
     bistro: {
-      gradient: "bg-gradient-to-br from-orange-50 to-stone-100 border-b border-stone-200",
-      contentBg: "bg-[#f8f5e6]",
-      titleColor: "text-stone-800 font-serif",
+      gradient: "bg-stone-50",
+      contentBg: "bg-[#FDFBF7] border-stone-200",
+      headerTitleColor: "text-stone-800 text-3xl font-serif",
+      headerTextColor: "text-stone-600",
+      titleColor: "text-stone-800",
       textColor: "text-stone-600",
       labelColor: "text-stone-700",
       inputBg: "bg-white",
       inputBorder: "border-stone-200",
-      inputFocus: "focus:border-orange-400 focus:ring-orange-200 text-stone-800",
-      primaryBtn: "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-500/20 hover:shadow-orange-500/30",
-      secondaryBtn: "border-orange-200 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 bg-white text-orange-700",
-      link: "text-orange-700 hover:text-orange-800",
-      iconBox: "bg-orange-100 text-orange-600",
+      inputFocus: "focus:border-orange-500/50 focus:ring-orange-500/20",
+      primaryBtn: "bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-900/10 rounded-xl h-12 font-medium",
+      secondaryBtn: "bg-white text-stone-700 hover:bg-stone-50 border border-stone-200 rounded-xl h-12",
+      link: "text-orange-600 font-medium hover:text-orange-700",
+      iconBox: "bg-orange-100 border-orange-200",
       iconColor: "text-orange-600",
       divider: "bg-stone-200 text-stone-400",
       successIconBg: "bg-orange-100",
       successIconColor: "text-orange-600"
+    },
+    modern: {
+      gradient: "bg-white",
+      contentBg: "bg-white/80 backdrop-blur-xl border-white/20",
+      headerTitleColor: "text-gray-900 text-3xl tracking-tight",
+      headerTextColor: "text-gray-500",
+      titleColor: "text-gray-900",
+      textColor: "text-gray-500",
+      labelColor: "text-gray-700",
+      inputBg: "bg-gray-50/50",
+      inputBorder: "border-gray-200",
+      inputFocus: "focus:border-blue-500/50 focus:ring-blue-500/20",
+      primaryBtn: "bg-gray-900 text-white hover:bg-gray-800 shadow-xl shadow-gray-900/10 rounded-2xl h-12",
+      secondaryBtn: "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 rounded-2xl h-12",
+      link: "text-blue-600 font-medium hover:text-blue-700",
+      iconBox: "bg-blue-50 border-blue-100",
+      iconColor: "text-blue-600",
+      divider: "bg-gray-100 text-gray-400",
+      successIconBg: "bg-blue-50",
+      successIconColor: "text-blue-600"
+    },
+    classic: {
+      gradient: "bg-gray-50",
+      contentBg: "bg-white border-gray-200 shadow-2xl",
+      headerTitleColor: "text-gray-900 text-3xl font-serif",
+      headerTextColor: "text-gray-600",
+      titleColor: "text-gray-900",
+      textColor: "text-gray-600",
+      labelColor: "text-gray-700",
+      inputBg: "bg-white",
+      inputBorder: "border-gray-300",
+      inputFocus: "focus:border-gray-900 focus:ring-gray-900/10",
+      primaryBtn: "bg-gray-900 text-white hover:bg-gray-800 rounded-md h-12 uppercase tracking-wide text-sm font-semibold",
+      secondaryBtn: "bg-white text-gray-900 hover:bg-gray-50 border border-gray-300 rounded-md h-12 uppercase tracking-wide text-sm font-semibold",
+      link: "text-gray-900 font-semibold hover:underline decoration-2 underline-offset-4",
+      iconBox: "bg-gray-100 border-gray-200",
+      iconColor: "text-gray-900",
+      divider: "bg-gray-200 text-gray-400",
+      successIconBg: "bg-gray-100",
+      successIconColor: "text-gray-900"
+    },
+    minimal: {
+      gradient: "bg-white",
+      contentBg: "bg-white border-0 shadow-none",
+      headerTitleColor: "text-black text-4xl font-light tracking-tight",
+      headerTextColor: "text-gray-400",
+      titleColor: "text-black",
+      textColor: "text-gray-500",
+      labelColor: "text-black font-medium",
+      inputBg: "bg-gray-50",
+      inputBorder: "border-transparent",
+      inputFocus: "focus:bg-white focus:border-black focus:ring-0",
+      primaryBtn: "bg-black text-white hover:bg-gray-900 rounded-full h-12 font-medium",
+      secondaryBtn: "bg-white text-black hover:bg-gray-50 border border-gray-200 rounded-full h-12 font-medium",
+      link: "text-black font-medium border-b border-black hover:border-gray-500 pb-0.5",
+      iconBox: "bg-gray-50",
+      iconColor: "text-black",
+      divider: "bg-gray-100 text-gray-300",
+      successIconBg: "bg-gray-50",
+      successIconColor: "text-black"
     }
   };
 
   const styles = theme[variant] || theme.default;
-  const headerTitleColor = (styles as any).headerTitleColor || styles.titleColor;
-  const headerTextColor = (styles as any).headerTextColor || styles.textColor;
-
-  const handleGuestContinue = () => {
-    setGuest(true);
-    setAuthDialogOpen(false);
-    toast.success('Hoş geldiniz! Menüyü inceleyebilirsiniz.');
-  };
+  
+  // Safe fallbacks for optional properties
+  const headerTitleColor = styles.headerTitleColor || styles.titleColor;
+  const headerTextColor = styles.headerTextColor || styles.textColor;
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -224,224 +258,152 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
 
   const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: { email: '' },
+    defaultValues: {
+      email: '',
+    },
   });
 
   const resetPasswordForm = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
-    defaultValues: { email: '', code: '', newPassword: '' },
+    defaultValues: {
+      email: '',
+      code: '',
+      newPassword: '',
+    },
   });
 
-  const onLogin = async (data: z.infer<typeof loginSchema>) => {
+  async function onLogin(values: z.infer<typeof loginSchema>) {
     setLoading(true);
     try {
-      const response = await api.post('/auth/customer/login', data);
-      setCustomer(response.data.customer, response.data.token);
-      toast.success('Giriş başarılı! Hoş geldiniz.');
+      const res = await api.post('/auth/customer/login', values);
+      setCustomer(res.data.customer, res.data.token);
       setAuthDialogOpen(false);
-      loginForm.reset();
-    } catch (error: unknown) {
-      const apiError = error as { response?: { data?: { code?: string; message?: string; email?: string } } };
-      if (apiError.response?.data?.code === 'NOT_VERIFIED') {
-        toast.error('Hesabınız henüz doğrulanmamış. Lütfen doğrulama kodunu giriniz.');
-        if (apiError.response.data.email) {
-          setVerificationEmail(apiError.response.data.email);
-          verifyForm.setValue('email', apiError.response.data.email);
-        }
-        setView('verification');
-      } else {
-        toast.error(apiError.response?.data?.message || 'Giriş yapılamadı');
-      }
+      toast.success('Giriş başarılı');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Giriş yapılamadı');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const onRegister = async (data: z.infer<typeof registerSchema>) => {
+  async function onRegister(values: z.infer<typeof registerSchema>) {
     setLoading(true);
     try {
-      const response = await api.post('/auth/customer/register', data);
-      if (response.data.requiresVerification) {
-        toast.success('Kayıt başarılı! Lütfen e-posta adresinize gönderilen kodu giriniz.');
-        setVerificationEmail(data.email);
-        verifyForm.setValue('email', data.email);
-        setView('verification');
-        registerForm.reset();
-      } else {
-        setCustomer(response.data.customer, response.data.token);
-        toast.success('Kayıt başarılı! Aramıza hoş geldiniz.');
-        setAuthDialogOpen(false);
-        registerForm.reset();
-      }
-    } catch (error: unknown) {
-      const apiError = error as { response?: { data?: { message?: string } } };
-      toast.error(apiError.response?.data?.message || 'Kayıt yapılamadı');
+      await api.post('/auth/customer/register', values);
+      setVerificationEmail(values.email);
+      setView('verification');
+      verifyForm.setValue('email', values.email);
+      toast.success('Kayıt başarılı, lütfen e-posta adresinizi doğrulayın');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Kayıt yapılamadı');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const onVerify = async (data: z.infer<typeof verifySchema>) => {
+  async function onVerify(values: z.infer<typeof verifySchema>) {
     setLoading(true);
     try {
-      const response = await api.post('/auth/customer/verify', data);
-      setCustomer(response.data.customer, response.data.token);
-      toast.success('Hesap doğrulandı! Hoş geldiniz.');
+      const res = await api.post('/auth/customer/verify', values);
+      setCustomer(res.data.customer, res.data.token);
       setAuthDialogOpen(false);
-      verifyForm.reset();
-    } catch (error: unknown) {
-      const apiError = error as { response?: { data?: { message?: string } } };
-      toast.error(apiError.response?.data?.message || 'Doğrulama başarısız');
+      toast.success('Doğrulama başarılı');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Doğrulama başarısız');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const onForgotPassword = async (data: z.infer<typeof forgotPasswordSchema>) => {
+  async function onForgotPassword(values: z.infer<typeof forgotPasswordSchema>) {
     setLoading(true);
     try {
-      await api.post('/auth/customer/forgot-password', data);
-      toast.success('Şifre sıfırlama kodu e-postanıza gönderildi.');
-      resetPasswordForm.setValue('email', data.email);
+      await api.post('/auth/customer/forgot-password', values);
+      setVerificationEmail(values.email);
       setView('reset-password');
-    } catch (error: unknown) {
-      const apiError = error as { response?: { data?: { message?: string } } };
-      toast.error(apiError.response?.data?.message || 'İşlem başarısız');
+      resetPasswordForm.setValue('email', values.email);
+      toast.success('Şifre sıfırlama kodu gönderildi');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'İşlem başarısız');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const onResetPassword = async (data: z.infer<typeof resetPasswordSchema>) => {
+  async function onResetPassword(values: z.infer<typeof resetPasswordSchema>) {
     setLoading(true);
     try {
-      await api.post('/auth/customer/reset-password', data);
-      toast.success('Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz.');
+      await api.post('/auth/customer/reset-password', values);
       setView('login');
-      resetPasswordForm.reset();
-    } catch (error: unknown) {
-      const apiError = error as { response?: { data?: { message?: string } } };
-      toast.error(apiError.response?.data?.message || 'İşlem başarısız');
+      toast.success('Şifreniz başarıyla değiştirildi, giriş yapabilirsiniz');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Şifre sıfırlama başarısız');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const resetView = (open: boolean) => {
-    setAuthDialogOpen(open);
-    if (!open) {
-      setTimeout(() => setView('welcome'), 300);
-    }
+  const handleGuestContinue = () => {
+    setGuest(true);
+    setAuthDialogOpen(false);
   };
 
   return (
-    <Dialog open={isAuthDialogOpen} onOpenChange={resetView}>
-      <DialogContent 
-        className={cn(
-          "sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl backdrop-blur-lg",
-          styles.contentBg
-        )}
-        showCloseButton={false}
-        overlayClassName="bg-black/5 backdrop-blur-[1px]"
-        aria-describedby="auth-description"
-      >
+    <Dialog open={isAuthDialogOpen} onOpenChange={setAuthDialogOpen}>
+      <DialogContent className={cn("sm:max-w-[480px] p-0 overflow-hidden border-0 shadow-2xl gap-0", styles.contentBg)}>
         <DialogTitle className="sr-only">Müşteri Girişi</DialogTitle>
-        <div id="auth-description" className="sr-only">
-          Müşteri giriş, kayıt veya misafir girişi seçenekleri
-        </div>
-        <div className="relative h-full flex flex-col">
-          {/* Header Section - Dynamic based on view */}
-          <div className={cn(
-            "relative transition-all duration-500 ease-in-out flex flex-col items-center justify-center overflow-hidden",
-            view === 'welcome' ? 'h-48' : 'h-32',
-            styles.gradient
-          )}>
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-white rounded-full translate-x-1/2 translate-y-1/2 blur-2xl" />
-            </div>
-
-            {view !== 'welcome' && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn("absolute top-4 left-4 hover:bg-white/20", styles.iconColor)}
-                onClick={() => setView('welcome')}
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </Button>
-            )}
-
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="z-10 flex flex-col items-center"
-            >
-              <div className={cn("p-3 rounded-2xl backdrop-blur-md mb-3 shadow-lg", styles.iconBox)}>
-                <UtensilsCrossed className={cn("h-8 w-8", styles.iconColor)} />
-              </div>
-              <h2 className={cn("text-2xl font-bold tracking-tight", headerTitleColor)}>qrders</h2>
-              {view === 'welcome' && (
-                <p className={cn("text-sm mt-1 font-medium", headerTextColor)}>Lezzetin Adresi</p>
-              )}
-            </motion.div>
-          </div>
-
-          {/* Content Section */}
-          <div className="p-6 bg-transparent flex-1">
+        <div className="relative">
+          {/* Header Pattern/Gradient */}
+          <div className={cn("absolute top-0 inset-x-0 h-32 opacity-50", styles.gradient)} />
+          
+          <div className="relative px-6 pt-8 pb-6">
             <AnimatePresence mode="wait">
               {view === 'welcome' && (
                 <motion.div
                   key="welcome"
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
+                  exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-4"
+                  className="space-y-8"
                 >
-                  <div className="text-center space-y-2 mb-6">
-                    <h3 className={cn("text-xl font-semibold", styles.titleColor)}>Hoş Geldiniz!</h3>
-                    <p className={cn("text-sm", styles.textColor)}>
-                      Siparişinizi vermek için hemen menüyü incelemeye başlayın.
+                  <div className="text-center space-y-2">
+                    <div className={cn("mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg rotate-3", styles.iconBox)}>
+                      <UtensilsCrossed className={cn("w-8 h-8", styles.iconColor)} />
+                    </div>
+                    <h2 className={cn("font-bold tracking-tight", headerTitleColor)}>Hoş Geldiniz</h2>
+                    <p className={cn("text-lg", headerTextColor)}>
+                      Sipariş vermek için giriş yapın veya misafir olarak devam edin.
                     </p>
                   </div>
 
-                  <Button 
-                    size="lg" 
-                    className={cn(
-                      "w-full h-14 text-lg font-semibold transition-all group border-0",
-                      styles.primaryBtn
-                    )}
-                    onClick={handleGuestContinue}
-                  >
-                    <Coffee className="mr-2 h-5 w-5" />
-                    Menüyü İncele
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                  </Button>
+                  <div className="space-y-3 pt-2">
+                    <Button 
+                      onClick={() => setView('login')}
+                      className={cn("w-full h-14 text-base font-semibold shadow-lg shadow-primary/10 transition-all hover:scale-[1.02] active:scale-[0.98]", styles.primaryBtn)}
+                    >
+                      <UserCircle2 className="mr-2 h-5 w-5" />
+                      Giriş Yap / Kayıt Ol
+                    </Button>
+                    
+                    <div className="relative py-3">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className={cn("w-full border-t", styles.divider)} />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className={cn("px-2 rounded-full font-medium", styles.contentBg, styles.textColor)}>veya</span>
+                      </div>
+                    </div>
 
-                  <div className="relative py-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className={cn("w-full border-t", styles.inputBorder)} />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className={cn("backdrop-blur-sm px-2 rounded", styles.divider)}>veya</span>
-                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleGuestContinue}
+                      className={cn("w-full h-14 text-base font-medium border-2 hover:bg-secondary/50 transition-all hover:scale-[1.02] active:scale-[0.98]", styles.secondaryBtn)}
+                    >
+                      Misafir Olarak Devam Et
+                      <ArrowRight className="ml-2 h-5 w-5 opacity-50" />
+                    </Button>
                   </div>
-
-                  <Button 
-                    variant="outline" 
-                    size="lg"
-                    className={cn(
-                      "w-full h-12 border-2 transition-colors",
-                      styles.secondaryBtn
-                    )}
-                    onClick={() => setView('login')}
-                  >
-                    <UserCircle2 className="mr-2 h-5 w-5" />
-                    Üye Girişi / Kayıt Ol
-                  </Button>
                 </motion.div>
               )}
 
@@ -452,11 +414,11 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-4"
+                  className="space-y-6"
                 >
-                  <div className="text-center mb-4">
-                    <h3 className={cn("text-lg font-semibold", styles.titleColor)}>Giriş Yap</h3>
-                    <p className={cn("text-sm", styles.textColor)}>Hesabınıza erişin ve sipariş verin</p>
+                  <div className="text-center mb-6">
+                    <h3 className={cn("text-2xl font-semibold mb-2", styles.titleColor)}>Giriş Yap</h3>
+                    <p className={styles.textColor}>Hesabınıza erişmek için bilgilerinizi girin</p>
                   </div>
 
                   <Form {...loginForm}>
@@ -472,7 +434,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                                 placeholder="ornek@email.com" 
                                 {...field} 
                                 className={cn(
-                                  "h-11", 
+                                  "h-12", 
                                   styles.inputBg, 
                                   styles.inputBorder, 
                                   styles.inputFocus
@@ -495,7 +457,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                                 placeholder="******" 
                                 {...field} 
                                 className={cn(
-                                  "h-11", 
+                                  "h-12", 
                                   styles.inputBg, 
                                   styles.inputBorder, 
                                   styles.inputFocus
@@ -511,175 +473,35 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                         <Button 
                           type="button" 
                           variant="link" 
-                          className={cn("px-0 h-auto text-sm font-medium", styles.link)}
+                          className={cn("px-0 h-auto text-sm font-medium hover:no-underline opacity-80 hover:opacity-100", styles.link)}
                           onClick={() => setView('forgot-password')}
                         >
                           Şifremi Unuttum?
                         </Button>
                       </div>
 
-                      <Button type="submit" className={cn("w-full h-11", styles.primaryBtn)} disabled={loading}>
-                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Giriş Yap
+                      <Button type="submit" className={cn("w-full h-12 text-base font-semibold", styles.primaryBtn)} disabled={loading}>
+                        {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Giriş Yap'}
                       </Button>
                     </form>
                   </Form>
                   
                   <div className="relative py-2">
                     <div className="absolute inset-0 flex items-center">
-                      <span className={cn("w-full border-t", styles.inputBorder)} />
+                      <span className={cn("w-full border-t", styles.divider)} />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className={cn("backdrop-blur-sm px-2 rounded", styles.divider)}>veya</span>
+                      <span className={cn("px-2 rounded font-medium", styles.contentBg, styles.textColor)}>Hesabınız yok mu?</span>
                     </div>
                   </div>
 
                   <Button 
                     variant="outline" 
-                    className={cn("w-full h-11 border-2", styles.secondaryBtn)}
+                    className={cn("w-full h-12 border-2 font-medium", styles.secondaryBtn)}
                     onClick={() => setView('register')}
                   >
                     Yeni Hesap Oluştur
                   </Button>
-                </motion.div>
-              )}
-
-              {view === 'forgot-password' && (
-                <motion.div
-                  key="forgot-password"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
-                >
-                  <div className="text-center mb-4">
-                    <h3 className={cn("text-lg font-semibold", styles.titleColor)}>Şifre Sıfırlama</h3>
-                    <p className={cn("text-sm", styles.textColor)}>E-posta adresinize bir kod göndereceğiz</p>
-                  </div>
-
-                  <Form {...forgotPasswordForm}>
-                    <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPassword)} className="space-y-4">
-                      <FormField
-                        control={forgotPasswordForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className={styles.labelColor}>E-posta</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="ornek@email.com" 
-                                {...field} 
-                                className={cn(
-                                  "h-11", 
-                                  styles.inputBg, 
-                                  styles.inputBorder, 
-                                  styles.inputFocus
-                                )} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button type="submit" className={cn("w-full h-11", styles.primaryBtn)} disabled={loading}>
-                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Kod Gönder
-                      </Button>
-                    </form>
-                  </Form>
-                </motion.div>
-              )}
-
-              {view === 'reset-password' && (
-                <motion.div
-                  key="reset-password"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
-                >
-                  <div className="text-center mb-4">
-                    <h3 className={cn("text-lg font-semibold", styles.titleColor)}>Yeni Şifre Belirle</h3>
-                    <p className={cn("text-sm", styles.textColor)}>Gelen kodu ve yeni şifrenizi girin</p>
-                  </div>
-
-                  <Form {...resetPasswordForm}>
-                    <form onSubmit={resetPasswordForm.handleSubmit(onResetPassword)} className="space-y-4">
-                      <FormField
-                        control={resetPasswordForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className={styles.labelColor}>E-posta</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                readOnly 
-                                className={cn(
-                                  "h-11 opacity-50 cursor-not-allowed", 
-                                  styles.inputBg, 
-                                  styles.inputBorder
-                                )} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={resetPasswordForm.control}
-                        name="code"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className={styles.labelColor}>Doğrulama Kodu</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="123456" 
-                                {...field} 
-                                maxLength={6} 
-                                className={cn(
-                                  "h-11 tracking-widest text-center text-lg", 
-                                  styles.inputBg, 
-                                  styles.inputBorder, 
-                                  styles.inputFocus
-                                )} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={resetPasswordForm.control}
-                        name="newPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className={styles.labelColor}>Yeni Şifre</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="password" 
-                                placeholder="******" 
-                                {...field} 
-                                className={cn(
-                                  "h-11", 
-                                  styles.inputBg, 
-                                  styles.inputBorder, 
-                                  styles.inputFocus
-                                )} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button type="submit" className={cn("w-full h-11", styles.primaryBtn)} disabled={loading}>
-                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Şifreyi Güncelle
-                      </Button>
-                    </form>
-                  </Form>
                 </motion.div>
               )}
 
@@ -690,11 +512,11 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-4"
+                  className="space-y-6"
                 >
-                  <div className="text-center mb-4">
-                    <h3 className={cn("text-lg font-semibold", styles.titleColor)}>Kayıt Ol</h3>
-                    <p className={cn("text-sm", styles.textColor)}>Yeni bir hesap oluşturun</p>
+                  <div className="text-center mb-6">
+                    <h3 className={cn("text-2xl font-semibold mb-2", styles.titleColor)}>Kayıt Ol</h3>
+                    <p className={styles.textColor}>Hızlıca sipariş vermek için hesap oluşturun</p>
                   </div>
 
                   <Form {...registerForm}>
@@ -710,7 +532,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                                 placeholder="Adınız Soyadınız" 
                                 {...field} 
                                 className={cn(
-                                  "h-11", 
+                                  "h-12", 
                                   styles.inputBg, 
                                   styles.inputBorder, 
                                   styles.inputFocus
@@ -732,7 +554,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                                 placeholder="ornek@email.com" 
                                 {...field} 
                                 className={cn(
-                                  "h-11", 
+                                  "h-12", 
                                   styles.inputBg, 
                                   styles.inputBorder, 
                                   styles.inputFocus
@@ -754,7 +576,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                                 placeholder="0555 555 55 55" 
                                 {...field} 
                                 className={cn(
-                                  "h-11", 
+                                  "h-12", 
                                   styles.inputBg, 
                                   styles.inputBorder, 
                                   styles.inputFocus
@@ -777,7 +599,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                                 placeholder="******" 
                                 {...field} 
                                 className={cn(
-                                  "h-11", 
+                                  "h-12", 
                                   styles.inputBg, 
                                   styles.inputBorder, 
                                   styles.inputFocus
@@ -788,23 +610,29 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className={cn("w-full h-11 text-base shadow-md", styles.primaryBtn)} disabled={loading}>
+                      
+                      <Button type="submit" className={cn("w-full h-12 text-base font-semibold mt-2", styles.primaryBtn)} disabled={loading}>
                         {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Kayıt Ol'}
                       </Button>
                     </form>
                   </Form>
-
-                  <div className="text-center mt-4">
-                    <p className={cn("text-sm", styles.textColor)}>
-                      Zaten hesabınız var mı?{' '}
-                      <button 
-                        onClick={() => setView('login')} 
-                        className={cn("font-semibold hover:underline", styles.link)}
-                      >
-                        Giriş Yap
-                      </button>
-                    </p>
+                  
+                  <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className={cn("w-full border-t", styles.divider)} />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className={cn("px-2 rounded font-medium", styles.contentBg, styles.textColor)}>Hesabınız var mı?</span>
+                    </div>
                   </div>
+
+                  <Button 
+                    variant="outline" 
+                    className={cn("w-full h-12 border-2 font-medium", styles.secondaryBtn)}
+                    onClick={() => setView('login')}
+                  >
+                    Giriş Yap
+                  </Button>
                 </motion.div>
               )}
 
@@ -815,76 +643,214 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-4"
+                  className="space-y-6"
                 >
-                  <div className="text-center mb-4">
-                    <div className={cn("w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3", styles.successIconBg)}>
-                      <MailCheck className={cn("h-6 w-6", styles.successIconColor)} />
+                  <div className="text-center mb-6">
+                    <div className={cn("mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4", styles.successIconBg)}>
+                      <MailCheck className={cn("w-8 h-8", styles.successIconColor)} />
                     </div>
-                    <h3 className={cn("text-lg font-semibold", styles.titleColor)}>Hesabı Doğrula</h3>
-                    <p className={cn("text-sm", styles.textColor)}>
-                      <span className={cn("font-medium", styles.titleColor)}>{verificationEmail}</span> adresine gönderilen 6 haneli kodu giriniz
+                    <h3 className={cn("text-2xl font-semibold mb-2", styles.titleColor)}>E-posta Doğrulama</h3>
+                    <p className={styles.textColor}>
+                      <span className="font-medium text-foreground">{verificationEmail}</span> adresine gönderilen 6 haneli kodu giriniz.
                     </p>
                   </div>
 
                   <Form {...verifyForm}>
-                    <form onSubmit={verifyForm.handleSubmit(onVerify)} className="space-y-4">
-                      <FormField
-                        control={verifyForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem className="hidden">
-                            <FormControl>
-                              <Input {...field} type="hidden" />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                    <form onSubmit={verifyForm.handleSubmit(onVerify)} className="space-y-6">
                       <FormField
                         control={verifyForm.control}
                         name="code"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className={cn("text-center block", styles.labelColor)}>Doğrulama Kodu</FormLabel>
                             <FormControl>
-                              <Input 
-                                placeholder="123456" 
-                                {...field} 
-                                className={cn(
-                                  "h-14 text-center text-2xl tracking-[0.5em] font-bold", 
-                                  styles.inputBg, 
-                                  styles.inputBorder, 
-                                  styles.inputFocus
-                                )} 
-                                maxLength={6}
-                              />
+                              <div className="flex justify-center">
+                                <InputOTP
+                                  maxLength={6}
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  containerClassName={cn("justify-center", styles.inputFocus)}
+                                >
+                                  <InputOTPGroup className={styles.inputBg}>
+                                    <InputOTPSlot index={0} className={styles.inputBorder} />
+                                    <InputOTPSlot index={1} className={styles.inputBorder} />
+                                    <InputOTPSlot index={2} className={styles.inputBorder} />
+                                  </InputOTPGroup>
+                                  <InputOTPSeparator />
+                                  <InputOTPGroup className={styles.inputBg}>
+                                    <InputOTPSlot index={3} className={styles.inputBorder} />
+                                    <InputOTPSlot index={4} className={styles.inputBorder} />
+                                    <InputOTPSlot index={5} className={styles.inputBorder} />
+                                  </InputOTPGroup>
+                                </InputOTP>
+                              </div>
                             </FormControl>
                             <FormMessage className="text-center" />
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className={cn("w-full h-11 text-base shadow-md", styles.primaryBtn)} disabled={loading}>
-                        {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Doğrula ve Giriş Yap'}
+                      
+                      <Button type="submit" className={cn("w-full h-12 text-base font-semibold", styles.primaryBtn)} disabled={loading}>
+                        {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Doğrula'}
+                      </Button>
+                    </form>
+                  </Form>
+                </motion.div>
+              )}
+
+              {view === 'forgot-password' && (
+                <motion.div
+                  key="forgot-password"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div className="text-center mb-6">
+                    <h3 className={cn("text-2xl font-semibold mb-2", styles.titleColor)}>Şifre Sıfırlama</h3>
+                    <p className={styles.textColor}>E-posta adresinize bir kod göndereceğiz</p>
+                  </div>
+
+                  <Form {...forgotPasswordForm}>
+                    <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPassword)} className="space-y-4">
+                      <FormField
+                        control={forgotPasswordForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={styles.labelColor}>E-posta</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="ornek@email.com" 
+                                {...field} 
+                                className={cn(
+                                  "h-12", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button type="submit" className={cn("w-full h-12 text-base font-semibold", styles.primaryBtn)} disabled={loading}>
+                        {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Kod Gönder'}
                       </Button>
                     </form>
                   </Form>
 
-                  <div className="text-center mt-4">
-                    <p className={cn("text-sm", styles.textColor)}>
-                      Kod gelmedi mi?{' '}
-                      <button 
-                        onClick={() => toast.info('Kod tekrar gönderildi (Simülasyon)')} 
-                        className={cn("font-semibold hover:underline", styles.link)}
-                        type="button"
-                      >
-                        Tekrar Gönder
-                      </button>
+                  <div className="text-center">
+                    <Button 
+                      variant="link" 
+                      onClick={() => setView('login')}
+                      className={cn("text-sm", styles.link)}
+                    >
+                      Giriş sayfasına dön
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {view === 'reset-password' && (
+                <motion.div
+                  key="reset-password"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div className="text-center mb-6">
+                    <h3 className={cn("text-2xl font-semibold mb-2", styles.titleColor)}>Yeni Şifre Belirle</h3>
+                    <p className={styles.textColor}>
+                      Lütfen kodunuzu ve yeni şifrenizi giriniz
                     </p>
                   </div>
+
+                  <Form {...resetPasswordForm}>
+                    <form onSubmit={resetPasswordForm.handleSubmit(onResetPassword)} className="space-y-4">
+                      <FormField
+                        control={resetPasswordForm.control}
+                        name="code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={styles.labelColor}>Doğrulama Kodu</FormLabel>
+                            <FormControl>
+                              <div className="flex justify-center">
+                                <InputOTP
+                                  maxLength={6}
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  containerClassName={cn("justify-start", styles.inputFocus)}
+                                >
+                                  <InputOTPGroup className={styles.inputBg}>
+                                    <InputOTPSlot index={0} className={styles.inputBorder} />
+                                    <InputOTPSlot index={1} className={styles.inputBorder} />
+                                    <InputOTPSlot index={2} className={styles.inputBorder} />
+                                  </InputOTPGroup>
+                                  <InputOTPSeparator />
+                                  <InputOTPGroup className={styles.inputBg}>
+                                    <InputOTPSlot index={3} className={styles.inputBorder} />
+                                    <InputOTPSlot index={4} className={styles.inputBorder} />
+                                    <InputOTPSlot index={5} className={styles.inputBorder} />
+                                  </InputOTPGroup>
+                                </InputOTP>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={resetPasswordForm.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={styles.labelColor}>Yeni Şifre</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                placeholder="******" 
+                                {...field} 
+                                className={cn(
+                                  "h-12", 
+                                  styles.inputBg, 
+                                  styles.inputBorder, 
+                                  styles.inputFocus
+                                )} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button type="submit" className={cn("w-full h-12 text-base font-semibold", styles.primaryBtn)} disabled={loading}>
+                        {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Şifreyi Güncelle'}
+                      </Button>
+                    </form>
+                  </Form>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
+
+          {/* Footer Back Button (only show if not on welcome) */}
+          {view !== 'welcome' && (
+            <div className={cn("p-4 border-t bg-muted/5", styles.divider)}>
+              <Button 
+                variant="ghost" 
+                onClick={() => setView('welcome')}
+                className={cn("w-full text-muted-foreground hover:text-foreground", styles.textColor)}
+              >
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Ana Menüye Dön
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

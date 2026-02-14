@@ -524,7 +524,14 @@ export default function OrdersPage() {
             <TableBody>
               {getFilteredOrders().length > 0 ? (
                 getFilteredOrders().map((order) => (
-                  <TableRow key={order.id}>
+                  <TableRow 
+                    key={order.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setIsDetailsDialogOpen(true);
+                    }}
+                  >
                     <TableCell className="font-medium">#{order.id.slice(-4)}</TableCell>
                     <TableCell>Masa {getTableNumber(order.tableId)}</TableCell>
                     <TableCell>{new Date(order.createdAt).toLocaleString('tr-TR')}</TableCell>

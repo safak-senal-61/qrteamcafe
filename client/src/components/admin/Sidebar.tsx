@@ -15,6 +15,7 @@ import {
   Receipt,
   MessageSquare,
   LayoutTemplate,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ReportIssueDialog } from './ReportIssueDialog';
@@ -68,6 +69,11 @@ const menuItems = [
     title: 'İstatistikler & Stoklar',
     href: '/admin/statistics',
     icon: TrendingUp,
+  },
+  {
+    title: 'Personel',
+    href: '/admin/staff',
+    icon: Users,
   },
   {
     title: 'Ayarlar',

@@ -110,6 +110,15 @@ api.interceptors.request.use((config) => {
       return config;
     }
 
+    // Check for Waiter Token
+    const isWaiterSection = window.location.pathname.includes('/waiter');
+    const waiterToken = localStorage.getItem('waiter-token');
+
+    if (isWaiterSection && waiterToken) {
+      config.headers.Authorization = `Bearer ${waiterToken}`;
+      return config;
+    }
+
     // Check for Customer Token
     const storage = localStorage.getItem('customer-storage');
     if (storage) {

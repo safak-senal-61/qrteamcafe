@@ -25,6 +25,12 @@ export class OrdersController {
     return this.ordersService.findAllByCustomer(req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('active')
+  findActive(@Query('cafeId') cafeId: string) {
+    return this.ordersService.findActive(cafeId);
+  }
+
   @Post()
   create(
     @Query('cafeId') cafeId: string,
@@ -41,13 +47,20 @@ export class OrdersController {
 
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
-  updateStatus(@Param('id') id: string, @Body('status') status: string) {
-    return this.ordersService.updateStatus(id, status);
+  updateStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.ordersService.updateStatus(id, status, req.user);
   }
 
   @Post('table/:id/pay')
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
-  closeTable(@Param('id') tableId: string) {
-    return this.ordersService.closeTable(tableId);
+  closeTable(
+    @Param('id') tableId: string,
+    @Body('paymentMethod') paymentMethod: string,
+  ) {
+    return this.ordersService.closeTable(tableId, paymentMethod || 'CASH');
   }
 }

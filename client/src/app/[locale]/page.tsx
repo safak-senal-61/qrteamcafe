@@ -168,6 +168,11 @@ export default function Home() {
                   {t('login')}
                 </Button>
               </Link>
+              <Link href="/waiter/login">
+                <Button variant="ghost" className="font-medium text-white hover:bg-white/10 hover:text-amber-500 text-base relative overflow-hidden group transition-colors">
+                  {t('waiterLogin')}
+                </Button>
+              </Link>
               <Link href="/menu/2ea6acce-7d77-4a0b-910f-56a05666d89d">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button className="rounded-full shadow-lg hover:shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-white border-0">
@@ -221,6 +226,18 @@ export default function Home() {
                                 <Users className="h-5 w-5 text-white/70 group-hover:text-amber-500 transition-colors" />
                               </div>
                               {t('login')}
+                            </span>
+                            <ChevronRight className="h-5 w-5 text-white/30 group-hover:text-amber-500 transition-colors" />
+                          </Button>
+                        </Link>
+                        
+                        <Link href="/waiter/login" onClick={() => {}}>
+                          <Button variant="outline" className="w-full justify-between h-14 text-base font-medium rounded-xl border-white/10 bg-transparent text-white hover:bg-white/10 hover:border-amber-500/50 hover:text-amber-500 transition-all group">
+                            <span className="flex items-center gap-3">
+                              <div className="p-2 bg-white/10 rounded-lg group-hover:bg-amber-500/20 transition-colors">
+                                <Users className="h-5 w-5 text-white/70 group-hover:text-amber-500 transition-colors" />
+                              </div>
+                              {t('waiterLogin')}
                             </span>
                             <ChevronRight className="h-5 w-5 text-white/30 group-hover:text-amber-500 transition-colors" />
                           </Button>

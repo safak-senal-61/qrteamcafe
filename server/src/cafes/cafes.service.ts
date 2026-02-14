@@ -11,6 +11,29 @@ export class CafesService {
     @Inject(CACHE_MANAGER) private cache: Cache,
   ) {}
 
+  async findAll(query?: string) {
+    try {
+      const where: any = {
+        isActive: true,
+      };
+
+      if (query) {
+        where.OR = [
+          { name: { contains: query, mode: 'insensitive' } },
+        ];
+      }
+
+      return await this.prisma.cafe.findMany({
+        where,
+        select: { id: true, name: true, city: true, district: true },
+        take: 20
+      });
+    } catch (error) {
+      console.error('CafesService.findAll error:', error);
+      throw error;
+    }
+  }
+
   async findOne(idOrSlug: string) {
     // Check if it's a valid UUID
     const isUuid =
@@ -201,11 +224,83 @@ export class CafesService {
       })
       .filter(Boolean);
 
+    // Waiter Performance (Today)
+    const waiters = await this.prisma.waiter.findMany({
+      where: { cafeId, status: 'ACTIVE' },
+      select: { id: true, firstName: true, lastName: true }
+    });
+
+    const waiterStats = await Promise.all(waiters.map(async (waiter) => {
+      const orders = await this.prisma.order.findMany({
+        where: {
+          cafeId,
+          waiterId: waiter.id,
+          createdAt: { gte: today },
+          status: 'PAID'
+        },
+        select: {
+            totalAmount: true,
+            tableId: true,
+            createdAt: true,
+            deliveredAt: true,
+        }
+      });
+
+      const dailySales = orders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
+      const servedTables = new Set(orders.map(o => o.tableId).filter(Boolean)).size;
+      
+      // Avg Service Time (minutes)
+      let totalServiceTime = 0;
+      let serviceTimeCount = 0;
+      orders.forEach(o => {
+        if (o.deliveredAt) {
+          const diff = o.deliveredAt.getTime() - o.createdAt.getTime();
+          totalServiceTime += diff;
+          serviceTimeCount++;
+        }
+      });
+      const avgServiceTime = serviceTimeCount > 0 ? Math.round((totalServiceTime / serviceTimeCount) / 60000) : 0;
+
+      // Calculate average rating
+            const reviews = await this.prisma.review.findMany({
+              where: {
+                order: {
+                  waiterId: waiter.id,
+                  cafeId: cafeId
+                }
+              },
+              select: {
+                rating: true
+              }
+            });
+
+            const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+            const avgRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : "0.0";
+
+            return {
+              id: waiter.id,
+              name: `${waiter.firstName} ${waiter.lastName}`,
+              dailySales,
+              servedTables,
+              avgServiceTime,
+              revenueContribution: "0",
+              avgRating
+            };
+          }));
+
+    // Calculate revenue contribution
+    const totalWaiterRevenue = waiterStats.reduce((sum, w) => sum + w.dailySales, 0);
+    const waiterPerformance = waiterStats.map(w => ({
+      ...w,
+      revenueContribution: totalWaiterRevenue > 0 ? ((w.dailySales / totalWaiterRevenue) * 100).toFixed(1) : "0"
+    })).sort((a, b) => b.dailySales - a.dailySales);
+
     const result = {
       totalOrders,
       dailyRevenue: dailyRevenue._sum.totalAmount || 0,
       activeTables,
       totalProducts,
+      waiterPerformance,
       recentOrders,
       popularProducts,
       isSoundEnabled: cafeSettings?.isSoundEnabled ?? true,

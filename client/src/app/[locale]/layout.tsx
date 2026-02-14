@@ -60,6 +60,7 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  console.log('--- LocaleLayout Rendered ---', locale);
   const messages = await getMessages();
   const direction = locale === 'ar' ? 'rtl' : 'ltr';
 

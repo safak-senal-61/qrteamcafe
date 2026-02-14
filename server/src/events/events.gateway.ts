@@ -22,7 +22,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // socketId -> { cafeId, tableId } (Hangi socket hangi masada)
   private clientMap = new Map<
     string,
-    { cafeId: string; tableId?: string; role: 'client' | 'admin' }
+    { cafeId: string; tableId?: string; role: 'client' | 'admin' | 'waiter' }
   >();
 
   handleConnection(client: Socket) {
@@ -142,6 +142,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.emitActiveTablesUpdate(cafeId);
   }
 
+  @SubscribeMessage('joinWaiter')
+  async handleJoinWaiter(client: Socket, payload: { cafeId: string }) {
+    const { cafeId } = payload;
+    this.clientMap.set(client.id, { cafeId, role: 'waiter' });
+    await client.join(`cafe_${cafeId}_waiter`);
+  }
+
   private emitActiveTablesUpdate(cafeId: string) {
     const tables = this.activeTables.get(cafeId);
     const count = tables ? tables.size : 0;
@@ -151,6 +158,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   notifyNewOrder(cafeId: string, order: any) {
     // Adminlere bildir
     this.server.to(`cafe_${cafeId}_admin`).emit('newOrder', order);
+    // Garsonlara bildir
+    this.server.to(`cafe_${cafeId}_waiter`).emit('newOrder', order);
   }
 
   notifyOrderStatusUpdate(
@@ -163,5 +172,20 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     // Adminlere de bildir
     this.server.to(`cafe_${cafeId}_admin`).emit('orderStatusUpdate', order);
+    // Garsonlara da bildir
+    this.server.to(`cafe_${cafeId}_waiter`).emit('orderStatusUpdate', order);
+  }
+
+  notifyWaiterCall(cafeId: string, call: any) {
+    this.server.to(`cafe_${cafeId}_admin`).emit('waiterCall', call);
+    this.server.to(`cafe_${cafeId}_waiter`).emit('waiterCall', call);
+  }
+
+  notifyNewWaiterRegistration(cafeId: string, waiter: any) {
+    this.server.to(`cafe_${cafeId}_admin`).emit('newWaiterRegistration', waiter);
+  }
+
+  notifySuspiciousAction(cafeId: string, log: any) {
+    this.server.to(`cafe_${cafeId}_admin`).emit('suspiciousAction', log);
   }
 }

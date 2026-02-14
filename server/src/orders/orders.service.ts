@@ -94,6 +94,7 @@ export class OrdersService {
           cafeId,
           tableId: createOrderDto.tableId,
           customerId: createOrderDto.customerId,
+          waiterId: createOrderDto.waiterId,
           totalAmount: totalAmount,
           status: 'PENDING',
           items: {
@@ -153,6 +154,30 @@ export class OrdersService {
     return orders.map((order) => this.mapOrderWithImages(order));
   }
 
+  async findActive(cafeId: string) {
+    const orders = await this.prisma.order.findMany({
+      where: { 
+        cafeId,
+        status: {
+          in: ['PENDING', 'PREPARING', 'READY', 'DELIVERED']
+        }
+      },
+      include: {
+        table: true,
+        items: {
+          include: {
+            product: {
+              include: { category: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return orders.map((order) => this.mapOrderWithImages(order));
+  }
+
   async findAll(cafeId: string) {
     const orders = await this.prisma.order.findMany({
       where: { cafeId },
@@ -173,7 +198,7 @@ export class OrdersService {
     return orders.map((order) => this.mapOrderWithImages(order));
   }
 
-  async updateStatus(id: string, status: string) {
+  async updateStatus(id: string, status: string, user?: any) {
     return this.prisma.$transaction(async (prisma) => {
       const order = await prisma.order.findUnique({
         where: { id },
@@ -181,6 +206,22 @@ export class OrdersService {
       });
 
       if (!order) throw new Error('Sipariş bulunamadı');
+
+      // Suspicious Action Logging
+      if (status === 'CANCELLED' && user?.type === 'waiter') {
+        const log = await prisma.suspiciousActionLog.create({
+          data: {
+            cafeId: order.cafeId,
+            waiterId: user.id,
+            actionType: 'ORDER_CANCELLED',
+            details: `Order #${order.id} cancelled by waiter ${user.firstName} ${user.lastName}. Amount: ${order.totalAmount}`,
+          },
+          include: { waiter: true },
+        });
+        
+        // Notify Admin
+        this.eventsGateway.notifySuspiciousAction(order.cafeId, log);
+      }
 
       // İptal edilmek isteniyorsa, sadece PENDING ise iptal edilebilir
       if (status === 'CANCELLED' && order.status !== 'PENDING') {
@@ -236,7 +277,7 @@ export class OrdersService {
     });
   }
 
-  async closeTable(tableId: string) {
+  async closeTable(tableId: string, paymentMethod: string) {
     // 1. Masadaki ödenmemiş siparişleri bul
     const orders = await this.prisma.order.findMany({
       where: {
@@ -259,6 +300,8 @@ export class OrdersService {
       },
       data: {
         status: 'PAID',
+        paymentStatus: 'PAID',
+        paymentMethod,
         updatedAt: new Date(),
       },
     });
@@ -272,19 +315,20 @@ export class OrdersService {
       },
       data: {
         status: 'PAID',
+        paymentStatus: 'PAID',
+        paymentMethod,
         deliveredAt: new Date(),
         updatedAt: new Date(),
       },
     });
 
-    // 3. Masayı boşalt (isteğe bağlı, bazı sistemlerde masa hep occupied kalır)
-    // Ama QR sisteminde masa boşalmalı ki yeni müşteri gelince sıfırdan başlasın
-    // Ancak burada 'isOccupied' flag'ini sadece masa fiziksel olarak boşaldığında mı yoksa hesap ödenince mi kaldıracağız?
-    // Kullanıcı "başkası oturduğunda yeniden hesaplama" dedi.
-    // Hesap ödenince masa boşalmış sayılır.
+    // 3. Masayı boşalt
     await this.prisma.table.update({
       where: { id: tableId },
-      data: { isOccupied: false },
+      data: { 
+        isOccupied: false,
+        lastOccupiedAt: null 
+      },
     });
 
     // 4. Toplam tutarı hesapla
