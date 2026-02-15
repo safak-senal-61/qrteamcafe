@@ -1,44 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailService {
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
 
   constructor() {
-    const secure = process.env.MAIL_SECURE === 'true';
-    const port = Number(process.env.MAIL_PORT);
-
-    // Gmail ve diğer bazı servisler için önerilen ayarlar
-    const transportConfig: any = {
-      host: process.env.MAIL_HOST,
-      port: port,
-      secure: secure,
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-    };
-
-    // Eğer secure (465) değilse TLS ayarlarını yapıyoruz
-    if (!secure) {
-      transportConfig.tls = {
-        // Geliştirme ortamında sertifika hatalarını yok say
-        rejectUnauthorized: false,
-        ciphers: 'SSLv3',
-      };
-    }
-
-    this.transporter = nodemailer.createTransport(transportConfig);
+    this.resend = new Resend(process.env.MAIL_PASS); // Using MAIL_PASS as API KEY for Resend
   }
 
   async sendCafeVerificationEmail(to: string, code: string, cafeName: string) {
-    const mailOptions = {
-      from: `"qrders" <${process.env.MAIL_FROM}>`,
-      to,
+    await this.resend.emails.send({
+      from: 'qrders <noreply@qrders.com.tr>',
+      to: [to],
       subject: `${cafeName} - İşletme Doğrulama Kodu`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -54,15 +28,13 @@ export class MailService {
           <p style="font-size: 12px; color: #888; text-align: center;">qrders Yönetim Sistemi</p>
         </div>
       `,
-    };
-
-    await this.transporter.sendMail(mailOptions);
+    });
   }
 
   async sendCustomerVerificationEmail(to: string, code: string, name: string) {
-    const mailOptions = {
-      from: `"qrders" <${process.env.MAIL_FROM}>`,
-      to,
+    await this.resend.emails.send({
+      from: 'qrders <noreply@qrders.com.tr>',
+      to: [to],
       subject: 'Hesap Doğrulama Kodu',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -78,9 +50,7 @@ export class MailService {
           <p style="font-size: 12px; color: #888; text-align: center;">qrders Ekibi</p>
         </div>
       `,
-    };
-
-    await this.transporter.sendMail(mailOptions);
+    });
   }
 
   async sendCafePasswordResetEmail(
@@ -93,9 +63,9 @@ export class MailService {
       : 'Şifre Sıfırlama Talebi';
     const greeting = cafeName ? `Merhaba ${cafeName} Yöneticisi,` : 'Merhaba,';
 
-    const mailOptions = {
-      from: `"qrders" <${process.env.MAIL_FROM}>`,
-      to,
+    await this.resend.emails.send({
+      from: 'qrders <noreply@qrders.com.tr>',
+      to: [to],
       subject: title,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -111,9 +81,7 @@ export class MailService {
           <p style="font-size: 12px; color: #888; text-align: center;">qrders Yönetim Sistemi</p>
         </div>
       `,
-    };
-
-    await this.transporter.sendMail(mailOptions);
+    });
   }
 
   async sendContactFormEmail(data: {
@@ -122,9 +90,9 @@ export class MailService {
     subject: string;
     message: string;
   }) {
-    const mailOptions = {
-      from: `"qrders Contact" <${process.env.MAIL_FROM}>`,
-      to: process.env.ADMIN_EMAIL, // Send to admin
+    await this.resend.emails.send({
+      from: 'qrders Contact <noreply@qrders.com.tr>',
+      to: [process.env.ADMIN_EMAIL || 'admin@qrders.com.tr'], // Send to admin or default
       replyTo: data.email,
       subject: `İletişim Formu: ${data.subject}`,
       html: `
@@ -143,15 +111,13 @@ export class MailService {
           </p>
         </div>
       `,
-    };
-
-    await this.transporter.sendMail(mailOptions);
+    });
   }
 
   async sendCustomerPasswordResetEmail(to: string, code: string, name: string) {
-    const mailOptions = {
-      from: `"qrders" <${process.env.MAIL_FROM}>`,
-      to,
+    await this.resend.emails.send({
+      from: 'qrders <noreply@qrders.com.tr>',
+      to: [to],
       subject: 'Şifre Sıfırlama Talebi',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -167,15 +133,13 @@ export class MailService {
           <p style="font-size: 12px; color: #888; text-align: center;">qrders Ekibi</p>
         </div>
       `,
-    };
-
-    await this.transporter.sendMail(mailOptions);
+    });
   }
 
   async sendEmailChangeVerificationEmail(to: string, code: string) {
-    const mailOptions = {
-      from: `"qrders" <${process.env.MAIL_FROM}>`,
-      to,
+    await this.resend.emails.send({
+      from: 'qrders <noreply@qrders.com.tr>',
+      to: [to],
       subject: 'E-posta Değişikliği Doğrulama Kodu',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -191,8 +155,6 @@ export class MailService {
           <p style="font-size: 12px; color: #888; text-align: center;">qrders Yönetim Sistemi</p>
         </div>
       `,
-    };
-
-    await this.transporter.sendMail(mailOptions);
+    });
   }
 }
