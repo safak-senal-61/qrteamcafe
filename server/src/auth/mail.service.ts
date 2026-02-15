@@ -7,7 +7,9 @@ export class MailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.MAIL_HOST,
+      port: Number(process.env.MAIL_PORT),
+      secure: true,
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
@@ -17,7 +19,7 @@ export class MailService {
 
   async sendCafeVerificationEmail(to: string, code: string, cafeName: string) {
     const mailOptions = {
-      from: `"qrders" <${process.env.MAIL_USER}>`,
+      from: `"qrders" <${process.env.MAIL_FROM}>`,
       to,
       subject: `${cafeName} - İşletme Doğrulama Kodu`,
       html: `
@@ -41,7 +43,7 @@ export class MailService {
 
   async sendCustomerVerificationEmail(to: string, code: string, name: string) {
     const mailOptions = {
-      from: `"qrders" <${process.env.MAIL_USER}>`,
+      from: `"qrders" <${process.env.MAIL_FROM}>`,
       to,
       subject: 'Hesap Doğrulama Kodu',
       html: `
@@ -74,7 +76,7 @@ export class MailService {
     const greeting = cafeName ? `Merhaba ${cafeName} Yöneticisi,` : 'Merhaba,';
 
     const mailOptions = {
-      from: `"qrders" <${process.env.MAIL_USER}>`,
+      from: `"qrders" <${process.env.MAIL_FROM}>`,
       to,
       subject: title,
       html: `
@@ -103,8 +105,8 @@ export class MailService {
     message: string;
   }) {
     const mailOptions = {
-      from: `"qrders Contact" <${process.env.MAIL_USER}>`,
-      to: process.env.MAIL_USER, // Send to self
+      from: `"qrders Contact" <${process.env.MAIL_FROM}>`,
+      to: process.env.ADMIN_EMAIL, // Send to admin
       replyTo: data.email,
       subject: `İletişim Formu: ${data.subject}`,
       html: `
@@ -130,7 +132,7 @@ export class MailService {
 
   async sendCustomerPasswordResetEmail(to: string, code: string, name: string) {
     const mailOptions = {
-      from: `"qrders" <${process.env.MAIL_USER}>`,
+      from: `"qrders" <${process.env.MAIL_FROM}>`,
       to,
       subject: 'Şifre Sıfırlama Talebi',
       html: `
@@ -154,7 +156,7 @@ export class MailService {
 
   async sendEmailChangeVerificationEmail(to: string, code: string) {
     const mailOptions = {
-      from: `"qrders" <${process.env.MAIL_USER}>`,
+      from: `"qrders" <${process.env.MAIL_FROM}>`,
       to,
       subject: 'E-posta Değişikliği Doğrulama Kodu',
       html: `

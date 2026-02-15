@@ -41,8 +41,12 @@ async function bootstrap() {
   );
 
   // Enable CORS for frontend
+  const corsOrigins = process.env.CORS_ORIGINS 
+    ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) 
+    : true;
+
   app.enableCors({
-    origin: true, // Allow all origins (for development) or specify array of allowed origins
+    origin: corsOrigins, // Allow specified origins or all if not defined
     credentials: true,
   });
 

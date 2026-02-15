@@ -1,18 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, Variants } from 'framer-motion';
+import { LazyMotion, domAnimation, m, Variants } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Globe, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import LottieAnimation from '@/components/ui/LottieAnimation';
+import dynamic from 'next/dynamic';
+const LottieAnimation = dynamic(() => import('@/components/ui/LottieAnimation'), { ssr: false });
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import axios from 'axios';
-import { getApiUrl } from '@/lib/api';
+import { sendContactEmail } from '@/actions/contact';
 
 export default function ContactPage() {
   const t = useTranslations('ContactPage');
@@ -35,20 +35,28 @@ export default function ContactPage() {
     setIsLoading(true);
 
     try {
-      await axios.post(`${getApiUrl()}/contact`, formData);
-      setIsSuccess(true);
-      toast.success('Mesajınız başarıyla gönderildi!');
-    } catch (error: unknown) {
-      console.error('Contact form error:', error);
-      let errorMessage = 'Bir hata oluştu. Lütfen tekrar deneyiniz.';
-      
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
+      const formDataObj = new FormData();
+      formDataObj.append('name', formData.name);
+      formDataObj.append('email', formData.email);
+      formDataObj.append('subject', formData.subject);
+      formDataObj.append('message', formData.message);
 
-      // If message is array (validation errors), join them
-      const displayMessage = Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage;
-      toast.error(typeof displayMessage === 'string' ? displayMessage : 'Bir hata oluştu');
+      const result = await sendContactEmail({}, formDataObj);
+
+      if (result.success) {
+        setIsSuccess(true);
+        toast.success(result.message);
+      } else {
+        let errorMessage = result.message || 'Bir hata oluştu.';
+        if (result.errors) {
+          const errorMessages = Object.values(result.errors).flat().join(', ');
+          if (errorMessages) errorMessage = errorMessages;
+        }
+        toast.error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      toast.error('Bir hata oluştu. Lütfen tekrar deneyiniz.');
     } finally {
       setIsLoading(false);
     }
@@ -87,34 +95,35 @@ export default function ContactPage() {
       </div>
 
       <div className="container mx-auto px-4 py-12 lg:py-32">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="max-w-7xl mx-auto"
-        >
-          {/* Header Section */}
-          <div className="text-center mb-10 lg:mb-16 space-y-4 lg:space-y-6">
-            <motion.div variants={itemVariants} className="inline-block">
-              <span className="px-4 py-2 rounded-full bg-primary/10 text-primary font-medium text-sm">
-                {t('badge')}
-              </span>
-            </motion.div>
-            <motion.h1 variants={itemVariants} className="text-3xl md:text-6xl font-bold tracking-tight">
-              {t('title')} <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">
-                {t('titleHighlight')}
-              </span>
-            </motion.h1>
-            <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              {t('subtitle')}
-            </motion.p>
-          </div>
+        <LazyMotion features={domAnimation}>
+          <m.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="max-w-7xl mx-auto"
+          >
+            {/* Header Section */}
+            <div className="text-center mb-10 lg:mb-16 space-y-4 lg:space-y-6">
+              <m.div variants={itemVariants} className="inline-block">
+                <span className="px-4 py-2 rounded-full bg-primary/10 text-primary font-medium text-sm">
+                  {t('badge')}
+                </span>
+              </m.div>
+              <m.h1 variants={itemVariants} className="text-3xl md:text-6xl font-bold tracking-tight">
+                {t('title')} <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">
+                  {t('titleHighlight')}
+                </span>
+              </m.h1>
+              <m.p variants={itemVariants} className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                {t('subtitle')}
+              </m.p>
+            </div>
 
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-start">
-            {/* Contact Info Side */}
-            <motion.div variants={itemVariants} className="space-y-8">
-              <div className="relative">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-start">
+              {/* Contact Info Side */}
+              <m.div variants={itemVariants} className="space-y-8">
+                <div className="relative">
                  {/* Decorative Lottie */}
                 <div className="w-full h-64 mb-8 bg-secondary/30 rounded-3xl flex items-center justify-center overflow-hidden border border-border/50">
                     <LottieAnimation url="https://assets2.lottiefiles.com/packages/lf20_u25cckyh.json" height="120%" width="120%" />
@@ -165,10 +174,10 @@ export default function ContactPage() {
                   </Card>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
 
             {/* Contact Form Side */}
-            <motion.div variants={itemVariants}>
+            <m.div variants={itemVariants}>
               <Card className="border-none shadow-2xl bg-card/80 backdrop-blur-xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-purple-600" />
                 <CardContent className="p-8 md:p-10">
@@ -287,9 +296,10 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </div>
-        </motion.div>
+        </m.div>
+        </LazyMotion>
       </div>
     </div>
   );

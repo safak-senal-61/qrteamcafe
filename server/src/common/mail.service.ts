@@ -7,7 +7,9 @@ export class MailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.MAIL_HOST,
+      port: Number(process.env.MAIL_PORT),
+      secure: true,
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
@@ -17,7 +19,7 @@ export class MailService {
 
   async sendVerificationCode(email: string, code: string) {
     const mailOptions = {
-      from: `"QR Team Cafe" <${process.env.MAIL_USER}>`,
+      from: `"QR Team Cafe" <${process.env.MAIL_FROM}>`,
       to: email,
       subject: 'Garson Hesabı Doğrulama Kodu',
       html: `
@@ -57,7 +59,7 @@ export class MailService {
     const link = `${clientUrl}/tr/waiter/complete-registration?token=${token}`;
 
     const mailOptions = {
-      from: `"QR Team Cafe" <${process.env.MAIL_USER}>`,
+      from: `"QR Team Cafe" <${process.env.MAIL_FROM}>`,
       to: email,
       subject: `${cafeName} - Personel Daveti`,
       html: `
