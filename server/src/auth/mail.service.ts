@@ -6,15 +6,29 @@ export class MailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
+    const secure = process.env.MAIL_SECURE === 'true';
+    const port = Number(process.env.MAIL_PORT);
+
+    const transportConfig: any = {
       host: process.env.MAIL_HOST,
-      port: Number(process.env.MAIL_PORT),
-      secure: process.env.MAIL_SECURE === 'true', // true for 465, false for other ports
+      port: port,
+      secure: secure,
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
       },
-    });
+    };
+
+    // Only add TLS options if not using secure connection (port 465)
+    // For port 587 (STARTTLS), we might need to be lenient in dev
+    if (!secure) {
+      transportConfig.tls = {
+        rejectUnauthorized: process.env.NODE_ENV === 'production',
+        ciphers: 'SSLv3',
+      };
+    }
+
+    this.transporter = nodemailer.createTransport(transportConfig);
   }
 
   async sendCafeVerificationEmail(to: string, code: string, cafeName: string) {

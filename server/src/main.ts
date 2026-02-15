@@ -37,7 +37,12 @@ async function bootstrap() {
           ],
           imgSrc: ["'self'", 'data:', 'https://cdn.jsdelivr.net'],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-          connectSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://qrders.com.tr', 'https://api.qrders.com.tr'],
+          connectSrc: [
+            "'self'",
+            'https://cdn.jsdelivr.net',
+            'https://qrders.com.tr',
+            'https://api.qrders.com.tr',
+          ],
         },
       },
     }),
@@ -53,7 +58,9 @@ async function bootstrap() {
   ];
 
   if (process.env.CORS_ORIGINS) {
-    const envOrigins = process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim());
+    const envOrigins = process.env.CORS_ORIGINS.split(',').map((origin) =>
+      origin.trim(),
+    );
     allowedOrigins.push(...envOrigins);
   }
 
@@ -65,8 +72,11 @@ async function bootstrap() {
         console.log('[CORS] Allowed (No Origin)');
         return callback(null, true);
       }
-      
-      if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+
+      if (
+        allowedOrigins.includes(origin) ||
+        process.env.NODE_ENV !== 'production'
+      ) {
         console.log(`[CORS] Allowed: ${origin}`);
         callback(null, true);
       } else {
@@ -78,7 +88,7 @@ async function bootstrap() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    optionsSuccessStatus: 200,
   });
 
   // Serve static files

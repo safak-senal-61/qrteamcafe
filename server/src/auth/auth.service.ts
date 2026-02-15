@@ -575,11 +575,21 @@ export class AuthService {
       },
     });
 
-    await this.mailService.sendCafePasswordResetEmail(
-      admin.email,
-      code,
-      admin.cafe?.name,
-    );
+    try {
+      await this.mailService.sendCafePasswordResetEmail(
+        admin.email,
+        code,
+        admin.cafe?.name,
+      );
+    } catch (error) {
+      console.error('[AuthService] Mail sending failed:', error);
+      // We don't throw error to user, but log it.
+      // User will see success message but won't receive email.
+      // Alternatively, we could throw InternalServerErrorException.
+      throw new BadRequestException(
+        'E-posta gönderilemedi. Lütfen daha sonra tekrar deneyiniz.',
+      );
+    }
 
     return { message: 'Şifre sıfırlama kodu e-posta adresinize gönderildi.' };
   }

@@ -1,4 +1,12 @@
-import { Module, Logger, OnModuleInit, Inject, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import {
+  Module,
+  Logger,
+  OnModuleInit,
+  Inject,
+  MiddlewareConsumer,
+  RequestMethod,
+  NestModule,
+} from '@nestjs/common';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { CacheModule, CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
@@ -95,15 +103,13 @@ import { redisStore } from 'cache-manager-redis-yet';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule implements OnModuleInit {
+export class AppModule implements OnModuleInit, NestModule {
   private readonly logger = new Logger(AppModule.name);
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(LoggerMiddleware)
-      .forRoutes({ path: '*', method: RequestMethod.ALL });
+    consumer.apply(LoggerMiddleware).forRoutes('*');
   }
 
   async onModuleInit() {
