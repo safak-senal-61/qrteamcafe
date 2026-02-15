@@ -84,15 +84,16 @@ export class PaymentsController {
     }
 
     // Construct frontend URL dynamically if possible, or fallback to ENV/localhost
-    // Ideally FRONTEND_URL should be set, but we can try to infer from referer if available (unreliable)
-    // For now stick to ENV or localhost:3000, but maybe use the request host to infer the IP for the frontend if on same network?
-    // Assuming frontend is on port 3000 and same hostname as API (which is on 3001 usually).
-
+    // Ideally CLIENT_URL (or FRONTEND_URL) should be set in .env
     const protocol = req.protocol;
     const host = req.get('host') ?? 'localhost:3001';
     const hostname = host.split(':')[0] || 'localhost';
+    
+    // Use CLIENT_URL from env, or FRONTEND_URL, or fallback to localhost:3000
     const frontendUrl =
-      process.env.FRONTEND_URL || `${protocol}://${hostname}:3000`;
+      process.env.CLIENT_URL || 
+      process.env.FRONTEND_URL || 
+      (hostname === 'localhost' ? `${protocol}://${hostname}:3000` : `${protocol}://${hostname}`);
 
     try {
       const result: any = await this.paymentsService.verifyPayment(token);

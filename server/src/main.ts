@@ -13,6 +13,9 @@ import helmet from 'helmet';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Trust proxy for Nginx
+  app.set('trust proxy', 1);
+
   // Enable Helmet for security headers
   app.use(
     helmet({
