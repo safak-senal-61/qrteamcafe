@@ -116,6 +116,7 @@ export class AuthController {
 
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    console.log('[AuthController] forgotPassword called with DTO:', dto);
     return this.authService.forgotPassword(dto);
   }
 

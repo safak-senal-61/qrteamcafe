@@ -552,6 +552,7 @@ export class AuthService {
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
+    console.log('[AuthService] forgotPassword request received for:', dto.email);
     const email = dto.email.toLowerCase();
     const admin = await this.prisma.cafeAdmin.findUnique({
       where: { email },
@@ -559,11 +560,13 @@ export class AuthService {
     });
 
     if (!admin) {
+      console.warn('[AuthService] User not found for email:', email);
       throw new NotFoundException(
         'Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.',
       );
     }
 
+    console.log('[AuthService] User found, generating reset code...');
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = new Date(Date.now() + 15 * 60 * 1000);
 
@@ -575,14 +578,17 @@ export class AuthService {
       },
     });
 
+    console.log('[AuthService] Reset code saved to DB. Attempting to send email...');
+
     try {
       await this.mailService.sendCafePasswordResetEmail(
         admin.email,
         code,
         admin.cafe?.name,
       );
+      console.log('[AuthService] Email sent successfully.');
     } catch (error) {
-      console.error('[AuthService] Mail sending failed:', error);
+      console.error('[AuthService] Mail sending failed with error details:', JSON.stringify(error, null, 2));
       // We don't throw error to user, but log it.
       // User will see success message but won't receive email.
       // Alternatively, we could throw InternalServerErrorException.
