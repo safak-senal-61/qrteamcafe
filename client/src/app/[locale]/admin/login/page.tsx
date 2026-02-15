@@ -362,9 +362,9 @@ export default function AdminLoginPage() {
           <DialogHeader>
             <DialogTitle>{t('forgotPassword.title')}</DialogTitle>
             <DialogDescription>
-              {forgotPasswordStep === 1 && t('forgotPassword.step1Desc')}
-              {forgotPasswordStep === 2 && t('forgotPassword.step2Desc')}
-              {forgotPasswordStep === 3 && t('forgotPassword.step3Desc')}
+              {forgotPasswordStep === 1 && (t('forgotPassword.step1Desc') || 'E-posta adresinizi giriniz.')}
+              {forgotPasswordStep === 2 && (t('forgotPassword.step2Desc') || 'Doğrulama kodunu giriniz.')}
+              {forgotPasswordStep === 3 && (t('forgotPassword.step3Desc') || 'Yeni şifrenizi belirleyiniz.')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForgotPassword} className="space-y-4">
