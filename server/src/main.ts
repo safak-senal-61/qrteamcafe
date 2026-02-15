@@ -59,12 +59,18 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
+      console.log(`[CORS] Checking origin: ${origin}`);
       // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+      if (!origin) {
+        console.log('[CORS] Allowed (No Origin)');
+        return callback(null, true);
+      }
       
       if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+        console.log(`[CORS] Allowed: ${origin}`);
         callback(null, true);
       } else {
+        console.log(`[CORS] Fallback Allowed (Permissive Mode): ${origin}`);
         // Fallback to allow if explicitly whitelisted, otherwise deny
         // For now, to solve the user's issue, let's be permissive if logic fails
         callback(null, true);
@@ -72,7 +78,7 @@ async function bootstrap() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   });
 
   // Serve static files
