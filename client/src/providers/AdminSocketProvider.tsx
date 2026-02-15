@@ -57,9 +57,13 @@ export function AdminSocketProvider({ children }: { children: React.ReactNode })
 
     console.log('AdminSocketProvider: Connecting to websocket with cafeId:', cafeId);
     
+    const token = localStorage.getItem('token');
     const newSocket = io(API_URL, {
       transports: ['websocket'],
       reconnection: true,
+      auth: {
+        token,
+      },
     });
 
     newSocket.on('connect', () => {

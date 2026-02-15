@@ -37,15 +37,15 @@ async function bootstrap() {
           ],
           imgSrc: ["'self'", 'data:', 'https://cdn.jsdelivr.net'],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-          connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+          connectSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://qrders.com.tr', 'https://api.qrders.com.tr'],
         },
       },
     }),
   );
 
   // Enable CORS for frontend
-  const corsOrigins = process.env.CORS_ORIGINS 
-    ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) 
+  const corsOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
     : true;
 
   app.enableCors({

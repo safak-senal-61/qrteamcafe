@@ -5,6 +5,7 @@ import { Bell, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';
 import { motion } from 'framer-motion';
+import { useCustomerStore } from '@/store/customer-store';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ export function CallWaiterButton({ options }: CallWaiterButtonProps) {
   const searchParams = useSearchParams();
   const cafeId = params.cafeId as string;
   const tableNumber = searchParams.get('table');
+  const { token } = useCustomerStore();
   
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -77,9 +79,14 @@ export function CallWaiterButton({ options }: CallWaiterButtonProps) {
         return;
       }
 
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch(`${API_URL}/waiter-calls?cafeId=${cafeId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ tableId: currentTable.id, type }),
       });
 
@@ -91,7 +98,8 @@ export function CallWaiterButton({ options }: CallWaiterButtonProps) {
         // 1 minute cooldown
         setTimeout(() => setCooldown(false), 60000);
       } else {
-        toast.error('Talep iletilirken bir hata oluştu.');
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(errorData.message || 'Talep iletilirken bir hata oluştu.');
       }
     } catch (error) {
       console.error(error);
@@ -108,7 +116,7 @@ export function CallWaiterButton({ options }: CallWaiterButtonProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <div className="fixed bottom-24 left-6 z-50">
+        <div className="fixed bottom-6 left-6 z-50">
            <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -117,11 +125,10 @@ export function CallWaiterButton({ options }: CallWaiterButtonProps) {
           >
             <Button
               size="lg"
-              variant="outline"
-              className="h-12 w-12 rounded-full shadow-xl bg-white/90 backdrop-blur-sm border-amber-500 text-amber-600 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-600"
+              className="h-16 w-16 rounded-full shadow-2xl bg-amber-500 hover:bg-amber-600 text-white border-4 border-white ring-2 ring-amber-500/20"
               disabled={cooldown}
             >
-              <Bell className={`h-6 w-6 ${cooldown ? 'opacity-50' : ''}`} />
+              <Bell className={`h-8 w-8 ${cooldown ? 'opacity-50' : ''}`} />
             </Button>
           </motion.div>
         </div>

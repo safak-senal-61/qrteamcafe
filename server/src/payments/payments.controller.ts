@@ -88,12 +88,14 @@ export class PaymentsController {
     const protocol = req.protocol;
     const host = req.get('host') ?? 'localhost:3001';
     const hostname = host.split(':')[0] || 'localhost';
-    
+
     // Use CLIENT_URL from env, or FRONTEND_URL, or fallback to localhost:3000
     const frontendUrl =
-      process.env.CLIENT_URL || 
-      process.env.FRONTEND_URL || 
-      (hostname === 'localhost' ? `${protocol}://${hostname}:3000` : `${protocol}://${hostname}`);
+      process.env.CLIENT_URL ||
+      process.env.FRONTEND_URL ||
+      (hostname === 'localhost'
+        ? `${protocol}://${hostname}:3000`
+        : `${protocol}://${hostname}`);
 
     try {
       const result: any = await this.paymentsService.verifyPayment(token);
