@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.985.0",
-    "@img/sharp-win32-x64": "^0.34.5",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
