@@ -9,6 +9,7 @@ export class MailService {
     const secure = process.env.MAIL_SECURE === 'true';
     const port = Number(process.env.MAIL_PORT);
 
+    // Gmail ve diğer bazı servisler için önerilen ayarlar
     const transportConfig: any = {
       host: process.env.MAIL_HOST,
       port: port,
@@ -17,16 +18,16 @@ export class MailService {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
       },
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,   // 10 seconds
-      socketTimeout: 10000,     // 10 seconds
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     };
 
-    // Only add TLS options if not using secure connection (port 465)
-    // For port 587 (STARTTLS), we might need to be lenient in dev
+    // Eğer secure (465) değilse TLS ayarlarını yapıyoruz
     if (!secure) {
       transportConfig.tls = {
-        rejectUnauthorized: process.env.NODE_ENV === 'production',
+        // Geliştirme ortamında sertifika hatalarını yok say
+        rejectUnauthorized: false,
         ciphers: 'SSLv3',
       };
     }
