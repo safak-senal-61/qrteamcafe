@@ -17,13 +17,12 @@ import {
   ArrowUpRight,
   Loader2,
   Package,
-  ExternalLink,
   BellRing,
-  ChevronRight,
-  Star,
   Crown,
   CreditCard,
-  Clock
+  Clock,
+  Megaphone,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -32,9 +31,29 @@ import { useSearchParams } from 'next/navigation';
 import { API_URL, getMediaUrl } from '@/lib/api';
 import Image from 'next/image';
 import { useAdminSocket } from '@/providers/AdminSocketProvider';
+import { format } from 'date-fns';
+import { tr } from 'date-fns/locale';
 
 // Sayfanın dinamik olmasını zorla (Cache sorunlarını önlemek için)
 export const dynamic = 'force-dynamic';
+
+const actionTypeLabels: Record<string, string> = {
+  ORDER_CREATED: 'Yeni Sipariş',
+  ORDER_UPDATED: 'Sipariş Güncelleme',
+  ORDER_CANCELLED: 'Sipariş İptali',
+  TABLE_MOVED: 'Masa Taşıma',
+  TABLE_CLOSE_PAYMENT: 'Hesap Kapatma',
+  PRODUCT_CREATE: 'Ürün Ekleme',
+  PRODUCT_UPDATE: 'Ürün Güncelleme',
+  PRODUCT_DELETE: 'Ürün Silme',
+  CATEGORY_CREATE: 'Kategori Ekleme',
+  CATEGORY_UPDATE: 'Kategori Güncelleme',
+  CATEGORY_DELETE: 'Kategori Silme',
+  WAITER_INVITE: 'Garson Daveti',
+  WAITER_DELETE: 'Garson Silme',
+  CAFE_SETTINGS_UPDATE: 'Kafe Ayarları',
+  SYSTEM_AUTO_CLOSE: 'Otomatik Kapanış',
+};
 
 interface OrderItem {
   id: string;
@@ -69,6 +88,25 @@ interface WaiterCall {
   };
 }
 
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  type: 'INFO' | 'WARNING' | 'DANGER' | 'SUCCESS';
+  targetRole: 'ALL' | 'CAFE_ADMIN' | 'WAITER';
+  expiresAt?: string;
+  createdAt: string;
+}
+
+interface AuditLog {
+  id: string;
+  actionType: string;
+  details: string;
+  timestamp: string;
+  admin?: { name: string };
+  waiter?: { firstName: string; lastName: string };
+}
+
 interface DashboardStats {
   totalOrders: number;
   dailyRevenue: number;
@@ -99,11 +137,12 @@ export default function DashboardPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { socket, activeTablesCount, isConnected } = useAdminSocket();
+  const { socket, activeTablesCount } = useAdminSocket();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [cafeId, setCafeId] = useState<string | null>(null);
-  const [newOrderCount, setNewOrderCount] = useState(0);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   
   // Payment Success Dialog State
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
@@ -281,7 +320,7 @@ export default function DashboardPage() {
     // LocalStorage'dan sayaç durumunu yükle
     const savedCount = localStorage.getItem('newOrderCount');
     if (savedCount) {
-      setNewOrderCount(parseInt(savedCount));
+      // setNewOrderCount(parseInt(savedCount));
     }
 
     if (!socket) return;
@@ -317,17 +356,17 @@ export default function DashboardPage() {
         },
       });
       
-      setNewOrderCount((prev) => {
-        const newCount = prev + 1;
-        localStorage.setItem('newOrderCount', newCount.toString());
-        return newCount;
-      });
+      // setNewOrderCount((prev) => {
+      //   const newCount = prev + 1;
+      //   localStorage.setItem('newOrderCount', newCount.toString());
+      //   return newCount;
+      // });
 
       // Sipariş sayısını ve listesini güncelle
       setStats((prev) => {
         if (!prev) return null;
         // Yeni siparişi listenin başına ekle
-        const updatedRecentOrders = [order, ...prev.recentOrders].slice(0, 10);
+        const updatedRecentOrders = [order, ...prev.recentOrders].slice(10);
         
         return {
           ...prev,
@@ -401,6 +440,25 @@ export default function DashboardPage() {
         } else {
           toast.error('Veriler yüklenemedi.');
         }
+
+        // Fetch Announcements
+        const annResponse = await fetch(`${API_URL}/announcements/active`, {
+           headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (annResponse.ok) {
+           const annData = await annResponse.json();
+           setAnnouncements(annData);
+        }
+
+        // Fetch Audit Logs
+        const logsResponse = await fetch(`${API_URL}/audit-logs?limit=5`, {
+           headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (logsResponse.ok) {
+           const logsData = await logsResponse.json();
+           setAuditLogs(logsData.logs || []);
+        }
+
       } catch (error) {
         console.error('Failed to fetch stats:', error);
         toast.error('Sunucu hatası.');
@@ -411,11 +469,6 @@ export default function DashboardPage() {
 
     fetchStats();
   }, []);
-
-  const handleViewOrders = () => {
-    setNewOrderCount(0);
-    localStorage.setItem('newOrderCount', '0');
-  };
 
   if (loading) {
     return (
@@ -576,181 +629,189 @@ export default function DashboardPage() {
                 </div>
              )}
           </div>
-
           <DialogFooter>
-            <Button onClick={() => setShowPaymentSuccess(false)}>Tamam</Button>
+             <Button onClick={() => setShowPaymentSuccess(false)}>Tamam</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Subscription Status Banner */}
-      {subStatus && (
-        <div className={`p-6 rounded-xl text-white shadow-lg ${subStatus.color} flex items-center justify-between relative overflow-hidden`}>
-          <div className="flex items-center gap-4 z-10">
-            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
-              <subStatus.icon className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                {subStatus.label}
-                {subStatus.type === 'PRO' && <Badge variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-0">Premium</Badge>}
-              </h3>
-              <p className="text-white/90 text-sm">
-                {subStatus.daysLeft > 0 
-                  ? `${subStatus.daysLeft} gün kaldı` 
-                  : 'Abonelik süreniz doldu, lütfen yenileyin.'}
-              </p>
-            </div>
-          </div>
-          
-          {subStatus.type !== 'PRO' && (
-             <Button variant="secondary" className="bg-white text-primary hover:bg-gray-100 z-10" onClick={() => router.push('/pricing')}>
-               Yükselt
-             </Button>
-          )}
-
-          {/* Background decoration */}
-          <div className="absolute right-0 top-0 h-full w-1/3 bg-white/10 skew-x-12 transform translate-x-10" />
-        </div>
-      )}
-
-      {newOrderCount > 0 && (
-        <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-center justify-between animate-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary text-primary-foreground p-2 rounded-full animate-pulse">
-              <BellRing className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg text-primary">Yeni Sipariş Var!</h3>
-              <p className="text-sm text-muted-foreground">
-                {newOrderCount} adet yeni sipariş onay bekliyor.
-              </p>
-            </div>
-          </div>
-          <Link href="/admin/orders">
-             <Button onClick={handleViewOrders} className="rounded-full px-6 font-bold shadow-lg shadow-primary/20">
-               Siparişleri Görüntüle <ChevronRight className="ml-2 h-4 w-4" />
-             </Button>
-          </Link>
-        </div>
-      )}
-
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Panel Özeti</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Panel</h2>
           <p className="text-muted-foreground">
-            İşletmenizin genel durumunu buradan takip edebilirsiniz.
+            Kafe durumunu ve istatistiklerini görüntüleyin
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {!isConnected && (
-            <Badge variant="destructive" className="animate-pulse">
-              Bağlantı Yok
-            </Badge>
-          )}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={toggleSound}
-            className={`gap-2 transition-all duration-300 ${
-              soundEnabled 
-                ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 shadow-sm'
-                : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 shadow-sm'
-            }`}
-          >
-            <BellRing className={`h-4 w-4 ${soundEnabled ? 'fill-current animate-pulse' : 'opacity-50'}`} />
-            Bildirim Sesi Ayarları: {soundEnabled ? 'Açık' : 'Kapalı'}
-          </Button>
-          <Link href="/admin/products">
-            <Button 
-              className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 gap-2"
-            >
-              <Star className="h-4 w-4 fill-current" />
-              Öneri Sun
-            </Button>
-          </Link>
-          {cafeId && (
-            <Link href={`/menu/${cafeId}?demo=true`} target="_blank">
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Menü Önizleme
-              </Button>
-            </Link>
-          )}
+        <div className="flex items-center gap-4">
+           {/* Sound Toggle */}
+           <Button
+             variant="outline"
+             size="icon"
+             onClick={toggleSound}
+             className={soundEnabled ? 'text-primary' : 'text-muted-foreground'}
+             title={soundEnabled ? 'Bildirim sesi açık' : 'Bildirim sesi kapalı'}
+           >
+             {soundEnabled ? (
+               <BellRing className="h-5 w-5" />
+             ) : (
+               <div className="relative">
+                 <BellRing className="h-5 w-5 opacity-50" />
+                 <div className="absolute top-1/2 left-0 w-full h-0.5 bg-current -rotate-45" />
+               </div>
+             )}
+           </Button>
+
+           <Button variant="outline" asChild>
+             <Link href="/admin/settings">Ayarlar</Link>
+           </Button>
+           <Button asChild>
+             <Link href="/admin/orders">Siparişler</Link>
+           </Button>
         </div>
       </div>
 
+      {/* Subscription Status Banner */}
+      {subStatus && (
+        <Card className={`${subStatus.color} border-none text-white shadow-lg overflow-hidden relative`}>
+           <div className="absolute right-0 top-0 h-full w-32 bg-white/10 skew-x-12 translate-x-16" />
+           <CardContent className="p-6 flex items-center justify-between relative z-10">
+              <div className="flex items-center gap-4">
+                 <div className="bg-white/20 p-3 rounded-full">
+                    <subStatus.icon className="h-6 w-6" />
+                 </div>
+                 <div>
+                    <h3 className="font-bold text-lg">{subStatus.label}</h3>
+                    <p className="text-white/90 text-sm">
+                       {subStatus.type === 'EXPIRED' 
+                          ? 'Abonelik süreniz dolmuştur. Hizmetlerden yararlanmaya devam etmek için lütfen yenileyin.'
+                          : `Kalan Süre: ${subStatus.daysLeft} Gün`}
+                    </p>
+                 </div>
+              </div>
+              <Button 
+                variant="secondary" 
+                className="whitespace-nowrap bg-white text-slate-900 hover:bg-slate-100"
+                asChild
+              >
+                 <Link href="/pricing">
+                    {subStatus.type === 'EXPIRED' ? 'Hemen Yenile' : 'Paketi Yükselt'}
+                 </Link>
+              </Button>
+           </CardContent>
+        </Card>
+      )}
+
+      {/* Active Announcements */}
+      {announcements.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {announcements.map((ann) => (
+             <div key={ann.id} className={`p-4 rounded-lg border flex items-start gap-3 ${
+                ann.type === 'DANGER' ? 'bg-red-50 border-red-200' :
+                ann.type === 'WARNING' ? 'bg-amber-50 border-amber-200' :
+                ann.type === 'SUCCESS' ? 'bg-green-50 border-green-200' :
+                'bg-blue-50 border-blue-200'
+             }`}>
+                <Megaphone className={`h-5 w-5 shrink-0 ${
+                   ann.type === 'DANGER' ? 'text-red-600' :
+                   ann.type === 'WARNING' ? 'text-amber-600' :
+                   ann.type === 'SUCCESS' ? 'text-green-600' :
+                   'text-blue-600'
+                }`} />
+                <div>
+                   <h4 className={`font-semibold text-sm ${
+                      ann.type === 'DANGER' ? 'text-red-900' :
+                      ann.type === 'WARNING' ? 'text-amber-900' :
+                      ann.type === 'SUCCESS' ? 'text-green-900' :
+                      'text-blue-900'
+                   }`}>{ann.title}</h4>
+                   <p className={`text-xs mt-1 ${
+                      ann.type === 'DANGER' ? 'text-red-700' :
+                      ann.type === 'WARNING' ? 'text-amber-700' :
+                      ann.type === 'SUCCESS' ? 'text-green-700' :
+                      'text-blue-700'
+                   }`}>{ann.content}</p>
+                </div>
+             </div>
+          ))}
+        </div>
+      )}
+
+      {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat, index) => {
-          const Icon = stat.icon;
-          const CardComponent = (
-            <Card className={`border-none shadow-sm hover:shadow-md transition-all h-full ${stat.href ? 'cursor-pointer hover:bg-gray-50/50' : ''}`}>
+        {statCards.map((stat) => (
+          <Link href={stat.href} key={stat.title}>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4" style={{ borderLeftColor: stat.color.replace('text-', 'var(--') }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium">
                   {stat.title}
                 </CardTitle>
                 <div className={`p-2 rounded-full ${stat.bg}`}>
-                  <Icon className={`h-4 w-4 ${stat.color}`} />
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
                 <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  <span className="text-green-600 flex items-center font-medium mr-1">
-                    <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                  <Badge variant="secondary" className="mr-2 font-normal text-[10px] px-1.5">
                     {stat.change}
-                  </span>
+                  </Badge>
+                  durumunda
                 </p>
               </CardContent>
             </Card>
-          );
-
-          return stat.href ? (
-            <Link key={index} href={stat.href} className="block h-full">
-              {CardComponent}
-            </Link>
-          ) : (
-            <div key={index} className="h-full">
-              {CardComponent}
-            </div>
-          );
-        })}
+          </Link>
+        ))}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 border-none shadow-sm">
+        {/* Recent Orders */}
+        <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Son Siparişler</CardTitle>
-            <CardDescription>
-              Son alınan siparişler.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Son Siparişler</CardTitle>
+                <CardDescription>
+                  Son alınan 10 sipariş
+                </CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/admin/orders" className="gap-1">
+                  Tümü <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-[400px]">
-              <div className="p-6 space-y-4">
+          <CardContent>
+            <ScrollArea className="h-[350px] pr-4">
+              <div className="space-y-4">
                 {stats.recentOrders.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">Henüz sipariş yok.</p>
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    Henüz sipariş bulunmuyor.
+                  </div>
                 ) : (
                   stats.recentOrders.map((order) => (
-                    <div key={order.id} className="flex items-center p-3 rounded-xl hover:bg-secondary/50 transition-colors border border-transparent hover:border-border/50 group">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm border-2 border-white shadow-sm">
-                        M{order.table?.tableNumber || '?'}
-                      </div>
-                      <div className="ml-4 space-y-1 flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-bold leading-none text-foreground/80 group-hover:text-primary transition-colors">
-                            Masa {order.table?.tableNumber}
-                          </p>
-                          <span className="text-xs text-muted-foreground font-mono">
-                            #{order.id.slice(-4)}
-                          </span>
-                        </div>
+                    <div
+                      key={order.id}
+                      className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          Masa {order.table?.tableNumber || '?'}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          {order.items?.length || 0} Parça Ürün
+                          {order.items?.map(i => `${i.quantity}x ${i.product.name}`).join(', ') || 'Ürün bilgisi yok'}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {format(new Date(order.createdAt), 'd MMM HH:mm', { locale: tr })}
                         </p>
                       </div>
-                      <div className="ml-4 font-bold text-sm bg-green-50 text-green-700 px-2.5 py-1 rounded-md border border-green-100">
-                        +₺{Number(order.totalAmount).toFixed(2)}
+                      <div className="flex flex-col items-end gap-2">
+                         <div className="font-bold">
+                           ₺{Number(order.totalAmount).toFixed(2)}
+                         </div>
+                         <Badge variant="outline" className="text-[10px]">
+                           Yeni
+                         </Badge>
                       </div>
                     </div>
                   ))
@@ -759,47 +820,107 @@ export default function DashboardPage() {
             </ScrollArea>
           </CardContent>
         </Card>
-        <Card className="col-span-3 border-none shadow-sm">
-          <CardHeader>
-            <CardTitle>Popüler Ürünler</CardTitle>
-            <CardDescription>
-              En çok tercih edilen ürünleriniz.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-8">
-              {stats.popularProducts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Veri yok.</p>
-              ) : (
-                stats.popularProducts.map((product) => (
-                  <div key={product.id} className="flex items-center">
-                    <div className="h-12 w-12 rounded-lg bg-secondary flex items-center justify-center overflow-hidden relative">
-                       {product.imageUrl ? (
-                         <Image 
-                           src={getMediaUrl(product.imageUrl)} 
-                           alt={product.name} 
-                           fill
-                           className="object-cover"
-                           unoptimized
-                         />
-                       ) : (
-                         <span className="text-2xl">🍔</span>
-                       )}
+
+        {/* Audit Logs & Popular Products */}
+        <div className="col-span-3 space-y-4">
+          {/* Audit Logs */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                Son İşlemler
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[200px]">
+                <div className="space-y-3">
+                  {auditLogs.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground text-xs">
+                      İşlem kaydı yok.
                     </div>
-                    <div className="ml-4 space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {product.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {product._count?.orderItems || 0} Satış
-                      </p>
-                    </div>
+                  ) : (
+                    auditLogs.map((log) => (
+                      <div key={log.id} className="flex items-start gap-3 text-sm border-b pb-2 last:border-0 last:pb-0">
+                        <div className={`p-1.5 rounded-full shrink-0 mt-0.5 ${
+                          log.actionType.includes('DELETE') ? 'bg-red-100 text-red-600' :
+                          log.actionType.includes('UPDATE') ? 'bg-blue-100 text-blue-600' :
+                          'bg-green-100 text-green-600'
+                        }`}>
+                          <ShieldCheck className="h-3 w-3" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-xs">
+                            {actionTypeLabels[log.actionType] || log.actionType}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {log.details}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="secondary" className="text-[10px] h-4 px-1">
+                              {log.admin ? log.admin.name : log.waiter ? `${log.waiter.firstName} ${log.waiter.lastName}` : 'Sistem'}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground">
+                              {format(new Date(log.timestamp), 'HH:mm', { locale: tr })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Popular Products */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Popüler Ürünler</CardTitle>
+              <CardDescription>
+                En çok sipariş edilenler
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {stats.popularProducts.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground text-sm">
+                    Veri yok.
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ) : (
+                  stats.popularProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="flex items-center gap-4"
+                    >
+                      <div className="relative h-10 w-10 overflow-hidden rounded-md border bg-muted">
+                        {product.imageUrl ? (
+                          <Image
+                            src={getMediaUrl(product.imageUrl)}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-secondary">
+                            <UtensilsCrossed className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {product.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {product._count?.orderItems || 0} sipariş
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

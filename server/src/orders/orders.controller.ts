@@ -60,7 +60,12 @@ export class OrdersController {
   closeTable(
     @Param('id') tableId: string,
     @Body('paymentMethod') paymentMethod: string,
+    @Request() req: RequestWithUser,
   ) {
-    return this.ordersService.closeTable(tableId, paymentMethod || 'CASH');
+    return this.ordersService.closeTable(
+      tableId,
+      paymentMethod || 'CASH',
+      req.user,
+    );
   }
 }

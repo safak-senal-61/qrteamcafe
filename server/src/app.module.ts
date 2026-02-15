@@ -32,6 +32,8 @@ import { IssueReportsModule } from './issue-reports/issue-reports.module';
 import { VerificationModule } from './verification/verification.module';
 import { ContactModule } from './contact/contact.module';
 import { WaitersModule } from './waiters/waiters.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { redisStore } from 'cache-manager-redis-yet';
 
@@ -98,7 +100,9 @@ import { redisStore } from 'cache-manager-redis-yet';
     IssueReportsModule,
     VerificationModule,
     ContactModule,
+    AuditLogsModule,
     WaitersModule,
+    AnnouncementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

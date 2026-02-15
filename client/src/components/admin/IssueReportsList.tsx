@@ -58,30 +58,36 @@ export function IssueReportsList() {
   };
 
   if (loading) {
-    return <div>Yükleniyor...</div>;
+    return <div className="text-center py-8">Yükleniyor...</div>;
   }
 
   return (
     <div className="space-y-4">
       {reports.map((report) => (
-        <Card key={report.id} className="border-slate-800 bg-slate-900 text-slate-100">
-          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-            <div className="space-y-1">
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-slate-100">
+        <Card key={report.id} className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <CardHeader className="p-4 flex flex-col md:flex-row items-start justify-between gap-4 space-y-0">
+            <div className="space-y-1 w-full md:w-auto">
+              <div className="flex items-center gap-2 flex-wrap">
                 {getStatusIcon(report.status)}
-                {report.title}
-              </CardTitle>
-              <div className="text-sm text-slate-400">
-                {report.cafe?.name} • {format(new Date(report.createdAt), 'd MMM yyyy HH:mm', { locale: tr })}
+                <CardTitle className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100 line-clamp-1">
+                  {report.title}
+                </CardTitle>
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-1">
+                <span className="font-medium">{report.cafe?.name}</span>
+                <span>•</span>
+                <span>{format(new Date(report.createdAt), 'd MMM yyyy HH:mm', { locale: tr })}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {getPriorityBadge(report.priority)}
+            <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
+              <div className="flex-shrink-0">
+                {getPriorityBadge(report.priority)}
+              </div>
               <Select
                 defaultValue={report.status}
                 onValueChange={(value) => handleStatusChange(report.id, value)}
               >
-                <SelectTrigger className="w-[140px] h-8 bg-slate-800 border-slate-700 text-slate-100">
+                <SelectTrigger className="w-[120px] md:w-[140px] h-8 text-xs md:text-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -93,8 +99,8 @@ export function IssueReportsList() {
               </Select>
             </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-slate-300">{report.description}</p>
+          <CardContent className="p-4 pt-0">
+            <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300">{report.description}</p>
           </CardContent>
         </Card>
       ))}

@@ -3,12 +3,14 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateCafeDto } from './dto/update-cafe.dto';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class CafesService {
   constructor(
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cache: Cache,
+    private auditLogsService: AuditLogsService,
   ) {}
 
   async findAll(query?: string) {
@@ -72,7 +74,12 @@ export class CafesService {
     return cafe;
   }
 
-  async update(id: string, data: UpdateCafeDto) {
+  async update(
+    id: string,
+    data: UpdateCafeDto,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     const updatedCafe = await this.prisma.cafe.update({
       where: { id },
       data: {
@@ -118,6 +125,17 @@ export class CafesService {
       this.cache.del(`cafe:id:${id}`),
       updatedCafe.slug ? this.cache.del(`cafe:slug:${updatedCafe.slug}`) : null,
     ]);
+
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        id,
+        'CAFE_SETTINGS_UPDATE',
+        'Cafe settings updated',
+        actorId,
+        actorType,
+        id,
+      );
+    }
 
     return updatedCafe;
   }

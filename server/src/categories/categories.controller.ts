@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -22,10 +23,18 @@ export class CategoriesController {
   @Post()
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
   create(
+    @Request() req: any,
     @Body() createCategoryDto: CreateCategoryDto,
     @Query('cafeId') cafeId: string,
   ) {
-    return this.categoriesService.create(cafeId, createCategoryDto);
+    const actorId = req.user.id as string;
+    const actorType = req.user.type === 'waiter' ? 'WAITER' : 'ADMIN';
+    return this.categoriesService.create(
+      cafeId,
+      createCategoryDto,
+      actorId,
+      actorType,
+    );
   }
 
   @Get()
@@ -48,15 +57,25 @@ export class CategoriesController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
   update(
+    @Request() req: any,
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
-    return this.categoriesService.update(id, updateCategoryDto);
+    const actorId = req.user.id as string;
+    const actorType = req.user.type === 'waiter' ? 'WAITER' : 'ADMIN';
+    return this.categoriesService.update(
+      id,
+      updateCategoryDto,
+      actorId,
+      actorType,
+    );
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
-  remove(@Param('id') id: string) {
-    return this.categoriesService.remove(id);
+  remove(@Request() req: any, @Param('id') id: string) {
+    const actorId = req.user.id as string;
+    const actorType = req.user.type === 'waiter' ? 'WAITER' : 'ADMIN';
+    return this.categoriesService.remove(id, actorId, actorType);
   }
 }

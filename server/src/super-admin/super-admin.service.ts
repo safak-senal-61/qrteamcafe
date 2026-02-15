@@ -91,6 +91,14 @@ export class SuperAdminService {
       where: { status: 'REJECTED' },
     });
     const totalUsers = await this.prisma.cafeAdmin.count();
+    const totalOrders = await this.prisma.order.count();
+
+    const trialCafes = await this.prisma.cafe.count({
+      where: { plan: 'trial' },
+    });
+    const premiumCafes = await this.prisma.cafe.count({
+      where: { plan: { not: 'trial' } },
+    });
 
     return {
       totalCafes,
@@ -98,7 +106,101 @@ export class SuperAdminService {
       activeCafes,
       rejectedCafes,
       totalUsers,
+      totalOrders,
+      subscriptionStats: {
+        trial: trialCafes,
+        premium: premiumCafes,
+      },
     };
+  }
+
+  async getExpiringSubscriptions() {
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    const now = new Date();
+
+    return this.prisma.cafe.findMany({
+      where: {
+        isSubscriptionActive: true,
+        subscriptionEndsAt: {
+          lte: sevenDaysFromNow,
+          gte: now,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        plan: true,
+        subscriptionEndsAt: true,
+        admins: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        subscriptionEndsAt: 'asc',
+      },
+    });
+  }
+
+  async getFinancialStats() {
+    const trialCafes = await this.prisma.cafe.count({
+      where: { plan: 'trial' },
+    });
+    const proCafes = await this.prisma.cafe.count({
+      where: { plan: 'pro' },
+    });
+    const enterpriseCafes = await this.prisma.cafe.count({
+      where: { plan: 'enterprise' },
+    });
+    const activeSubscriptions = await this.prisma.cafe.count({
+      where: { isSubscriptionActive: true },
+    });
+
+    // Get cafes expiring in the next 7 days
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+    const expiringCafes = await this.prisma.cafe.findMany({
+      where: {
+        isSubscriptionActive: true,
+        subscriptionEndsAt: {
+          lte: sevenDaysFromNow,
+          gte: new Date(),
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        subscriptionEndsAt: true,
+        plan: true,
+      },
+      orderBy: {
+        subscriptionEndsAt: 'asc',
+      },
+    });
+
+    return {
+      trialCafes,
+      proCafes,
+      enterpriseCafes,
+      activeSubscriptions,
+      expiringCafes,
+    };
+  }
+
+  async getRecentLogs(limit: number = 10) {
+    return this.prisma.suspiciousActionLog.findMany({
+      take: limit,
+      orderBy: { timestamp: 'desc' },
+      include: {
+        cafe: { select: { name: true } },
+        waiter: { select: { firstName: true, lastName: true } },
+        admin: { select: { name: true } },
+      },
+    });
   }
 
   async getSettings() {

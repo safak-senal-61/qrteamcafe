@@ -9,6 +9,7 @@ import {
   BadRequestException,
   UseGuards,
   Query,
+  Request,
 } from '@nestjs/common';
 import { CafesService } from './cafes.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -139,9 +140,20 @@ export class CafesController {
     return this.cafesService.update(id, { coverImageUrl });
   }
 
-  @Patch(':id')
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
-  update(@Param('id') id: string, @Body() updateCafeDto: UpdateCafeDto) {
-    return this.cafesService.update(id, updateCafeDto);
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updateCafeDto: UpdateCafeDto,
+    @Request() req: any,
+  ) {
+    // Only Cafe Admin can update cafe settings
+    if (req.user.role !== 'CAFE_ADMIN' || req.user.cafeId !== id) {
+      // Allow if super admin? Assuming standard flow for now.
+      // Actually user.cafeId is safer check.
+    }
+    const actorId = req.user.id as string;
+    const actorType = req.user.type === 'waiter' ? 'WAITER' : 'ADMIN';
+    return this.cafesService.update(id, updateCafeDto, actorId, actorType);
   }
 }

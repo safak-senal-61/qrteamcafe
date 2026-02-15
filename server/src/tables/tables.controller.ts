@@ -7,6 +7,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { TablesService } from './tables.service';
 import { CreateTableDto } from './dto/create-table.dto';
@@ -20,22 +21,35 @@ export class TablesController {
   @Post()
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
   create(
+    @Request() req: any,
     @Body() createTableDto: CreateTableDto,
     @Query('cafeId') cafeId: string,
   ) {
-    return this.tablesService.create(cafeId, createTableDto);
+    const actorId = req.user.id as string;
+    const actorType = req.user.type === 'waiter' ? 'WAITER' : 'ADMIN';
+    return this.tablesService.create(
+      cafeId,
+      createTableDto,
+      actorId,
+      actorType,
+    );
   }
 
   @Post('move')
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
   moveTable(
+    @Request() req: any,
     @Query('cafeId') cafeId: string,
     @Body() body: { fromTableId: string; toTableId: string },
   ) {
+    const actorId = req.user.id as string;
+    const actorType = req.user.type === 'waiter' ? 'WAITER' : 'ADMIN';
     return this.tablesService.moveTable(
       cafeId,
       body.fromTableId,
       body.toTableId,
+      actorId,
+      actorType,
     );
   }
 
@@ -46,7 +60,9 @@ export class TablesController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
-  remove(@Param('id') id: string) {
-    return this.tablesService.remove(id);
+  remove(@Request() req: any, @Param('id') id: string) {
+    const actorId = req.user.id as string;
+    const actorType = req.user.type === 'waiter' ? 'WAITER' : 'ADMIN';
+    return this.tablesService.remove(id, actorId, actorType);
   }
 }

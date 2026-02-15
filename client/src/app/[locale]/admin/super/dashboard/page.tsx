@@ -20,13 +20,13 @@ import {
   Search,
   Activity,
   AlertCircle,
-  Users,
   Settings,
   Power,
   Globe,
-  BellRing,
   Gift,
-  CreditCard
+  Megaphone,
+  CreditCard,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -37,6 +37,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { API_URL } from '@/lib/api';
 import { RewardsManagement } from '@/components/admin/RewardsManagement';
 import { IssueReportsList } from '@/components/admin/IssueReportsList';
@@ -67,22 +68,58 @@ interface DashboardStats {
   activeCafes: number;
   rejectedCafes: number;
   totalUsers: number;
+  totalOrders: number;
+}
+
+interface FinancialStats {
+  trialCafes: number;
+  proCafes: number;
+  enterpriseCafes: number;
+  activeSubscriptions: number;
+  expiringCafes: {
+    id: string;
+    name: string;
+    subscriptionEndsAt: string;
+    plan: string;
+  }[];
+}
+
+interface RecentLog {
+  id: string;
+  actionType: string;
+  details: string;
+  timestamp: string;
+  cafe: { name: string };
+  waiter?: { firstName: string; lastName: string };
+  admin?: { name: string };
 }
 
 interface SystemSettings {
   maintenanceMode: boolean;
   allowRegistrations: boolean;
-  globalAnnouncement: string;
+}
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  type: 'INFO' | 'WARNING' | 'SUCCESS' | 'DANGER';
+  isActive: boolean;
+  targetRole: 'ALL' | 'CAFE_ADMIN' | 'WAITER';
+  expiresAt: string | null;
+  createdAt: string;
 }
 
 export default function SuperAdminDashboard() {
   const router = useRouter();
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [financialStats, setFinancialStats] = useState<FinancialStats | null>(null);
+  const [recentLogs, setRecentLogs] = useState<RecentLog[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [settings, setSettings] = useState<SystemSettings>({
     maintenanceMode: false,
     allowRegistrations: true,
-    globalAnnouncement: ''
   });
   const [loading, setLoading] = useState(true);
   // Change processingId to store both ID and Action
@@ -96,6 +133,23 @@ export default function SuperAdminDashboard() {
   const [subscriptionDialog, setSubscriptionDialog] = useState<{ open: boolean; cafeId: string; cafeName: string } | null>(null);
   const [extensionMonths, setExtensionMonths] = useState(1);
   const [extendingSubscription, setExtendingSubscription] = useState(false);
+
+  // Announcement State
+  const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
+  const [newAnnouncement, setNewAnnouncement] = useState<{
+    title: string;
+    content: string;
+    type: 'INFO' | 'WARNING' | 'SUCCESS' | 'DANGER';
+    targetRole: 'ALL' | 'CAFE_ADMIN' | 'WAITER';
+    expiresInDays: number;
+  }>({
+    title: '',
+    content: '',
+    type: 'INFO',
+    targetRole: 'ALL',
+    expiresInDays: 7
+  });
+  const [creatingAnnouncement, setCreatingAnnouncement] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -124,6 +178,33 @@ export default function SuperAdminDashboard() {
         setStats(data);
       }
 
+      // Fetch Financial Stats
+      const financialRes = await fetch(`${API_URL}/super-admin/financial-stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (financialRes.ok) {
+        const data = await financialRes.json();
+        setFinancialStats(data);
+      }
+
+      // Fetch Recent Logs
+      const logsRes = await fetch(`${API_URL}/super-admin/recent-logs`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (logsRes.ok) {
+        const data = await logsRes.json();
+        setRecentLogs(data);
+      }
+
+      // Fetch Announcements
+      const announcementsRes = await fetch(`${API_URL}/announcements`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (announcementsRes.ok) {
+        const data = await announcementsRes.json();
+        setAnnouncements(data);
+      }
+
       // Fetch Settings
       const settingsRes = await fetch(`${API_URL}/super-admin/settings`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -134,7 +215,6 @@ export default function SuperAdminDashboard() {
         setSettings({
           maintenanceMode: data.maintenanceMode === 'true',
           allowRegistrations: data.allowRegistrations !== 'false', // default true
-          globalAnnouncement: data.globalAnnouncement || ''
         });
       }
     } catch (error) {
@@ -187,12 +267,6 @@ export default function SuperAdminDashboard() {
         body: JSON.stringify({ key: 'allowRegistrations', value: String(settings.allowRegistrations) })
       });
 
-      await fetch(`${API_URL}/super-admin/settings`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'globalAnnouncement', value: settings.globalAnnouncement })
-      });
-
       toast.success('Site ayarları güncellendi.');
       setIsSettingsOpen(false);
     } catch (error) {
@@ -200,6 +274,80 @@ export default function SuperAdminDashboard() {
       toast.error('Ayarlar kaydedilirken bir hata oluştu.');
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  const handleCreateAnnouncement = async () => {
+    setCreatingAnnouncement(true);
+    const token = localStorage.getItem('token');
+    if (!token) {
+        setCreatingAnnouncement(false);
+        return;
+    }
+
+    try {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + newAnnouncement.expiresInDays);
+
+      const response = await fetch(`${API_URL}/announcements`, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: newAnnouncement.title,
+          content: newAnnouncement.content,
+          type: newAnnouncement.type,
+          targetRole: newAnnouncement.targetRole,
+          expiresAt: expiresAt.toISOString(),
+          isActive: true
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Duyuru başarıyla oluşturuldu.');
+        setIsAnnouncementOpen(false);
+        setNewAnnouncement({
+          title: '',
+          content: '',
+          type: 'INFO',
+          targetRole: 'ALL',
+          expiresInDays: 7
+        });
+        fetchData();
+      } else {
+        toast.error('Duyuru oluşturulurken bir hata oluştu.');
+      }
+    } catch (error) {
+      console.error('Failed to create announcement:', error);
+      toast.error('Bir hata oluştu.');
+    } finally {
+      setCreatingAnnouncement(false);
+    }
+  };
+
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (!confirm('Bu duyuruyu silmek istediğinize emin misiniz?')) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/announcements/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        toast.success('Duyuru silindi.');
+        fetchData();
+      } else {
+        toast.error('Silme işlemi başarısız.');
+      }
+    } catch (error) {
+      console.error('Failed to delete announcement:', error);
+      toast.error('Bir hata oluştu.');
     }
   };
 
@@ -261,16 +409,16 @@ export default function SuperAdminDashboard() {
 
   const StatCard = ({ title, value, icon: Icon, color, description }: { title: string; value: number; icon: React.ElementType; color: string; description: string }) => (
     <Card className="border-none shadow-md bg-white dark:bg-slate-900/50 backdrop-blur-sm hover:shadow-lg transition-all">
-      <CardContent className="p-6">
+      <CardContent className="p-4 md:p-6">
         <div className="flex items-center justify-between space-y-0 pb-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <div className={`p-2 rounded-full ${color} bg-opacity-10`}>
-            <Icon className={`h-4 w-4 ${color.replace('bg-', 'text-')}`} />
+          <p className="text-xs md:text-sm font-medium text-muted-foreground">{title}</p>
+          <div className={`p-1.5 md:p-2 rounded-full ${color} bg-opacity-10`}>
+            <Icon className={`h-3 w-3 md:h-4 md:w-4 ${color.replace('bg-', 'text-')}`} />
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          <h3 className="text-2xl font-bold">{value}</h3>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <h3 className="text-xl md:text-2xl font-bold">{value}</h3>
+          <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-1">{description}</p>
         </div>
       </CardContent>
     </Card>
@@ -282,14 +430,12 @@ export default function SuperAdminDashboard() {
       <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
-              <Store className="h-5 w-5 text-white" />
+            <div className="bg-indigo-600 p-1.5 md:p-2 rounded-xl shadow-lg shadow-indigo-500/20">
+              <Store className="h-4 w-4 md:h-5 md:w-5 text-white" />
             </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 hidden md:block">
-              Süper Admin Paneli
-            </h1>
-            <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 md:hidden">
-              Admin
+            <h1 className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+              <span className="hidden md:block">Süper Admin Paneli</span>
+              <span className="md:hidden">Admin</span>
             </h1>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
@@ -338,17 +484,6 @@ export default function SuperAdminDashboard() {
                       onCheckedChange={(checked) => setSettings({ ...settings, allowRegistrations: checked })}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="announcement" className="flex items-center gap-2">
-                      <BellRing className="h-4 w-4" /> Global Duyuru
-                    </Label>
-                    <Textarea
-                      id="announcement"
-                      placeholder="Tüm kullanıcılara görünecek duyuru metni..."
-                      value={settings.globalAnnouncement}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSettings({ ...settings, globalAnnouncement: e.target.value })}
-                    />
-                  </div>
                 </div>
                 <DialogFooter>
                   <Button type="submit" onClick={saveSettings} disabled={savingSettings}>
@@ -359,12 +494,97 @@ export default function SuperAdminDashboard() {
               </DialogContent>
             </Dialog>
 
+            <Dialog open={isAnnouncementOpen} onOpenChange={setIsAnnouncementOpen}>
+              <DialogTrigger asChild>
+                <Button variant="secondary" size="sm" className="rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/30">
+                  <Megaphone className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">Duyuru Ekle</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Yeni Duyuru</DialogTitle>
+                  <DialogDescription>
+                    Tüm kullanıcılara gösterilecek bir duyuru oluşturun.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Başlık</Label>
+                    <Input 
+                      value={newAnnouncement.title} 
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
+                      placeholder="Duyuru başlığı..." 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>İçerik</Label>
+                    <Textarea 
+                      value={newAnnouncement.content}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}
+                      placeholder="Duyuru içeriği..." 
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Tür</Label>
+                      <Select 
+                        value={newAnnouncement.type} 
+                        onValueChange={(v) => setNewAnnouncement({...newAnnouncement, type: v as 'INFO' | 'WARNING' | 'SUCCESS' | 'DANGER'})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="INFO">Bilgi</SelectItem>
+                          <SelectItem value="WARNING">Uyarı</SelectItem>
+                          <SelectItem value="SUCCESS">Başarılı</SelectItem>
+                          <SelectItem value="DANGER">Kritik</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Hedef Kitle</Label>
+                      <Select 
+                        value={newAnnouncement.targetRole} 
+                        onValueChange={(v) => setNewAnnouncement({...newAnnouncement, targetRole: v as 'ALL' | 'CAFE_ADMIN' | 'WAITER'})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Herkes</SelectItem>
+                          <SelectItem value="CAFE_ADMIN">Kafe Yöneticileri</SelectItem>
+                          <SelectItem value="WAITER">Garsonlar</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Süre (Gün)</Label>
+                    <Input 
+                      type="number" 
+                      min="1"
+                      value={newAnnouncement.expiresInDays}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, expiresInDays: parseInt(e.target.value) || 7})}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleCreateAnnouncement} disabled={creatingAnnouncement}>
+                    {creatingAnnouncement && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Oluştur
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             <Button 
               variant="secondary" 
               size="sm" 
               onClick={fetchData} 
               disabled={loading} 
-              className="rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/30"
+              className="rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
             >
               <RefreshCw className={`h-4 w-4 md:mr-2 ${loading ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline">Yenile</span>
@@ -383,46 +603,210 @@ export default function SuperAdminDashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <main className="container mx-auto px-2 md:px-4 py-4 md:py-8 space-y-4 md:space-y-8">
+        {/* Active Announcements */}
+        {announcements.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <Megaphone className="h-5 w-5 text-indigo-600" />
+              Aktif Duyurular
+            </h3>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {announcements.map((ann) => (
+                <Card key={ann.id} className="border-none shadow-sm bg-white dark:bg-slate-900">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant={
+                            ann.type === 'INFO' ? 'secondary' : 
+                            ann.type === 'WARNING' ? 'outline' : 
+                            ann.type === 'DANGER' ? 'destructive' : 'default'
+                          } className="text-[10px] px-1.5 py-0">
+                            {ann.type}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {ann.targetRole === 'ALL' ? 'Tümü' : ann.targetRole === 'CAFE_ADMIN' ? 'Yöneticiler' : 'Garsonlar'}
+                          </Badge>
+                        </div>
+                        <h4 className="font-medium text-sm">{ann.title}</h4>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{ann.content}</p>
+                        <p className="text-[10px] text-muted-foreground mt-2">
+                          Bitiş: {ann.expiresAt ? format(new Date(ann.expiresAt), 'd MMM yyyy', { locale: tr }) : 'Süresiz'}
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteAnnouncement(ann.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Stats Grid */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <StatCard
             title="Toplam İşletme"
             value={stats?.totalCafes || 0}
             icon={Store}
             color="bg-blue-500"
-            description="Sisteme kayıtlı tüm işletmeler"
+            description="Sistemdeki kayıtlı tüm işletmeler"
           />
           <StatCard
-            title="Bekleyen Onay"
+            title="Aktif Abonelik"
+            value={financialStats?.activeSubscriptions || 0}
+            icon={CreditCard}
+            color="bg-green-500"
+            description="Ödeme yapan aktif müşteriler"
+          />
+          <StatCard
+            title="Onay Bekleyen"
             value={stats?.pendingCafes || 0}
             icon={AlertCircle}
-            color="bg-yellow-500"
-            description="Onay bekleyen başvurular"
+            color="bg-amber-500"
+            description="İncelenmesi gereken başvurular"
           />
           <StatCard
-            title="Aktif İşletme"
-            value={stats?.activeCafes || 0}
-            icon={Activity}
-            color="bg-green-500"
-            description="Şu an hizmet verenler"
-          />
-          <StatCard
-            title="Toplam Kullanıcı"
-            value={stats?.totalUsers || 0}
-            icon={Users}
+            title="Toplam Sipariş"
+            value={stats?.totalOrders || 0}
+            icon={CreditCard}
             color="bg-purple-500"
-            description="Sistemdeki toplam yönetici"
+            description="Platform geneli toplam sipariş"
           />
+        </div>
+
+        {/* Financial & Logs Section */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+          {/* Financial Overview */}
+          <Card className="border-none shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <CreditCard className="h-5 w-5 text-indigo-500" />
+                Paket Dağılımı
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 text-blue-600 rounded-full dark:bg-blue-900/20 dark:text-blue-400">
+                      <Gift className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">Trial</p>
+                    </div>
+                  </div>
+                  <span className="text-lg font-bold">{financialStats?.trialCafes || 0}</span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 text-purple-600 rounded-full dark:bg-purple-900/20 dark:text-purple-400">
+                      <Store className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">Pro</p>
+                    </div>
+                  </div>
+                  <span className="text-lg font-bold">{financialStats?.proCafes || 0}</span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 text-emerald-600 rounded-full dark:bg-emerald-900/20 dark:text-emerald-400">
+                      <Globe className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">Enterprise</p>
+                    </div>
+                  </div>
+                  <span className="text-lg font-bold">{financialStats?.enterpriseCafes || 0}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Expiring Subscriptions */}
+          <Card className="border-none shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Calendar className="h-5 w-5 text-orange-500" />
+                Aboneliği Bitenler (7 Gün)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {!financialStats?.expiringCafes?.length ? (
+                  <div className="text-center py-8 text-muted-foreground text-xs">
+                    Yaklaşan bitiş yok.
+                  </div>
+                ) : (
+                  financialStats.expiringCafes.map((cafe) => (
+                    <div key={cafe.id} className="flex items-center justify-between p-2 border rounded-md bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/20">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm">{cafe.name}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase">{cafe.plan} Plan</span>
+                      </div>
+                      <Badge variant="outline" className="text-xs bg-white dark:bg-slate-950">
+                        {new Date(cafe.subscriptionEndsAt).toLocaleDateString('tr-TR')}
+                      </Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Security Logs */}
+          <Card className="border-none shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Activity className="h-5 w-5 text-rose-500" />
+                Son Aktiviteler
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentLogs.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-xs">
+                    Henüz kayıtlı bir olay yok.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recentLogs.map((log) => (
+                      <div key={log.id} className="flex items-start gap-3 p-2 rounded-lg border bg-slate-50/50 dark:bg-slate-900/50">
+                        <AlertCircle className="h-3 w-3 text-rose-500 mt-1 shrink-0" />
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-medium">{log.actionType}</p>
+                            <span className="text-[10px] text-muted-foreground">
+                              {new Date(log.timestamp).toLocaleDateString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground line-clamp-1">{log.details}</p>
+                          <div className="flex items-center gap-1">
+                             <Badge variant="secondary" className="text-[9px] h-4 px-1">{log.cafe.name}</Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Main Content */}
         <Card className="border-none shadow-lg bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
-          <CardHeader className="pb-4">
+          <CardHeader className="p-4 md:pb-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <CardTitle>İşletme Yönetimi</CardTitle>
-                <CardDescription>Tüm cafe başvurularını ve aktif işletmeleri buradan yönetebilirsiniz.</CardDescription>
+                <CardTitle className="text-lg md:text-2xl">İşletme Yönetimi</CardTitle>
+                <CardDescription className="text-xs md:text-sm">Tüm cafe başvurularını ve aktif işletmeleri buradan yönetebilirsiniz.</CardDescription>
               </div>
               <div className="relative w-full md:w-72">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -435,22 +819,24 @@ export default function SuperAdminDashboard() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="pending" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                <TabsTrigger value="pending" className="rounded-lg">Bekleyenler</TabsTrigger>
-                <TabsTrigger value="active" className="rounded-lg">Aktif İşletmeler</TabsTrigger>
-                <TabsTrigger value="rejected" className="rounded-lg flex items-center gap-2">
-                  <XCircle className="h-4 w-4" />
-                  Reddedilenler ({stats?.rejectedCafes || 0})
-                </TabsTrigger>
-                <TabsTrigger value="issues" className="rounded-lg flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  Bildirimler
-                </TabsTrigger>
-                <TabsTrigger value="rewards" className="rounded-lg flex items-center gap-2"><Gift className="w-4 h-4" /> Hediye Kataloğu</TabsTrigger>
-                <TabsTrigger value="all" className="rounded-lg">Tümü</TabsTrigger>
-              </TabsList>
+          <CardContent className="p-2 md:p-6">
+            <Tabs defaultValue="pending" value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+              <div className="overflow-x-auto pb-2 -mx-2 px-2 md:mx-0 md:px-0 md:pb-0 scrollbar-hide">
+                <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-max md:w-auto flex">
+                  <TabsTrigger value="pending" className="rounded-lg text-xs md:text-sm">Bekleyenler</TabsTrigger>
+                  <TabsTrigger value="active" className="rounded-lg text-xs md:text-sm">Aktif İşletmeler</TabsTrigger>
+                  <TabsTrigger value="rejected" className="rounded-lg flex items-center gap-2 text-xs md:text-sm">
+                    <XCircle className="h-3 w-3 md:h-4 md:w-4" />
+                    Reddedilenler ({stats?.rejectedCafes || 0})
+                  </TabsTrigger>
+                  <TabsTrigger value="issues" className="rounded-lg flex items-center gap-2 text-xs md:text-sm">
+                    <AlertCircle className="h-3 w-3 md:h-4 md:w-4" />
+                    Bildirimler
+                  </TabsTrigger>
+                  <TabsTrigger value="rewards" className="rounded-lg flex items-center gap-2 text-xs md:text-sm"><Gift className="w-3 h-3 md:w-4 md:h-4" /> Hediye Kataloğu</TabsTrigger>
+                  <TabsTrigger value="all" className="rounded-lg text-xs md:text-sm">Tümü</TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="rewards" className="mt-0">
                 <RewardsManagement cafes={cafes} />
@@ -477,7 +863,7 @@ export default function SuperAdminDashboard() {
                       <p className="text-slate-500">Bu kategoride gösterilecek işletme yok.</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                       {filteredCafes.map((cafe) => (
                         <motion.div
                           key={cafe.id}
@@ -486,66 +872,66 @@ export default function SuperAdminDashboard() {
                           transition={{ duration: 0.3 }}
                         >
                           <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all bg-white dark:bg-slate-900 group">
-                            <div className={`h-2 w-full ${
+                            <div className={`h-1.5 md:h-2 w-full ${
                               cafe.status === 'APPROVED' ? 'bg-green-500' :
                               cafe.status === 'PENDING' ? 'bg-yellow-500' : 'bg-red-500'
                             }`} />
-                            <CardHeader className="pb-4">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <CardTitle className="text-lg font-bold flex items-center gap-2 group-hover:text-indigo-600 transition-colors">
+                            <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="min-w-0">
+                                  <CardTitle className="text-base md:text-lg font-bold flex items-center gap-2 group-hover:text-indigo-600 transition-colors truncate">
                                     {cafe.name}
                                   </CardTitle>
-                                  <CardDescription className="flex items-center mt-1 text-xs">
-                                    <Calendar className="h-3 w-3 mr-1" />
-                                    {format(new Date(cafe.createdAt), 'd MMMM yyyy HH:mm', { locale: tr })}
+                                  <CardDescription className="flex items-center text-xs mt-1">
+                                    <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
+                                    {format(new Date(cafe.createdAt), 'd MMM yyyy HH:mm', { locale: tr })}
                                   </CardDescription>
                                 </div>
                                 <Badge variant={
                                   cafe.status === 'APPROVED' ? 'default' :
                                   cafe.status === 'PENDING' ? 'secondary' : 'destructive'
-                                } className={
+                                } className={`flex-shrink-0 text-[10px] md:text-xs px-2 py-0.5 ${
                                   cafe.status === 'APPROVED' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
                                   cafe.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : ''
-                               }>
+                                }`}>
                                   {cafe.status === 'APPROVED' ? 'Aktif' :
                                   cafe.status === 'PENDING' ? 'Bekliyor' : 'Pasif'}
                                 </Badge>
                               </div>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                              <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
-                                <div className="flex items-center text-sm">
-                                  <User className="h-4 w-4 mr-3 text-indigo-500" />
-                                  <span className="font-medium">{cafe.admins[0]?.name || 'Yönetici Yok'}</span>
+                            <CardContent className="p-4 md:p-6 pt-2 md:pt-4 space-y-3 md:space-y-4">
+                              <div className="space-y-2 md:space-y-3 bg-slate-50 dark:bg-slate-800/50 p-3 md:p-4 rounded-lg">
+                                <div className="flex items-center text-xs md:text-sm">
+                                  <User className="h-3.5 w-3.5 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-500 flex-shrink-0" />
+                                  <span className="font-medium truncate">{cafe.admins[0]?.name || 'Yönetici Yok'}</span>
                                 </div>
-                                <div className="flex items-center text-sm">
-                                  <Mail className="h-4 w-4 mr-3 text-indigo-500" />
+                                <div className="flex items-center text-xs md:text-sm">
+                                  <Mail className="h-3.5 w-3.5 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-500 flex-shrink-0" />
                                   <span className="truncate" title={cafe.admins[0]?.email}>{cafe.admins[0]?.email || '-'}</span>
                                 </div>
-                                <div className="flex items-center text-sm">
-                                  <Phone className="h-4 w-4 mr-3 text-indigo-500" />
+                                <div className="flex items-center text-xs md:text-sm">
+                                  <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 mr-2 md:mr-3 text-indigo-500 flex-shrink-0" />
                                   <span>{cafe.phone}</span>
                                 </div>
                                 
                                 {/* Subscription Status */}
                                 <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700">
                                   <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Abonelik Durumu</span>
-                                    <Badge variant="outline" className={
+                                    <span className="text-[10px] md:text-xs font-semibold text-slate-500 dark:text-slate-400">Abonelik Durumu</span>
+                                    <Badge variant="outline" className={`text-[10px] md:text-xs px-1.5 py-0 ${
                                       cafe.isSubscriptionActive ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-orange-50 text-orange-700 border-orange-200'
-                                    }>
+                                    }`}>
                                       {cafe.isSubscriptionActive ? 'Pro Paket' : 'Deneme Sürümü'}
                                     </Badge>
                                   </div>
-                                  <div className="flex items-center text-xs text-slate-500">
+                                  <div className="flex items-center text-[10px] md:text-xs text-slate-500">
                                     <Calendar className="h-3 w-3 mr-2" />
                                     <span>
                                       Bitiş: {
                                         cafe.isSubscriptionActive && cafe.subscriptionEndsAt 
-                                          ? format(new Date(cafe.subscriptionEndsAt), 'd MMMM yyyy', { locale: tr })
+                                          ? format(new Date(cafe.subscriptionEndsAt), 'd MMM yyyy', { locale: tr })
                                           : cafe.trialEndsAt 
-                                            ? format(new Date(cafe.trialEndsAt), 'd MMMM yyyy', { locale: tr }) 
+                                            ? format(new Date(cafe.trialEndsAt), 'd MMM yyyy', { locale: tr }) 
                                             : '-'
                                       }
                                     </span>
@@ -554,33 +940,35 @@ export default function SuperAdminDashboard() {
                               </div>
 
                               <div className="pt-2 flex flex-col gap-2">
-                                <div className="flex gap-3">
+                                <div className="flex gap-2 md:gap-3">
                                 {cafe.status === 'PENDING' ? (
                                   <>
                                     <Button
-                                      className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20"
+                                      size="sm"
+                                      className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20 text-xs md:text-sm h-8 md:h-9"
                                       onClick={() => handleAction(cafe.id, 'approve')}
                                       disabled={processingState?.id === cafe.id}
                                     >
                                       {processingState?.id === cafe.id && processingState?.action === 'approve' ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" />
                                       ) : (
                                         <>
-                                          <CheckCircle2 className="h-4 w-4 mr-2" /> Onayla
+                                          <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Onayla
                                         </>
                                       )}
                                     </Button>
                                     <Button
                                       variant="outline"
-                                      className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                                      size="sm"
+                                      className="flex-1 border-red-200 text-red-600 hover:bg-red-50 text-xs md:text-sm h-8 md:h-9"
                                       onClick={() => handleAction(cafe.id, 'reject')}
                                       disabled={processingState?.id === cafe.id}
                                     >
                                       {processingState?.id === cafe.id && processingState?.action === 'reject' ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" />
                                       ) : (
                                         <>
-                                          <XCircle className="h-4 w-4 mr-2" /> Reddet
+                                          <XCircle className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Reddet
                                         </>
                                       )}
                                     </Button>
@@ -588,30 +976,32 @@ export default function SuperAdminDashboard() {
                                 ) : cafe.status === 'APPROVED' ? (
                                   <Button
                                     variant="outline"
-                                    className="w-full border-red-200 text-red-600 hover:bg-red-50"
+                                    size="sm"
+                                    className="w-full border-red-200 text-red-600 hover:bg-red-50 text-xs md:text-sm h-8 md:h-9"
                                     onClick={() => handleAction(cafe.id, 'reject')}
                                     disabled={processingState?.id === cafe.id}
                                   >
                                     {processingState?.id === cafe.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                      <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" />
                                     ) : (
                                       <>
-                                        <XCircle className="h-4 w-4 mr-2" /> Askıya Al / Pasifleştir
+                                        <XCircle className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Askıya Al
                                       </>
                                     )}
                                   </Button>
                                 ) : (
                                   <Button
                                     variant="outline"
-                                    className="w-full border-green-200 text-green-600 hover:bg-green-50"
+                                    size="sm"
+                                    className="w-full border-green-200 text-green-600 hover:bg-green-50 text-xs md:text-sm h-8 md:h-9"
                                     onClick={() => handleAction(cafe.id, 'approve')}
                                     disabled={processingState?.id === cafe.id}
                                   >
                                     {processingState?.id === cafe.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                      <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" />
                                     ) : (
                                       <>
-                                        <CheckCircle2 className="h-4 w-4 mr-2" /> Tekrar Aktifleştir
+                                        <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Tekrar Aktifleştir
                                       </>
                                     )}
                                   </Button>
@@ -620,10 +1010,11 @@ export default function SuperAdminDashboard() {
                               {cafe.status === 'APPROVED' && (
                                 <Button
                                   variant="outline"
-                                  className="w-full border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                                  size="sm"
+                                  className="w-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 text-xs md:text-sm h-8 md:h-9"
                                   onClick={() => setSubscriptionDialog({ open: true, cafeId: cafe.id, cafeName: cafe.name })}
                                 >
-                                  <CreditCard className="h-4 w-4 mr-2" /> Abonelik Süresi Ekle
+                                  <CreditCard className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" /> Süre Ekle
                                 </Button>
                               )}
                             </div>
@@ -645,47 +1036,28 @@ export default function SuperAdminDashboard() {
             <DialogHeader>
               <DialogTitle>Abonelik Uzat</DialogTitle>
               <DialogDescription>
-                {subscriptionDialog?.cafeName} için abonelik süresini uzatın.
+                {subscriptionDialog?.cafeName} için abonelik süresi ekleyin.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="months">Ay Sayısı</Label>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => setExtensionMonths(Math.max(1, extensionMonths - 1))}
-                    disabled={extensionMonths <= 1}
-                  >
-                    -
-                  </Button>
-                  <Input
-                    id="months"
-                    type="number"
-                    value={extensionMonths}
-                    onChange={(e) => setExtensionMonths(parseInt(e.target.value) || 1)}
-                    className="text-center"
-                    min="1"
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => setExtensionMonths(extensionMonths + 1)}
-                  >
-                    +
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Toplam {extensionMonths} ay eklenecek.
-                </p>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="months" className="text-right">
+                  Ay Sayısı
+                </Label>
+                <Input
+                  id="months"
+                  type="number"
+                  min="1"
+                  value={extensionMonths}
+                  onChange={(e) => setExtensionMonths(parseInt(e.target.value) || 1)}
+                  className="col-span-3"
+                />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setSubscriptionDialog(null)}>İptal</Button>
-              <Button onClick={handleExtendSubscription} disabled={extendingSubscription}>
+              <Button type="submit" onClick={handleExtendSubscription} disabled={extendingSubscription}>
                 {extendingSubscription && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Onayla ve Uzat
+                Süre Ekle
               </Button>
             </DialogFooter>
           </DialogContent>

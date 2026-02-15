@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -110,10 +111,18 @@ export class ProductsController {
   @Post()
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
   create(
+    @Request() req: any,
     @Body() createProductDto: CreateProductDto,
     @Query('cafeId') cafeId: string,
   ) {
-    return this.productsService.create(cafeId, createProductDto);
+    const actorId = req.user.id as string;
+    const actorType = req.user.type === 'waiter' ? 'WAITER' : 'ADMIN';
+    return this.productsService.create(
+      cafeId,
+      createProductDto,
+      actorId,
+      actorType,
+    );
   }
 
   @Get()
@@ -161,13 +170,26 @@ export class ProductsController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(id, updateProductDto);
+  update(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+  ) {
+    const actorId = req.user.id as string;
+    const actorType = req.user.type === 'waiter' ? 'WAITER' : 'ADMIN';
+    return this.productsService.update(
+      id,
+      updateProductDto,
+      actorId,
+      actorType,
+    );
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(id);
+  remove(@Request() req: any, @Param('id') id: string) {
+    const actorId = req.user.id as string;
+    const actorType = req.user.type === 'waiter' ? 'WAITER' : 'ADMIN';
+    return this.productsService.remove(id, actorId, actorType);
   }
 }

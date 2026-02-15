@@ -6,7 +6,7 @@ export class MailService {
   private resend: Resend;
 
   constructor() {
-    this.resend = new Resend(process.env.MAIL_PASS); // Using MAIL_PASS as API KEY for Resend
+    this.resend = new Resend(process.env.RESEND_API_KEY); // Using MAIL_PASS as API KEY for Resend
   }
 
   async sendCafeVerificationEmail(to: string, code: string, cafeName: string) {

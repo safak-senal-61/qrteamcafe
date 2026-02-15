@@ -11,6 +11,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { getProductImage } from './product-images.util';
 import { S3Service } from '../common/s3.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class ProductsService {
@@ -18,6 +19,7 @@ export class ProductsService {
     private prisma: PrismaService,
     private readonly s3Service: S3Service,
     @Inject(CACHE_MANAGER) private cache: Cache,
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   async getGalleryImages(query?: string) {
@@ -60,7 +62,12 @@ export class ProductsService {
     }
   }
 
-  async create(cafeId: string, createProductDto: CreateProductDto) {
+  async create(
+    cafeId: string,
+    createProductDto: CreateProductDto,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     const { recommendationIds, ...rest } = createProductDto;
 
     const product = await this.prisma.product.create({
@@ -82,6 +89,17 @@ export class ProductsService {
       this.cache.del(`products:${cafeId}`),
       this.cache.del(`categories:${cafeId}`),
     ]);
+
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        cafeId,
+        'PRODUCT_CREATE',
+        `Product created: ${product.name}`,
+        actorId,
+        actorType,
+        product.id,
+      );
+    }
 
     return {
       ...product,
@@ -162,7 +180,12 @@ export class ProductsService {
     };
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     // First verify product exists
     await this.findOne(id);
 
@@ -207,6 +230,17 @@ export class ProductsService {
       this.cache.del(`categories:${product.cafeId}`),
     ]);
 
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        product.cafeId,
+        'PRODUCT_UPDATE',
+        `Product updated: ${updatedProduct.name}`,
+        actorId,
+        actorType,
+        updatedProduct.id,
+      );
+    }
+
     return {
       ...updatedProduct,
       imageUrl: getProductImage(
@@ -235,10 +269,14 @@ export class ProductsService {
     return updated;
   }
 
-  async remove(id: string) {
+  async remove(
+    id: string,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     const product = await this.prisma.product.findUnique({
       where: { id },
-      select: { cafeId: true },
+      select: { cafeId: true, name: true },
     });
     if (!product) throw new NotFoundException('Ürün bulunamadı');
     const deleted = await this.prisma.product.delete({
@@ -248,6 +286,18 @@ export class ProductsService {
       this.cache.del(`products:${product.cafeId}`),
       this.cache.del(`categories:${product.cafeId}`),
     ]);
+
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        product.cafeId,
+        'PRODUCT_DELETE',
+        `Product deleted: ${product.name}`,
+        actorId,
+        actorType,
+        id,
+      );
+    }
+
     return deleted;
   }
 
@@ -264,11 +314,11 @@ export class ProductsService {
       },
     });
 
-    let manualRecommendations =
+    const manualRecommendations =
       productWithRecommendations?.recommendations || [];
 
     // Add imageUrl to manual recommendations
-    manualRecommendations = manualRecommendations.map((product) => ({
+    const mappedRecommendations = manualRecommendations.map((product) => ({
       ...product,
       imageUrl: getProductImage(
         product.name,
@@ -277,7 +327,7 @@ export class ProductsService {
       ),
     }));
 
-    return manualRecommendations;
+    return mappedRecommendations;
   }
 
   async toggleChefRecommendation(id: string, isChefRecommended: boolean) {

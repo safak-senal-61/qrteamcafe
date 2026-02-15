@@ -14,6 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import { EventsGateway } from '../events/events.gateway';
 import { MailService } from '../common/mail.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class WaitersService {
@@ -22,6 +23,7 @@ export class WaitersService {
     private jwtService: JwtService,
     private eventsGateway: EventsGateway,
     private mailService: MailService,
+    private auditLogsService: AuditLogsService,
   ) {}
 
   async login(dto: LoginWaiterDto) {
@@ -88,7 +90,13 @@ export class WaitersService {
     });
   }
 
-  async updateStatus(id: string, dto: UpdateWaiterStatusDto, cafeId?: string) {
+  async updateStatus(
+    id: string,
+    dto: UpdateWaiterStatusDto,
+    cafeId?: string,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     const waiter = await this.prisma.waiter.findUnique({ where: { id } });
     if (!waiter) throw new NotFoundException('Garson bulunamadı.');
 
@@ -96,16 +104,35 @@ export class WaitersService {
       throw new UnauthorizedException('Bu garsonu yönetme yetkiniz yok.');
     }
 
-    return this.prisma.waiter.update({
+    const updatedWaiter = await this.prisma.waiter.update({
       where: { id },
       data: {
         status: dto.status,
         role: dto.role || waiter.role,
       },
     });
+
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        updatedWaiter.cafeId,
+        'STAFF_UPDATE_STATUS',
+        `Staff status updated: ${updatedWaiter.firstName} ${updatedWaiter.lastName} -> ${dto.status}`,
+        actorId,
+        actorType,
+        updatedWaiter.id,
+      );
+    }
+
+    return updatedWaiter;
   }
 
-  async inviteStaff(dto: InviteStaffDto, cafeId: string, origin?: string) {
+  async inviteStaff(
+    dto: InviteStaffDto,
+    cafeId: string,
+    origin?: string,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     const existing = await this.prisma.waiter.findUnique({
       where: { email: dto.email },
     });
@@ -154,10 +181,27 @@ export class WaitersService {
       origin,
     );
 
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        cafeId,
+        'STAFF_INVITE',
+        `Staff invited: ${dto.email} (${dto.role})`,
+        actorId,
+        actorType,
+        waiter.id,
+      );
+    }
+
     return { message: 'Davet gönderildi.', waiter };
   }
 
-  async resendInvitation(waiterId: string, cafeId: string, origin?: string) {
+  async resendInvitation(
+    waiterId: string,
+    cafeId: string,
+    origin?: string,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     const waiter = await this.prisma.waiter.findFirst({
       where: { id: waiterId, cafeId },
       include: { cafe: true },
@@ -192,10 +236,26 @@ export class WaitersService {
       origin,
     );
 
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        cafeId,
+        'STAFF_INVITE_RESEND',
+        `Staff invitation resent: ${waiter.email}`,
+        actorId,
+        actorType,
+        waiter.id,
+      );
+    }
+
     return { message: 'Davet tekrar gönderildi.' };
   }
 
-  async deleteInvitation(waiterId: string, cafeId: string) {
+  async deleteInvitation(
+    waiterId: string,
+    cafeId: string,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     const waiter = await this.prisma.waiter.findFirst({
       where: { id: waiterId, cafeId },
     });
@@ -215,6 +275,17 @@ export class WaitersService {
     await this.prisma.waiter.delete({
       where: { id: waiterId },
     });
+
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        cafeId,
+        'STAFF_DELETE',
+        `Staff deleted/invitation removed: ${waiter.firstName} ${waiter.lastName}`,
+        actorId,
+        actorType,
+        waiter.id,
+      );
+    }
 
     return { message: 'Davet silindi.' };
   }

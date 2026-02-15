@@ -21,6 +21,21 @@ export class SuperAdminController {
     return this.superAdminService.getDashboardStats();
   }
 
+  @Get('expiring-subscriptions')
+  getExpiringSubscriptions() {
+    return this.superAdminService.getExpiringSubscriptions();
+  }
+
+  @Get('financial-stats')
+  getFinancialStats() {
+    return this.superAdminService.getFinancialStats();
+  }
+
+  @Get('recent-logs')
+  getRecentLogs() {
+    return this.superAdminService.getRecentLogs();
+  }
+
   @Get('cafes')
   getAllCafes() {
     return this.superAdminService.getAllCafes();

@@ -49,7 +49,13 @@ export class WaitersController {
       throw new ForbiddenException('Bu işlem için yetkiniz yok.');
     }
     const origin = req.headers.origin;
-    return this.waitersService.inviteStaff(dto, req.user.cafeId, origin);
+    return this.waitersService.inviteStaff(
+      dto,
+      req.user.cafeId,
+      origin,
+      req.user.id,
+      'ADMIN',
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -62,7 +68,13 @@ export class WaitersController {
       throw new ForbiddenException('Bu işlem için yetkiniz yok.');
     }
     const origin = req.headers.origin;
-    return this.waitersService.resendInvitation(id, req.user.cafeId, origin);
+    return this.waitersService.resendInvitation(
+      id,
+      req.user.cafeId,
+      origin,
+      req.user.id,
+      'ADMIN',
+    );
   }
 
   @Post('verify-invitation')
@@ -99,6 +111,8 @@ export class WaitersController {
       id,
       updateWaiterStatusDto,
       req.user.cafeId,
+      req.user.id,
+      'ADMIN',
     );
   }
 
@@ -108,7 +122,12 @@ export class WaitersController {
     if (req.user.role !== 'CAFE_ADMIN') {
       throw new ForbiddenException('Bu işlem için yetkiniz yok.');
     }
-    return this.waitersService.deleteInvitation(id, req.user.cafeId);
+    return this.waitersService.deleteInvitation(
+      id,
+      req.user.cafeId,
+      req.user.id,
+      'ADMIN',
+    );
   }
 
   @UseGuards(JwtAuthGuard)

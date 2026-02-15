@@ -9,15 +9,22 @@ import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class CategoriesService {
   constructor(
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cache: Cache,
+    private auditLogsService: AuditLogsService,
   ) {}
 
-  async create(cafeId: string, createCategoryDto: CreateCategoryDto) {
+  async create(
+    cafeId: string,
+    createCategoryDto: CreateCategoryDto,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     const existingCategory = await this.prisma.category.findFirst({
       where: {
         cafeId,
@@ -42,6 +49,18 @@ export class CategoriesService {
       this.cache.del(`categories:${cafeId}`),
       this.cache.del(`products:${cafeId}`),
     ]);
+
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        cafeId,
+        'CATEGORY_CREATE',
+        `Category created: ${created.name}`,
+        actorId,
+        actorType,
+        created.id,
+      );
+    }
+
     return created;
   }
 
@@ -83,6 +102,11 @@ export class CategoriesService {
     await Promise.all(
       cafeIds.map((cafeId) => this.cache.del(`categories:${cafeId}`)),
     );
+
+    // Log reorder action if possible, but simpler to skip for bulk reorder or log generic
+    // Let's skip detailed reorder logging for now to keep it simple, or add a generic log if actor provided
+    // Adding actorId to reorder signature later if needed.
+
     return result;
   }
 
@@ -94,7 +118,12 @@ export class CategoriesService {
     return category;
   }
 
-  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
+  async update(
+    id: string,
+    updateCategoryDto: UpdateCategoryDto,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     const category = await this.findOne(id);
 
     if (updateCategoryDto.name) {
@@ -122,10 +151,26 @@ export class CategoriesService {
       this.cache.del(`categories:${category.cafeId}`),
       this.cache.del(`products:${category.cafeId}`),
     ]);
+
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        category.cafeId,
+        'CATEGORY_UPDATE',
+        `Category updated: ${updated.name}`,
+        actorId,
+        actorType,
+        updated.id,
+      );
+    }
+
     return updated;
   }
 
-  async remove(id: string) {
+  async remove(
+    id: string,
+    actorId?: string,
+    actorType: 'ADMIN' | 'WAITER' = 'ADMIN',
+  ) {
     const category = await this.findOne(id);
     const deleted = await this.prisma.category.delete({
       where: { id },
@@ -134,6 +179,18 @@ export class CategoriesService {
       this.cache.del(`categories:${category.cafeId}`),
       this.cache.del(`products:${category.cafeId}`),
     ]);
+
+    if (actorId) {
+      await this.auditLogsService.logAction(
+        category.cafeId,
+        'CATEGORY_DELETE',
+        `Category deleted: ${category.name}`,
+        actorId,
+        actorType,
+        category.id,
+      );
+    }
+
     return deleted;
   }
 }

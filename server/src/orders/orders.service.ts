@@ -4,12 +4,14 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { EventsGateway } from '../events/events.gateway';
 import { getProductImage } from '../products/product-images.util';
 import { OrderItem, Product, Category } from '@prisma/client';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private prisma: PrismaService,
     private eventsGateway: EventsGateway,
+    private auditLogsService: AuditLogsService,
   ) {}
 
   private mapOrderWithImages<
@@ -208,19 +210,25 @@ export class OrdersService {
       if (!order) throw new Error('Sipariş bulunamadı');
 
       // Suspicious Action Logging
-      if (status === 'CANCELLED' && user?.type === 'waiter') {
-        const log = await prisma.suspiciousActionLog.create({
-          data: {
-            cafeId: order.cafeId,
-            waiterId: user.id,
-            actionType: 'ORDER_CANCELLED',
-            details: `Order #${order.id} cancelled by waiter ${user.firstName} ${user.lastName}. Amount: ${order.totalAmount}`,
-          },
-          include: { waiter: true },
-        });
+      if (status === 'CANCELLED') {
+        const actorId = user?.id as string;
+        const actorType =
+          user?.type === 'waiter'
+            ? 'WAITER'
+            : user?.role === 'CAFE_ADMIN'
+              ? 'ADMIN'
+              : null;
 
-        // Notify Admin
-        this.eventsGateway.notifySuspiciousAction(order.cafeId, log);
+        if (actorId && actorType) {
+          await this.auditLogsService.logAction(
+            order.cafeId,
+            'ORDER_CANCELLED',
+            `Order #${order.id} cancelled by ${actorType} ${user.firstName || ''} ${user.lastName || ''}. Amount: ${order.totalAmount}`,
+            actorId,
+            actorType,
+            order.id,
+          );
+        }
       }
 
       // İptal edilmek isteniyorsa, sadece PENDING ise iptal edilebilir
@@ -277,7 +285,7 @@ export class OrdersService {
     });
   }
 
-  async closeTable(tableId: string, paymentMethod: string) {
+  async closeTable(tableId: string, paymentMethod: string, user?: any) {
     // 1. Masadaki ödenmemiş siparişleri bul
     const orders = await this.prisma.order.findMany({
       where: {
@@ -336,6 +344,35 @@ export class OrdersService {
       (sum, order) => sum + Number(order.totalAmount),
       0,
     );
+
+    // Audit Log
+    if (user) {
+      const actorId = user.id as string;
+      const actorType =
+        user.type === 'waiter'
+          ? 'WAITER'
+          : user.role === 'CAFE_ADMIN'
+            ? 'ADMIN'
+            : null;
+
+      if (actorId && actorType) {
+        await this.auditLogsService.logAction(
+          orders[0].cafeId,
+          'TABLE_CLOSE_PAYMENT',
+          `Table closed with payment (${paymentMethod}). Total: ${totalAmount}`,
+          actorId,
+          actorType,
+          tableId,
+        );
+      }
+    }
+
+    // Socket Notifications
+    this.eventsGateway.server.to(orders[0].cafeId).emit('tableUpdate', {
+      tableId,
+      isOccupied: false,
+    });
+    this.eventsGateway.server.to(orders[0].cafeId).emit('ordersUpdated');
 
     return { message: 'Hesap kapatıldı', totalAmount };
   }

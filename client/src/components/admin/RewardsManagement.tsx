@@ -225,9 +225,9 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>Ödül Görseli</Label>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                       {imageUrl ? (
-                        <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
+                        <div className="relative w-full md:w-20 h-40 md:h-20 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0">
                           <Image 
                             src={getMediaUrl(imageUrl)} 
                             alt="Preview" 
@@ -238,14 +238,14 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
                           <button
                             type="button"
                             onClick={() => setImageUrl('')}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 z-10"
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 z-10 shadow-sm"
                           >
-                            <X className="w-3 h-3" />
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
                       ) : (
                         <div 
-                          className="w-20 h-20 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-colors"
+                          className="w-full md:w-20 h-20 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-colors flex-shrink-0"
                           onClick={() => fileInputRef.current?.click()}
                         >
                           {uploadingImage ? (
@@ -255,7 +255,7 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
                           )}
                         </div>
                       )}
-                      <div className="flex-1">
+                      <div className="flex-1 w-full">
                          <input 
                            type="file" 
                            ref={fileInputRef} 
@@ -263,7 +263,16 @@ export function RewardsManagement({ cafes }: RewardsManagementProps) {
                            accept="image/*"
                            onChange={handleImageUpload}
                          />
-                         <p className="text-sm text-slate-500">Cihazınızdan bir görsel seçin.</p>
+                         <p className="text-xs md:text-sm text-slate-500">Cihazınızdan bir görsel seçin (Max 2MB).</p>
+                         <Button 
+                           type="button" 
+                           variant="outline" 
+                           size="sm" 
+                           className="mt-2 w-full md:w-auto"
+                           onClick={() => fileInputRef.current?.click()}
+                         >
+                           Görsel Seç
+                         </Button>
                       </div>
                     </div>
                   </div>

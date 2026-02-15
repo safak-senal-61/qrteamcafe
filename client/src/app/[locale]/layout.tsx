@@ -65,7 +65,7 @@ export default async function LocaleLayout({
   const direction = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <html lang={locale} dir={direction}>
+    <html lang={locale} dir={direction} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <NetworkStatus />
