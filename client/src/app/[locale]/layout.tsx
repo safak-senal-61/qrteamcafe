@@ -7,6 +7,9 @@ import NetworkStatus from '@/components/NetworkStatus';
 import BackToHomeButton from '@/components/BackToHomeButton';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { headers } from 'next/headers';
+import MaintenancePage from '@/components/MaintenancePage';
+import { API_URL } from '@/lib/api';
 
 const geistSans = localFont({
   src: '../fonts/GeistVF.woff',
@@ -61,8 +64,38 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
   console.log('--- LocaleLayout Rendered ---', locale);
-  const messages = await getMessages();
+
+  // Maintenance Check Start
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') || '';
+  let isMaintenance = false;
+
+  try {
+    const res = await fetch(`${API_URL}/system-status`, { next: { revalidate: 10 } });
+    if (res.ok) {
+      const data = await res.json();
+      isMaintenance = data.maintenanceMode;
+    }
+  } catch (error) {
+    console.error('Failed to check system status:', error);
+  }
+
+  const isSuperAdminPath = pathname.includes('/admin/super');
   const direction = locale === 'ar' ? 'rtl' : 'ltr';
+
+  if (isMaintenance && !isSuperAdminPath) {
+    return (
+      <html lang={locale} dir={direction} suppressHydrationWarning>
+        <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-slate-50 dark:bg-slate-950`} suppressHydrationWarning>
+           <MaintenancePage />
+        </body>
+      </html>
+    );
+  }
+  // Maintenance Check End
+
+  const messages = await getMessages();
+  // const direction = locale === 'ar' ? 'rtl' : 'ltr'; // Removed duplicate declaration
 
   return (
     <html lang={locale} dir={direction} suppressHydrationWarning>

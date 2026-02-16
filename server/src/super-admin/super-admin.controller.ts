@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Patch, Post, Body } from '@nestjs/common';
 import { SuperAdminService } from './super-admin.service';
 import { RegisterSuperAdminDto } from './dto/register-super-admin.dto';
+import { SendAnnouncementEmailDto } from './dto/send-announcement-email.dto';
 
 @Controller('super-admin')
 export class SuperAdminController {
@@ -9,6 +10,11 @@ export class SuperAdminController {
   @Post('register')
   register(@Body() dto: RegisterSuperAdminDto) {
     return this.superAdminService.register(dto);
+  }
+
+  @Post('send-announcement-email')
+  sendAnnouncementEmail(@Body() dto: SendAnnouncementEmailDto) {
+    return this.superAdminService.sendAnnouncementEmail(dto);
   }
 
   @Get('pending-cafes')

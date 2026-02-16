@@ -1,7 +1,14 @@
 import createMiddleware from 'next-intl/middleware';
 import {routing} from './navigation';
- 
-export default createMiddleware(routing);
+import { NextRequest } from 'next/server';
+
+const intlMiddleware = createMiddleware(routing);
+
+export default function middleware(req: NextRequest) {
+  const res = intlMiddleware(req);
+  res.headers.set('x-pathname', req.nextUrl.pathname);
+  return res;
+}
  
 export const config = {
   // Match all pathnames except for

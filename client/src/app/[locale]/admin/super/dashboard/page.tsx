@@ -151,6 +151,16 @@ export default function SuperAdminDashboard() {
   });
   const [creatingAnnouncement, setCreatingAnnouncement] = useState(false);
 
+  // Bulk Email State
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailData, setEmailData] = useState({
+    subject: '',
+    content: '',
+    target: 'ALL_CAFE_OWNERS',
+    cafeId: ''
+  });
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   const fetchData = async () => {
     setLoading(true);
     const token = localStorage.getItem('token');
@@ -327,6 +337,50 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  const handleSendEmail = async () => {
+    if (emailData.target === 'SINGLE_CAFE' && !emailData.cafeId) {
+      toast.error('Lütfen bir işletme seçin.');
+      return;
+    }
+
+    setSendingEmail(true);
+    const token = localStorage.getItem('token');
+    if (!token) {
+        setSendingEmail(false);
+        return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/super-admin/send-announcement-email`, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(emailData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(data.message);
+        setIsEmailDialogOpen(false);
+        setEmailData({
+          subject: '',
+          content: '',
+          target: 'ALL_CAFE_OWNERS',
+          cafeId: ''
+        });
+      } else {
+        toast.error('E-posta gönderimi başarısız oldu.');
+      }
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      toast.error('Bir hata oluştu.');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const handleDeleteAnnouncement = async (id: string) => {
     if (!confirm('Bu duyuruyu silmek istediğinize emin misiniz?')) return;
 
@@ -489,6 +543,90 @@ export default function SuperAdminDashboard() {
                   <Button type="submit" onClick={saveSettings} disabled={savingSettings}>
                     {savingSettings && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Kaydet
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="secondary"
+                  className="rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/30"
+                >
+                  <Mail className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">E-posta Gönder</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Toplu E-posta Gönder</DialogTitle>
+                  <DialogDescription>
+                    Seçili kitleye e-posta gönderin.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Konu</Label>
+                    <Input 
+                      value={emailData.subject} 
+                      onChange={(e) => setEmailData({...emailData, subject: e.target.value})}
+                      placeholder="E-posta konusu..." 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>İçerik</Label>
+                    <Textarea 
+                      value={emailData.content}
+                      onChange={(e) => setEmailData({...emailData, content: e.target.value})}
+                      placeholder="E-posta içeriği..." 
+                      className="h-32"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Hedef Kitle</Label>
+                    <Select 
+                      value={emailData.target} 
+                      onValueChange={(v) => setEmailData({...emailData, target: v})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL_CAFE_OWNERS">Tüm Kafe Sahipleri</SelectItem>
+                        <SelectItem value="ALL_USERS">Tüm Son Kullanıcılar</SelectItem>
+                        <SelectItem value="EVERYONE">Herkes (Kafe Sahipleri + Kullanıcılar)</SelectItem>
+                        <SelectItem value="SINGLE_CAFE">Tek Bir İşletme</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {emailData.target === 'SINGLE_CAFE' && (
+                    <div className="space-y-2">
+                      <Label>İşletme Seç</Label>
+                      <Select 
+                        value={emailData.cafeId} 
+                        onValueChange={(v) => setEmailData({...emailData, cafeId: v})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="İşletme seçiniz..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cafes.map((cafe) => (
+                            <SelectItem key={cafe.id} value={cafe.id}>
+                              {cafe.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleSendEmail} disabled={sendingEmail}>
+                    {sendingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Gönder
                   </Button>
                 </DialogFooter>
               </DialogContent>

@@ -35,6 +35,7 @@ import { WaitersModule } from './waiters/waiters.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TelegramModule } from './telegram/telegram.module';
 import { redisStore } from 'cache-manager-redis-yet';
 
 @Module({
@@ -92,6 +93,7 @@ import { redisStore } from 'cache-manager-redis-yet';
     OrdersModule,
     PaymentsModule,
     SuperAdminModule,
+    TelegramModule,
     EventsModule,
     WaiterCallsModule,
     ReviewsModule,

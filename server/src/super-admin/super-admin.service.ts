@@ -7,12 +7,18 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RegisterSuperAdminDto } from './dto/register-super-admin.dto';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
+import { SuperAdminMailService } from './super-admin-mail.service';
+import {
+  SendAnnouncementEmailDto,
+  EmailTarget,
+} from './dto/send-announcement-email.dto';
 
 @Injectable()
 export class SuperAdminService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private mailService: SuperAdminMailService,
   ) {}
 
   async register(dto: RegisterSuperAdminDto) {
@@ -77,6 +83,81 @@ export class SuperAdminService {
         createdAt: 'desc',
       },
     });
+  }
+
+  async sendAnnouncementEmail(dto: SendAnnouncementEmailDto) {
+    let emails: string[] = [];
+
+    if (
+      dto.target === EmailTarget.ALL_CAFE_OWNERS ||
+      dto.target === EmailTarget.EVERYONE
+    ) {
+      const cafeAdmins = await this.prisma.cafeAdmin.findMany({
+        select: { email: true },
+        // email is required in CafeAdmin, no need to filter nulls
+      });
+      emails.push(...cafeAdmins.map((admin) => admin.email));
+    }
+
+    if (dto.target === EmailTarget.SINGLE_CAFE) {
+      if (!dto.cafeId) {
+        throw new BadRequestException(
+          'Cafe ID is required for SINGLE_CAFE target',
+        );
+      }
+
+      const cafeAdmins = await this.prisma.cafeAdmin.findMany({
+        where: { cafeId: dto.cafeId },
+        select: { email: true },
+      });
+
+      const cafe = await this.prisma.cafe.findUnique({
+        where: { id: dto.cafeId },
+        select: { email: true },
+      });
+
+      if (cafe?.email) {
+        emails.push(cafe.email);
+      }
+
+      emails.push(...cafeAdmins.map((admin) => admin.email));
+    }
+
+    if (
+      dto.target === EmailTarget.ALL_USERS ||
+      dto.target === EmailTarget.EVERYONE
+    ) {
+      const customers = await this.prisma.customer.findMany({
+        select: { email: true },
+        where: { email: { not: null } },
+      });
+
+      const customerEmails = customers
+        .map((c) => c.email)
+        .filter((email): email is string => email !== null);
+
+      emails.push(...customerEmails);
+    }
+
+    // Remove duplicates
+    emails = [...new Set(emails)];
+
+    if (emails.length === 0) {
+      return {
+        message: 'Hedef kitlede gönderilecek e-posta adresi bulunamadı.',
+      };
+    }
+
+    // Send emails asynchronously
+    await this.mailService.sendAnnouncementEmail(
+      emails,
+      dto.subject,
+      dto.content,
+    );
+
+    return {
+      message: `${emails.length} kişiye e-posta gönderimi başlatıldı.`,
+    };
   }
 
   async getDashboardStats() {
