@@ -5,6 +5,7 @@ import { TelegramUpdate } from './telegram.update';
 import { SuperAdminModule } from '../super-admin/super-admin.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Agent } from 'https';
 
 @Module({
   imports: [
@@ -17,6 +18,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         token: configService.get<string>('TELEGRAM_BOT_TOKEN')!,
         launchOptions: {
           dropPendingUpdates: true,
+        },
+        options: {
+          telegram: {
+            agent: new Agent({ keepAlive: true, family: 4 }),
+          },
         },
       }),
       inject: [ConfigService],
