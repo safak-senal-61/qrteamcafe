@@ -5,7 +5,7 @@ import { Link } from '@/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Coffee, User, Mail, Phone, Lock, Store, ArrowRight, Loader2, CheckCircle2, Upload } from 'lucide-react';
+import { Coffee, User, Mail, Phone, Lock, Store, ArrowRight, Loader2, CheckCircle2, Upload, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { API_URL, getMediaUrl } from '@/lib/api';
@@ -215,15 +215,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden">
-      {/* Background Image - Same as Login */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=2078&auto=format&fit=crop")',
-        }}
-      />
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden bg-slate-50">
       
       {/* Main Content Container */}
       <div className="relative z-10 w-full max-w-7xl grid lg:grid-cols-2 gap-8 lg:gap-16 p-6 items-center">
@@ -234,15 +226,15 @@ export default function RegisterPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-[550px] bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+            className="w-full max-w-[550px] bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden"
           >
             <div className="p-8 md:p-10 space-y-6">
               <div className="text-center space-y-2">
-                 <div className="mx-auto bg-white/10 text-white p-3 rounded-2xl w-fit mb-6 lg:hidden">
-                   <Coffee className="h-8 w-8" />
+                 <div className="mx-auto bg-amber-100 text-amber-600 p-3 rounded-2xl w-fit mb-6 lg:hidden border border-amber-200">
+                   <Image src="/logo/logo.svg" alt="QrDers Logo" width={48} height={48} className="h-12 w-12" />
                  </div>
-                <h2 className="text-3xl font-bold tracking-tight text-white">{t('register.title')}</h2>
-                <p className="text-white/70">
+                <h2 className="text-3xl font-bold tracking-tight text-slate-900">{t('register.title')}</h2>
+                <p className="text-slate-500">
                   {t('register.desc')}
                 </p>
               </div>
@@ -251,25 +243,25 @@ export default function RegisterPage() {
                 {step === 'form' ? (
                   <>
                     <div className="space-y-2">
-                      <Label htmlFor="cafeName" className="text-white">{t('register.cafeName')}</Label>
+                      <Label htmlFor="cafeName" className="text-slate-900">{t('register.cafeName')}</Label>
                       <div className="relative">
-                        <Store className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                        <Store className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                         <Input
                           id="cafeName"
                           value={formData.cafeName}
                           onChange={handleChange}
                           placeholder={t('register.cafeNamePlaceholder')}
-                          className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 transition-colors"
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-white">{t('register.cafeLogo')}</Label>
+                      <Label className="text-slate-900">{t('register.cafeLogo')}</Label>
                       <div className="flex items-center gap-4">
                         <div 
-                          className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/5 flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
+                          className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors"
                           onClick={() => fileInputRef.current?.click()}
                         >
                           {logoPreview ? (
@@ -283,14 +275,14 @@ export default function RegisterPage() {
                               />
                             </div>
                           ) : (
-                            <Upload className="h-6 w-6 text-white/50" />
+                            <Upload className="h-6 w-6 text-slate-400" />
                           )}
                         </div>
                         <div className="flex-1">
                           <Button
                             type="button"
                             variant="outline"
-                            className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+                            className="w-full bg-slate-50 border-slate-200 text-slate-900 hover:bg-slate-100"
                             onClick={() => fileInputRef.current?.click()}
                           >
                             {t('register.selectLogo')}
@@ -302,39 +294,36 @@ export default function RegisterPage() {
                             className="hidden"
                             onChange={onFileChange}
                           />
-                          <p className="text-xs text-white/40 mt-1 text-center">
-                              {t('register.logoHint')}
-                          </p>
                         </div>
                       </div>
+                      <p className="text-xs text-slate-500">{t('register.logoHint')}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="fullName" className="text-white">{t('register.fullName')}</Label>
+                        <Label htmlFor="fullName" className="text-slate-900">{t('register.fullName')}</Label>
                         <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                          <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                           <Input
                             id="fullName"
                             value={formData.fullName}
                             onChange={handleChange}
                             placeholder={t('register.fullNamePlaceholder')}
-                            className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                            className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 transition-colors"
                             required
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="phone" className="text-white">{t('register.phone')}</Label>
+                        <Label htmlFor="phone" className="text-slate-900">{t('register.phone')}</Label>
                         <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                          <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                           <Input
                             id="phone"
                             value={formData.phone}
                             onChange={handleChange}
                             placeholder={t('register.phonePlaceholder')}
-                            type="tel"
-                            className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                            className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 transition-colors"
                             required
                           />
                         </div>
@@ -342,32 +331,32 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-white">{t('common.email')}</Label>
+                      <Label htmlFor="email" className="text-slate-900">{t('common.email')}</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                         <Input
                           id="email"
                           value={formData.email}
                           onChange={handleChange}
                           placeholder={t('register.emailPlaceholder')}
                           type="email"
-                          className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 transition-colors"
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="password" className="text-white">{t('register.setPassword')}</Label>
+                      <Label htmlFor="password" className="text-slate-900">{t('register.setPassword')}</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                         <Input
                           id="password"
                           value={formData.password}
                           onChange={handleChange}
                           type="password"
                           placeholder="••••••••"
-                          className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 transition-colors"
                           required
                         />
                       </div>
@@ -376,20 +365,23 @@ export default function RegisterPage() {
                 ) : (
                   <div className="space-y-4 py-4">
                     <div className="text-center space-y-2">
-                      <Mail className="h-12 w-12 mx-auto text-amber-500" />
-                      <h3 className="font-semibold text-lg text-white">{t('register.verifyEmail')}</h3>
-                      <p className="text-sm text-white/70">
+                      <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Mail className="h-8 w-8 text-amber-600" />
+                      </div>
+                      <h3 className="font-semibold text-lg text-slate-900">{t('register.verifyEmail')}
+                      </h3>
+                      <p className="text-sm text-slate-500">
                         {t('register.verifyEmailDesc', { email: formData.email })}
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="code" className="text-white">{t('register.verificationCode')}</Label>
+                      <Label htmlFor="code" className="text-slate-900">{t('register.verificationCode')}</Label>
                       <Input
                         id="code"
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value)}
                         placeholder="123456"
-                        className="text-center text-lg tracking-widest h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50"
+                        className="text-center text-lg tracking-widest h-12 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500"
                         maxLength={6}
                         required
                       />
@@ -399,7 +391,7 @@ export default function RegisterPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 font-bold text-lg bg-amber-500 hover:bg-amber-600 text-black transition-all mt-4"
+                  className="w-full h-12 font-bold text-lg bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/20 transition-all mt-4"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -416,9 +408,9 @@ export default function RegisterPage() {
               </form>
             </div>
 
-            <div className="text-center text-sm text-white/60 pb-8 bg-black/20 p-4 border-t border-white/5">
+            <div className="text-center text-sm text-slate-500 pb-8 bg-slate-50 p-4 border-t border-slate-100">
                 {t('register.hasAccount')}{' '}
-                <Link href="/admin/login" className="font-bold text-amber-500 hover:text-amber-400 hover:underline">
+                <Link href="/admin/login" className="font-bold text-amber-600 hover:text-amber-700 hover:underline">
                   {t('register.loginLink')}
                 </Link>
             </div>
@@ -426,37 +418,37 @@ export default function RegisterPage() {
         </div>
 
         {/* Right Side - Brand & Slogans (Hidden on Mobile) */}
-        <div className="hidden lg:flex flex-col text-white space-y-8">
+        <div className="hidden lg:flex flex-col text-slate-900 space-y-8">
           <div className="flex items-center gap-3">
-            <div className="bg-white/10 p-3 rounded-xl backdrop-blur-md border border-white/20">
-              <Coffee className="h-8 w-8 text-white" />
+            <div className="bg-amber-100 p-3 rounded-xl border border-amber-200">
+              <Image src="/logo/logo.svg" alt="QrDers Logo" width={80} height={80} className="h-20 w-20" />
             </div>
-            <span className="text-2xl font-bold tracking-tight">qrders</span>
+            <span className="text-4xl font-bold tracking-tight text-slate-900">qrders</span>
           </div>
 
           <div className="space-y-6">
-            <h1 className="text-5xl font-bold leading-tight tracking-tight">
+            <h1 className="text-5xl font-bold leading-tight tracking-tight text-slate-900">
               Yönetim parmaklarınızın ucunda.
             </h1>
-            <p className="text-xl text-white/80 leading-relaxed max-w-lg">
+            <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
               İşletmenizi dijital dünyaya taşıyın, siparişleri hızlandırın ve müşteri memnuniyetini artırın.
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-6 pt-4">
             <div className="space-y-2">
-              <div className="bg-white/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-                <Loader2 className="w-5 h-5 text-white" />
+              <div className="bg-amber-100 w-10 h-10 rounded-lg flex items-center justify-center mb-3 text-amber-600">
+                <Loader2 className="w-5 h-5" />
               </div>
-              <h3 className="font-semibold text-lg">Hızlı Kurulum</h3>
-              <p className="text-white/60 text-sm">Dakikalar içinde menünüzü oluşturun ve yayına alın.</p>
+              <h3 className="font-semibold text-lg text-slate-900">Hızlı Kurulum</h3>
+              <p className="text-slate-500 text-sm">Dakikalar içinde menünüzü oluşturun ve yayına alın.</p>
             </div>
             <div className="space-y-2">
-              <div className="bg-white/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-                <Lock className="w-5 h-5 text-white" />
+              <div className="bg-amber-100 w-10 h-10 rounded-lg flex items-center justify-center mb-3 text-amber-600">
+                <ShieldCheck className="w-5 h-5" />
               </div>
-              <h3 className="font-semibold text-lg">Güvenli Altyapı</h3>
-              <p className="text-white/60 text-sm">Verileriniz ve ödemeleriniz güvende.</p>
+              <h3 className="font-semibold text-lg text-slate-900">Güvenilir Sistem</h3>
+              <p className="text-slate-500 text-sm">Verileriniz ve ödemeleriniz güvende.</p>
             </div>
           </div>
         </div>

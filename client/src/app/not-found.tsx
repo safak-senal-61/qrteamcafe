@@ -8,8 +8,8 @@ import { Home } from 'lucide-react';
 
 export default function GlobalNotFound() {
   return (
-    <html lang="tr">
-      <body>
+    <html lang="tr" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-background text-foreground font-sans">
           <div className="w-full max-w-lg mb-8">
             <LottieAnimation

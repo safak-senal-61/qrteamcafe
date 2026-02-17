@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -174,51 +175,43 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden">
-      {/* Arka Plan Görseli - Tam Ekran */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=2078&auto=format&fit=crop")',
-        }}
-      />
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden bg-slate-50">
       
       {/* Ana İçerik Konteyner */}
       <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 lg:gap-16 p-6 items-center">
         
         {/* Sol Taraf - Marka ve Sloganlar */}
-        <div className="hidden lg:flex flex-col text-white space-y-8">
+        <div className="hidden lg:flex flex-col text-slate-900 space-y-8">
           <div className="flex items-center gap-3">
-            <div className="bg-white/10 p-3 rounded-xl backdrop-blur-md border border-white/20">
-              <Coffee className="h-8 w-8 text-white" />
+            <div className="bg-amber-100 p-3 rounded-xl border border-amber-200">
+              <Image src="/logo/logo.svg" alt="QrDers Logo" width={80} height={80} className="h-20 w-20" />
             </div>
-            <span className="text-2xl font-bold tracking-tight">qrders</span>
+            <span className="text-4xl font-bold tracking-tight text-slate-900">qrders</span>
           </div>
 
           <div className="space-y-6">
-            <h1 className="text-5xl font-bold leading-tight tracking-tight">
+            <h1 className="text-5xl font-bold leading-tight tracking-tight text-slate-900">
               Yönetim parmaklarınızın ucunda.
             </h1>
-            <p className="text-xl text-white/80 leading-relaxed max-w-lg">
+            <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
               Sipariş takibi, stok yönetimi ve detaylı raporlar ile işletmenizi bir üst seviyeye taşıyın.
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-6 pt-4">
             <div className="space-y-2">
-              <div className="bg-white/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-                <Loader2 className="w-5 h-5 text-white" />
+              <div className="bg-amber-100 w-10 h-10 rounded-lg flex items-center justify-center mb-3 text-amber-600">
+                <Loader2 className="w-5 h-5" />
               </div>
-              <h3 className="font-semibold text-lg">Hızlı İşlem</h3>
-              <p className="text-white/60 text-sm">Saniyeler içinde sipariş alın ve yönetin.</p>
+              <h3 className="font-semibold text-lg text-slate-900">Hızlı İşlem</h3>
+              <p className="text-slate-500 text-sm">Saniyeler içinde sipariş alın ve yönetin.</p>
             </div>
             <div className="space-y-2">
-              <div className="bg-white/10 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-                <Lock className="w-5 h-5 text-white" />
+              <div className="bg-amber-100 w-10 h-10 rounded-lg flex items-center justify-center mb-3 text-amber-600">
+                <Lock className="w-5 h-5" />
               </div>
-              <h3 className="font-semibold text-lg">Güvenli Altyapı</h3>
-              <p className="text-white/60 text-sm">Verileriniz uçtan uca şifreleme ile güvende.</p>
+              <h3 className="font-semibold text-lg text-slate-900">Güvenli Altyapı</h3>
+              <p className="text-slate-500 text-sm">Verileriniz uçtan uca şifreleme ile güvende.</p>
             </div>
           </div>
         </div>
@@ -229,17 +222,17 @@ export default function AdminLoginPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-[440px] bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+            className="w-full max-w-[440px] bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden"
           >
             <div className="p-8 md:p-10 space-y-8">
               <div className="text-center space-y-2">
-                <div className="mx-auto bg-white/10 text-white p-3 rounded-2xl w-fit mb-6 lg:hidden">
-                  <Coffee className="h-8 w-8" />
+                <div className="mx-auto bg-amber-100 text-amber-600 p-3 rounded-2xl w-fit mb-6 lg:hidden border border-amber-200">
+                  <Image src="/logo/logo.svg" alt="QrDers Logo" width={48} height={48} className="h-12 w-12" />
                 </div>
-                <h2 className="text-3xl font-bold tracking-tight text-white">
+                <h2 className="text-3xl font-bold tracking-tight text-slate-900">
                   {is2FARequired ? t('2fa.title') : t('login.title')}
                 </h2>
-                <p className="text-white/70">
+                <p className="text-slate-500">
                   {is2FARequired 
                     ? t('2fa.desc')
                     : t('login.desc')
@@ -250,15 +243,15 @@ export default function AdminLoginPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {is2FARequired ? (
                   <div className="space-y-2">
-                    <Label htmlFor="twoFactorCode" className="text-white">{t('common.verificationCode')}</Label>
+                    <Label htmlFor="twoFactorCode" className="text-slate-900">{t('common.verificationCode')}</Label>
                     <div className="relative">
-                      <KeyRound className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                      <KeyRound className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                       <Input
                         id="twoFactorCode"
                         value={twoFactorCode}
                         onChange={(e) => setTwoFactorCode(e.target.value)}
                         placeholder="123456"
-                        className="pl-10 tracking-widest text-lg text-center font-mono h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                        className="pl-10 tracking-widest text-lg text-center font-mono h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 transition-colors"
                         maxLength={6}
                         autoFocus
                         required
@@ -267,7 +260,7 @@ export default function AdminLoginPage() {
                     <Button 
                       type="button" 
                       variant="ghost" 
-                      className="w-full text-xs text-white/60 hover:text-white hover:bg-white/10"
+                      className="w-full text-xs text-slate-500 hover:text-slate-900 hover:bg-slate-100"
                       onClick={() => {
                         setIs2FARequired(false);
                         setTwoFactorCode('');
@@ -279,27 +272,27 @@ export default function AdminLoginPage() {
                 ) : (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-white">{t('common.email')}</Label>
+                      <Label htmlFor="email" className="text-slate-900">{t('common.email')}</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                         <Input
                           id="email"
                           value={formData.email}
                           onChange={handleChange}
                           placeholder="ornek@cafe.com"
                           type="email"
-                          className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 transition-colors"
                           required
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="password" className="text-white">{t('common.password')}</Label>
+                        <Label htmlFor="password" className="text-slate-900">{t('common.password')}</Label>
                         <Button
                           type="button"
                           variant="link"
-                          className="text-xs font-medium text-amber-500 hover:text-amber-400 hover:underline p-0 h-auto"
+                          className="px-0 font-normal text-xs text-amber-600 h-auto hover:text-amber-700 hover:no-underline"
                           onClick={() => {
                             setForgotPasswordStep(1);
                             setIsForgotPasswordOpen(true);
@@ -309,50 +302,46 @@ export default function AdminLoginPage() {
                         </Button>
                       </div>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                         <Input
                           id="password"
                           value={formData.password}
                           onChange={handleChange}
                           type="password"
                           placeholder="••••••••"
-                          className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:bg-white/10 focus:border-amber-500/50 transition-colors"
+                          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 transition-colors"
                           required
                         />
                       </div>
                     </div>
                   </div>
                 )}
-                
+
                 <Button
                   type="submit"
-                  className="w-full h-11 font-bold text-base bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all"
+                  className="w-full h-12 font-bold text-lg bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/20 transition-all"
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {is2FARequired ? t('common.verifying') : t('login.loggingIn')}
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      {t('login.loggingIn')}
                     </>
                   ) : (
                     <>
-                      {is2FARequired ? t('common.verifyAndLogin') : t('login.submit')} 
-                      {!is2FARequired && <ArrowRight className="ml-2 h-4 w-4" />}
+                      {is2FARequired ? t('common.verifyAndLogin') : t('login.submit')} <ArrowRight className="ml-2 h-5 w-5" />
                     </>
                   )}
                 </Button>
               </form>
 
-              <div className="text-center text-sm text-white/60">
+              <div className="text-center text-sm text-slate-500 pb-2">
                 {t('login.noAccount')}{' '}
-                <Link href="/admin/register" className="font-semibold text-amber-500 hover:text-amber-400 hover:underline transition-colors">
+                <Link href="/admin/register" className="font-bold text-amber-600 hover:text-amber-700 hover:underline">
                   {t('login.registerLink')}
                 </Link>
               </div>
             </div>
-            
-            {/* Kart Altı Dekoratif Çizgi */}
-            <div className="h-1 w-full bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
           </motion.div>
         </div>
       </div>

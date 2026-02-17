@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/co
 import { QrCode, Utensils, Smartphone, CheckCircle2, Zap, LayoutDashboard, Users, BarChart3, Clock, Globe, Wallet, ChevronRight, Menu } from 'lucide-react';
 import { LazyMotion, domAnimation, m, Variants } from 'framer-motion';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 const PanelGallery = dynamic(() => import('@/components/ui/panel-gallery'), { ssr: false });
 const LottieAnimation = dynamic(() => import('@/components/ui/LottieAnimation'), { ssr: false });
@@ -134,11 +135,11 @@ export default function Home() {
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <Link className="flex items-center gap-3 group" href="#">
             <m.div 
-              whileHover={{ rotate: 180, scale: 1.1 }}
+              whileHover={{ rotate: 360, scale: 1.1 }}
               transition={{ duration: 0.5 }}
               className="bg-slate-100 text-amber-500 p-2 rounded-2xl border border-slate-200"
             >
-              <QrCode className="h-7 w-7" />
+              <Image src="/logo/logo.svg" alt="QrDers Logo" width={64} height={64} className="h-14 w-14" />
             </m.div>
             <span className="font-bold text-2xl tracking-tight text-slate-900">
               QrDers
@@ -147,6 +148,9 @@ export default function Home() {
           <nav className="flex items-center gap-4">
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">
+              <Link href="/pricing" className="text-sm font-medium text-slate-600 hover:text-amber-600 transition-colors">{t('pricing')}</Link>
+              <Link href="/roadmap" className="text-sm font-medium text-slate-600 hover:text-amber-600 transition-colors">{t('roadmap')}</Link>
+              <Link href="/contact" className="text-sm font-medium text-slate-600 hover:text-amber-600 transition-colors">{t('contact')}</Link>
               <div className="text-slate-600 hover:text-slate-900 transition-colors">
                  <LanguageSwitcher />
               </div>
@@ -176,8 +180,8 @@ export default function Home() {
                   <div className="flex flex-col h-full">
                     <SheetHeader className="p-6 border-b border-slate-200 bg-slate-50">
                       <SheetTitle className="text-left flex items-center gap-3">
-                        <div className="bg-amber-600 text-white p-2 rounded-xl shadow-lg shadow-amber-500/20">
-                          <QrCode className="h-6 w-6" />
+                        <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                          <Image src="/logo/logo.svg" alt="QrDers Logo" width={48} height={48} className="h-10 w-10" />
                         </div>
                         <span className="font-bold text-xl tracking-tight text-slate-900">
                           QrDers
@@ -186,6 +190,11 @@ export default function Home() {
                     </SheetHeader>
                     
                     <div className="flex flex-col flex-1 p-6 gap-6 text-slate-900">
+                      <nav className="flex flex-col gap-2">
+                        <Link href="/pricing" onClick={() => {}} className="text-lg font-medium text-slate-600 hover:text-amber-600 transition-colors p-2 hover:bg-slate-50 rounded-lg">{t('pricing')}</Link>
+                        <Link href="/roadmap" onClick={() => {}} className="text-lg font-medium text-slate-600 hover:text-amber-600 transition-colors p-2 hover:bg-slate-50 rounded-lg">{t('roadmap')}</Link>
+                        <Link href="/contact" onClick={() => {}} className="text-lg font-medium text-slate-600 hover:text-amber-600 transition-colors p-2 hover:bg-slate-50 rounded-lg">{t('contact')}</Link>
+                      </nav>
                       {/* Language Selection Section */}
                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
                         <div className="flex items-center justify-between mb-2">
@@ -202,26 +211,14 @@ export default function Home() {
                       {/* Action Buttons */}
                       <div className="flex flex-col gap-3 mt-auto mb-6">
                         <Link href="/admin/login" onClick={() => {}}>
-                          <Button variant="outline" className="w-full justify-between h-14 text-base font-medium rounded-xl border-slate-200 bg-transparent text-slate-700 hover:bg-slate-50 hover:border-amber-500/50 hover:text-amber-600 transition-all group">
+                          <Button variant="outline" className="w-full justify-between h-14 text-base font-medium rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-amber-500/50 hover:text-amber-600 transition-all group">
                             <span className="flex items-center gap-3">
                               <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-amber-500/10 transition-colors">
                                 <Users className="h-5 w-5 text-slate-500 group-hover:text-amber-600 transition-colors" />
                               </div>
                               {t('login')}
                             </span>
-                            <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-amber-600 transition-colors" />
-                          </Button>
-                        </Link>
-                        
-                        <Link href="/waiter/login" onClick={() => {}}>
-                          <Button variant="outline" className="w-full justify-between h-14 text-base font-medium rounded-xl border-slate-200 bg-transparent text-slate-700 hover:bg-slate-50 hover:border-amber-500/50 hover:text-amber-600 transition-all group">
-                            <span className="flex items-center gap-3">
-                              <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-amber-500/10 transition-colors">
-                                <Users className="h-5 w-5 text-slate-500 group-hover:text-amber-600 transition-colors" />
-                              </div>
-                              {t('waiterLogin')}
-                            </span>
-                            <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-amber-600 transition-colors" />
+                            <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-amber-500 transition-colors" />
                           </Button>
                         </Link>
                         

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from '@/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -76,9 +77,9 @@ export default function SuperAdminLoginPage() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
-              className="mx-auto bg-indigo-600 text-white p-3 rounded-2xl w-fit shadow-lg shadow-indigo-500/20"
+              className="mx-auto bg-white p-3 rounded-2xl w-fit shadow-lg shadow-indigo-500/20"
             >
-              <ShieldCheck className="h-8 w-8" />
+              <Image src="/logo/logo.svg" alt="System Logo" width={80} height={80} className="h-20 w-20" />
             </motion.div>
             <div className="space-y-2">
               <CardTitle className="text-2xl font-bold tracking-tight">Süper Admin</CardTitle>

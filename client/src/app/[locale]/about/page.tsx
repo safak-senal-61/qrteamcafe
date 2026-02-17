@@ -5,10 +5,35 @@ import { Users, Target, Heart, Coffee, Lightbulb, Shield, Globe, Award, Sparkles
 import { Button } from '@/components/ui/button';
 import { useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { API_URL } from '@/lib/api';
 
 export default function AboutPage() {
   const router = useRouter();
   const t = useTranslations('AboutPage');
+  const [statsData, setStatsData] = useState({
+    activeCafes: 0,
+    totalProducts: 0,
+    totalOrders: 0,
+    uniqueCities: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${API_URL}/stats`, { next: { revalidate: 3600 } });
+        if (res.ok) {
+          const data = await res.json();
+          setStatsData(data);
+        }
+      } catch (error) {
+        // Sunucu kapalıysa veya hata varsa sessizce geç
+        // console.error('Failed to fetch stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -34,10 +59,10 @@ export default function AboutPage() {
   };
 
   const stats = [
-    { label: t('stats.happyBusiness'), value: '500+', icon: <Coffee className="w-6 h-6" /> },
-    { label: t('stats.digitalMenu'), value: '1000+', icon: <Globe className="w-6 h-6" /> },
-    { label: t('stats.monthlyTransaction'), value: '5M+', icon: <Sparkles className="w-6 h-6" /> },
-    { label: t('stats.citiesServed'), value: '81', icon: <Target className="w-6 h-6" /> },
+    { label: t('stats.happyBusiness'), value: statsData.activeCafes > 0 ? `${statsData.activeCafes}+` : '500+', icon: <Coffee className="w-6 h-6" /> },
+    { label: t('stats.digitalMenu'), value: statsData.totalProducts > 0 ? `${statsData.totalProducts}+` : '1000+', icon: <Globe className="w-6 h-6" /> },
+    { label: t('stats.monthlyTransaction'), value: statsData.totalOrders > 0 ? `${(statsData.totalOrders / 1000).toFixed(1)}K+` : '5M+', icon: <Sparkles className="w-6 h-6" /> },
+    { label: t('stats.citiesServed'), value: statsData.uniqueCities > 0 ? `${statsData.uniqueCities}` : '81', icon: <Target className="w-6 h-6" /> },
   ];
 
   const values = [
@@ -62,10 +87,17 @@ export default function AboutPage() {
   ];
 
   const team = [
-    { name: 'Ahmet Yılmaz', role: t('team.roles.founder'), color: 'bg-blue-500' },
-    { name: 'Ayşe Demir', role: t('team.roles.cto'), color: 'bg-purple-500' },
-    { name: 'Mehmet Kaya', role: t('team.roles.productManager'), color: 'bg-emerald-500' },
-    { name: 'Zeynep Çelik', role: t('team.roles.designLead'), color: 'bg-rose-500' },
+    { 
+      name: 'Furkan Erdoğan', 
+      role: t('team.roles.founder'), 
+      color: 'bg-blue-500',
+      image: '/personel/Furkan_Erdogan.png'
+    },
+    { 
+      name: 'Ad Soyad', 
+      role: t('team.roles.founder'), 
+      color: 'bg-purple-500',
+    }
   ];
 
   return (
@@ -213,8 +245,16 @@ export default function AboutPage() {
                   <div className="relative mb-6 mx-auto w-40 h-40">
                     <div className={`absolute inset-0 ${member.color} opacity-20 rounded-full blur-2xl group-hover:opacity-40 transition-opacity`} />
                     <div className={`relative w-full h-full ${member.color}/10 rounded-full flex items-center justify-center border border-border/50 overflow-hidden`}>
+                    {(member as any).image ? (
+                      <img 
+                        src={(member as any).image} 
+                        alt={member.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
                       <Users className={`w-12 h-12 ${member.color.replace('bg-', 'text-')}`} />
-                    </div>
+                    )}
+                  </div>
                   </div>
                   <h3 className="text-xl font-bold mb-1">{member.name}</h3>
                   <p className="text-muted-foreground font-medium text-sm">{member.role}</p>

@@ -3,13 +3,14 @@ import axios from 'axios';
 export const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     // Tarayıcıda çalışıyorsa
-    if (process.env.NEXT_PUBLIC_API_URL) {
-      return process.env.NEXT_PUBLIC_API_URL;
-    }
     
-    // Eğer localhost ise yerel portu kullan
+    // Eğer localhost ise yerel portu kullan (process.env.NEXT_PUBLIC_API_URL olsa bile)
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return `${window.location.protocol}//${window.location.hostname}:3001`;
+    }
+
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      return process.env.NEXT_PUBLIC_API_URL;
     }
 
     // Production ortamında env'den gelen URL'i kullan veya varsayılan değere dön
@@ -17,6 +18,10 @@ export const getApiUrl = () => {
   }
   
   // Server tarafında çalışıyorsa (SSR)
+  // Eğer NODE_ENV development ise localhost kullan
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:3001';
+  }
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 };
 

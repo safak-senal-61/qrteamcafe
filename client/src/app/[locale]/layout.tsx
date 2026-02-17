@@ -30,9 +30,28 @@ export const metadata: Metadata = {
   },
   description: 'Modern QR Menü ve Sipariş Yönetim Sistemi. Hızlı, kolay ve temassız sipariş deneyimi.',
   icons: {
-    icon: '/icon.svg',
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    icon: [
+      { url: '/favicons/icons/favicon.ico' },
+      { url: '/favicons/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicons/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicons/icons/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicons/icons/favicon-192x192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    shortcut: '/favicons/icons/favicon.ico',
+    apple: [
+      { url: '/favicons/icons/favicon-57x57.png', sizes: '57x57', type: 'image/png' },
+      { url: '/favicons/icons/favicon-60x60.png', sizes: '60x60', type: 'image/png' },
+      { url: '/favicons/icons/favicon-72x72.png', sizes: '72x72', type: 'image/png' },
+      { url: '/favicons/icons/favicon-76x76.png', sizes: '76x76', type: 'image/png' },
+      { url: '/favicons/icons/favicon-114x114.png', sizes: '114x114', type: 'image/png' },
+      { url: '/favicons/icons/favicon-120x120.png', sizes: '120x120', type: 'image/png' },
+      { url: '/favicons/icons/favicon-144x144.png', sizes: '144x144', type: 'image/png' },
+      { url: '/favicons/icons/favicon-152x152.png', sizes: '152x152', type: 'image/png' },
+      { url: '/favicons/icons/favicon-180x180.png', sizes: '180x180', type: 'image/png' },
+    ],
+    other: [
+      { rel: 'apple-touch-icon-precomposed', url: '/favicons/icons/favicon-152x152.png' },
+    ],
   },
   openGraph: {
     title: 'qrders - QR Menü Sistemi',
@@ -41,6 +60,20 @@ export const metadata: Metadata = {
     siteName: 'qrders',
     locale: 'tr_TR',
     type: 'website',
+    images: [
+      {
+        url: '/favicons/icons/favicon-310x310.png',
+        width: 310,
+        height: 310,
+        alt: 'qrders Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'qrders - QR Menü Sistemi',
+    description: 'Modern QR Menü ve Sipariş Yönetim Sistemi',
+    images: ['/favicons/icons/favicon-310x310.png'],
   },
   robots: {
     index: true,

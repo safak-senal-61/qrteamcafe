@@ -11,6 +11,11 @@ export class AppController {
     return status;
   }
 
+  @Get('stats')
+  async getPublicStats() {
+    return this.appService.getPublicStats();
+  }
+
   @Post('contact-support')
   async contactSupport(@Body() body: { email: string; message: string }) {
     await this.appService.sendSupportEmail(body.email, body.message);

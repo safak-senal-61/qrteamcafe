@@ -20,6 +20,35 @@ export class AppService {
     return { maintenanceMode: setting?.value === 'true' };
   }
 
+  async getPublicStats() {
+    const activeCafes = await this.prisma.cafe.count({
+      where: { status: 'APPROVED', isActive: true },
+    });
+    
+    // We can assume each cafe has at least 1 menu item, or fetch real product count
+    const totalProducts = await this.prisma.product.count({
+      where: { isAvailable: true }
+    });
+
+    // Approximate orders (or real if needed)
+    const totalOrders = await this.prisma.order.count();
+
+    // Unique cities (from address field in Cafe)
+    const cafes = await this.prisma.cafe.findMany({
+      where: { status: 'APPROVED', isActive: true },
+      select: { city: true }
+    });
+    
+    const uniqueCities = new Set(cafes.map(c => c.city).filter(Boolean)).size;
+
+    return {
+      activeCafes,
+      totalProducts,
+      totalOrders,
+      uniqueCities
+    };
+  }
+
   async sendSupportEmail(email: string, message: string) {
     return this.mailService.sendSupportEmail(email, message);
   }

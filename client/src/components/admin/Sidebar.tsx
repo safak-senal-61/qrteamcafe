@@ -270,8 +270,8 @@ export function Sidebar() {
                 unoptimized
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-primary text-primary-foreground">
-                <Coffee className="h-6 w-6" />
+              <div className="flex h-full w-full items-center justify-center bg-white relative">
+                <Image src="/logo/logo.svg" alt="System Logo" fill className="object-contain p-0.5" />
               </div>
             )}
           </div>
