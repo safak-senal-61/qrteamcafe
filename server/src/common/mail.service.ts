@@ -7,19 +7,19 @@ export class MailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST,
-      port: Number(process.env.MAIL_PORT),
-      secure: true,
+      host: process.env.BREVO_SMTP_HOST,
+      port: Number(process.env.BREVO_SMTP_PORT),
+      secure: false, // true for 465, false for other ports
       auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
+        user: process.env.BREVO_SMTP_USER,
+        pass: process.env.BREVO_SMTP_PASS,
       },
     });
   }
 
   async sendVerificationCode(email: string, code: string) {
     const mailOptions = {
-      from: `"QR Team Cafe" <${process.env.MAIL_FROM}>`,
+      from: `"QR Team Cafe" <${process.env.BREVO_MAIL_FROM || 'noreply@qrders.com.tr'}>`,
       to: email,
       subject: 'Garson Hesabı Doğrulama Kodu',
       html: `
@@ -59,7 +59,7 @@ export class MailService {
     const link = `${clientUrl}/tr/waiter/complete-registration?token=${token}`;
 
     const mailOptions = {
-      from: `"QR Team Cafe" <${process.env.MAIL_FROM}>`,
+      from: `"QR Team Cafe" <${process.env.BREVO_MAIL_FROM || 'noreply@qrders.com.tr'}>`,
       to: email,
       subject: `${cafeName} - Personel Daveti`,
       html: `
@@ -100,7 +100,7 @@ export class MailService {
     for (let i = 0; i < emails.length; i += chunkSize) {
       const chunk = emails.slice(i, i + chunkSize);
       const mailOptions = {
-        from: `"QR Team Cafe" <${process.env.MAIL_FROM}>`,
+        from: `"QR Team Cafe" <${process.env.BREVO_MAIL_FROM || 'noreply@qrders.com.tr'}>`,
         bcc: chunk, // Use BCC to hide recipients
         subject: subject,
         html: `
