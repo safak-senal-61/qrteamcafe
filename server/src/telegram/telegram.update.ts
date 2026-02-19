@@ -24,7 +24,7 @@ export class TelegramUpdate {
       return;
     }
     await ctx.reply(
-      'Hoşgeldiniz Süper Admin!\n\nKomutlar:\n/sendmail - Duyuru maili gönder\n/pending - Bekleyen işletme başvuruları\n/cafes - Tüm işletmeleri listele\n/expiring - Süresi dolan abonelikler\n/financial - Finansal istatistikler\n/logs - Son şüpheli işlemler\n/settings - Sistem ayarları\n/maintenance - Bakım modu',
+      'Hoşgeldiniz Süper Admin!\n\nKomutlar:\n/sendmail - Duyuru maili gönder\n/pending - Bekleyen işletme başvuruları\n/cafes - Tüm işletmeleri listele\n/expiring - Süresi dolan abonelikler\n/financial - Finansal istatistikler\n/settings - Sistem ayarları\n/maintenance - Bakım modu',
     );
   }
 
@@ -137,28 +137,6 @@ export class TelegramUpdate {
 
 ⚠️ <b>Yaklaşan Bitişler (7 Gün):</b> ${stats.expiringCafes.length}
       `;
-      await ctx.replyWithHTML(message);
-      return;
-    }
-
-    if (text === '/logs') {
-      const logs = await this.telegramService.getRecentLogs();
-      if (logs.length === 0) {
-        await ctx.reply('Son kayıt bulunamadı.');
-        return;
-      }
-
-      let message = '📋 <b>Son Şüpheli İşlemler:</b>\n\n';
-      for (const log of logs) {
-        const time = new Date(log.timestamp).toLocaleString('tr-TR');
-        const user = log.waiter
-          ? `${log.waiter.firstName} ${log.waiter.lastName}`
-          : log.admin
-            ? log.admin.name
-            : 'Sistem';
-
-        message += `🕒 ${time}\n🏢 ${this.escapeHtml(log.cafe?.name || '-')}\n👤 ${this.escapeHtml(user)}\n📝 ${this.escapeHtml(String(log.actionType))}\n⚠️ ${this.escapeHtml(log.details || '-')}\n\n`;
-      }
       await ctx.replyWithHTML(message);
       return;
     }

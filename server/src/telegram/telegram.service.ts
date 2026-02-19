@@ -99,10 +99,6 @@ export class TelegramService {
     return this.superAdminService.getFinancialStats();
   }
 
-  async getRecentLogs() {
-    return this.superAdminService.getRecentLogs();
-  }
-
   async getSettings() {
     return this.superAdminService.getSettings();
   }

@@ -42,6 +42,44 @@ export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<string>('monthly');
   const [mode, setMode] = useState<string | null>(null);
 
+  const [prices, setPrices] = useState({
+    monthly: 499,
+    yearly: 4990
+  });
+  
+  const [isPriceLoading, setIsPriceLoading] = useState(true);
+
+  const [discountPercentage, setDiscountPercentage] = useState(() => {
+    return Math.round((1 - (4990 / (499 * 12))) * 100);
+  });
+
+  useEffect(() => {
+    fetch(`${API_URL}/super-admin/settings`)
+      .then(res => res.json())
+      .then(data => {
+        let newMonthly = prices.monthly;
+        let newYearly = prices.yearly;
+
+        if (data.PRICING_MONTHLY) {
+          newMonthly = parseFloat(data.PRICING_MONTHLY);
+        }
+        if (data.PRICING_YEARLY) {
+          newYearly = parseFloat(data.PRICING_YEARLY);
+        }
+
+        setPrices({ monthly: newMonthly, yearly: newYearly });
+        
+        // Calculate discount percentage
+        if (newMonthly > 0 && newYearly > 0) {
+          const yearlyTotal = newMonthly * 12;
+          const discount = Math.round((1 - (newYearly / yearlyTotal)) * 100);
+          setDiscountPercentage(discount);
+        }
+      })
+      .catch(err => console.error('Failed to fetch pricing:', err))
+      .finally(() => setIsPriceLoading(false));
+  }, []);
+
   useEffect(() => {
     const durationParam = searchParams.get('duration');
     const modeParam = searchParams.get('mode');
@@ -139,7 +177,8 @@ export default function PricingPage() {
           address: billingData.address,
           gsmNumber: billingData.gsmNumber,
           planDuration: billingCycle,
-          mode: mode
+          mode: mode,
+          storeCard: true
         })
       });
 
@@ -192,16 +231,20 @@ export default function PricingPage() {
   };
 
   const getPriceDisplay = () => {
-    if (billingCycle === 'yearly') return '₺4.990/yıl';
-    if (billingCycle === 'monthly') return '₺499/ay';
+    if (isPriceLoading) {
+      return <div className="h-10 w-40 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mx-auto" />;
+    }
+
+    if (billingCycle === 'yearly') return `₺${prices.yearly.toLocaleString('tr-TR')}/yıl`;
+    if (billingCycle === 'monthly') return `₺${prices.monthly.toLocaleString('tr-TR')}/ay`;
     if (billingCycle && billingCycle.endsWith('_months')) {
         const m = parseInt(billingCycle.split('_')[0]);
         if (!isNaN(m)) {
-            const price = (499 * m).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            const price = (prices.monthly * m).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
             return `₺${price} / ${m} Ay`;
         }
     }
-    return '₺499/ay';
+    return `₺${prices.monthly.toLocaleString('tr-TR')}/ay`;
   };
 
   const plans = [
@@ -223,7 +266,7 @@ export default function PricingPage() {
     {
       name: t('plans.pro.name'),
       price: getPriceDisplay(),
-      description: billingCycle === 'yearly' ? 'Yıllık öde, %20 tasarruf et.' : t('plans.pro.description'),
+      description: billingCycle === 'yearly' ? (isPriceLoading ? 'Yıllık öde, tasarruf et.' : `Yıllık öde, %${discountPercentage} tasarruf et.`) : t('plans.pro.description'),
       features: [
         t('plans.pro.features.0'),
         t('plans.pro.features.1'),
@@ -303,9 +346,11 @@ export default function PricingPage() {
                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-900'}`}
                >
                  Yıllık
-                 <span className="absolute -top-3 -right-3 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">
-                   %20 İndirim
-                 </span>
+                 {!isPriceLoading && discountPercentage > 0 && (
+                   <span className="absolute -top-3 -right-3 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">
+                     %{discountPercentage} İndirim
+                   </span>
+                 )}
                </button>
             </div>
           </div>
@@ -572,14 +617,18 @@ export default function PricingPage() {
             <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
               <span className="font-medium">Toplam Tutar:</span>
               <span className="text-xl font-bold">
-                {extendMonth === 12 
-                  ? "4.990,00 ₺" 
-                  : `${(extendMonth * 499).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺`}
+                {isPriceLoading ? (
+                  <span className="inline-block h-6 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded" />
+                ) : (
+                  extendMonth === 12 
+                    ? `₺${prices.yearly.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`
+                    : `₺${(extendMonth * prices.monthly).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`
+                )}
               </span>
             </div>
-            {extendMonth === 12 && (
+            {extendMonth === 12 && !isPriceLoading && (
               <p className="text-sm text-green-600 text-center font-medium">
-                Yıllık planda %20 tasarruf edersiniz!
+                Yıllık planda %{discountPercentage} tasarruf edersiniz!
               </p>
             )}
           </div>

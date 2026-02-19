@@ -272,18 +272,6 @@ export class SuperAdminService {
     };
   }
 
-  async getRecentLogs(limit: number = 10) {
-    return this.prisma.suspiciousActionLog.findMany({
-      take: limit,
-      orderBy: { timestamp: 'desc' },
-      include: {
-        cafe: { select: { name: true } },
-        waiter: { select: { firstName: true, lastName: true } },
-        admin: { select: { name: true } },
-      },
-    });
-  }
-
   async getSettings() {
     const settings = await this.prisma.systemSetting.findMany();
     // Convert array to object for easier frontend consumption

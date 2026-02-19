@@ -172,7 +172,25 @@ export class PaymentsService {
       }
     }
 
-    let price = isYearly ? '4990.00' : (durationMonths * 499).toFixed(2);
+    // Fetch dynamic pricing
+    const settings = await this.prisma.systemSetting.findMany({
+      where: {
+        key: { in: ['PRICING_MONTHLY', 'PRICING_YEARLY'] },
+      },
+    });
+
+    let monthlyPrice = 499;
+    let yearlyPrice = 4990;
+
+    const monthlySetting = settings.find((s) => s.key === 'PRICING_MONTHLY');
+    const yearlySetting = settings.find((s) => s.key === 'PRICING_YEARLY');
+
+    if (monthlySetting) monthlyPrice = parseFloat(monthlySetting.value);
+    if (yearlySetting) yearlyPrice = parseFloat(yearlySetting.value);
+
+    let price = isYearly
+      ? yearlyPrice.toFixed(2)
+      : (durationMonths * monthlyPrice).toFixed(2);
     let planName = isYearly
       ? 'qrders Pro Plan (1 Yıllık)'
       : `qrders Pro Plan (${durationMonths} Aylık)`;
@@ -342,9 +360,12 @@ export class PaymentsService {
       this.iyzipay.checkoutForm.retrieve(
         { token },
         async (err: any, result: any) => {
-          if (err) {
-            reject(err);
-          } else {
+          try {
+            if (err) {
+              reject(err);
+              return;
+            }
+
             if (
               result.status === 'success' &&
               result.paymentStatus === 'SUCCESS'
@@ -491,7 +512,7 @@ export class PaymentsService {
               endDate.setMonth(endDate.getMonth() + monthsToAdd);
 
               this.logger.log(
-                `Payment Verified. Cafe: ${cafeId}, Duration: ${planDuration}, New End Date: ${endDate}`,
+                `Payment Verified. Cafe: ${cafeId}, Duration: ${planDuration}, New End Date: ${endDate}, CardStored: ${!!result.cardUserKey}`,
               );
 
               await this.prisma.cafe.update({
@@ -502,6 +523,7 @@ export class PaymentsService {
                   plan: 'pro',
                   subscriptionPeriod: planDuration,
                   iyzicoSubReferenceCode: result.paymentId,
+                  // Eğer kart kaydedildiyse (kullanıcı ödeme ekranında seçtiyse) kaydet
                   ...(result.cardUserKey
                     ? { iyzicoCardUserKey: result.cardUserKey }
                     : {}),
@@ -516,6 +538,9 @@ export class PaymentsService {
             } else {
               resolve({ success: false, message: 'Payment failed', result });
             }
+          } catch (error) {
+            this.logger.error('Error during payment verification callback', error);
+            reject(error);
           }
         },
       );

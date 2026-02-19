@@ -40,4 +40,7 @@ export class InitializePaymentDto {
   @IsString()
   @IsOptional()
   mode?: string;
+
+  @IsOptional()
+  storeCard?: boolean;
 }

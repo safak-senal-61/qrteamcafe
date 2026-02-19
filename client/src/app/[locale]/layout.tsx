@@ -110,7 +110,12 @@ export default async function LocaleLayout({
       isMaintenance = data.maintenanceMode;
     }
   } catch (error) {
-    console.error('Failed to check system status:', error);
+    // Backend kapalıysa veya ulaşılamıyorsa sadece bilgi ver, hata basma
+    if (error instanceof TypeError && error.cause && (error.cause as any).code === 'ECONNREFUSED') {
+       console.log('Backend not reachable - Maintenance check skipped');
+    } else {
+       console.error('Failed to check system status:', error);
+    }
   }
 
   const isSuperAdminPath = pathname.includes('/admin/super');

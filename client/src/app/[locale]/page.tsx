@@ -148,9 +148,6 @@ export default function Home() {
           <nav className="flex items-center gap-4">
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">
-              <Link href="/pricing" className="text-sm font-medium text-slate-600 hover:text-amber-600 transition-colors">{t('pricing')}</Link>
-              <Link href="/roadmap" className="text-sm font-medium text-slate-600 hover:text-amber-600 transition-colors">{t('roadmap')}</Link>
-              <Link href="/contact" className="text-sm font-medium text-slate-600 hover:text-amber-600 transition-colors">{t('contact')}</Link>
               <div className="text-slate-600 hover:text-slate-900 transition-colors">
                  <LanguageSwitcher />
               </div>
@@ -190,11 +187,6 @@ export default function Home() {
                     </SheetHeader>
                     
                     <div className="flex flex-col flex-1 p-6 gap-6 text-slate-900">
-                      <nav className="flex flex-col gap-2">
-                        <Link href="/pricing" onClick={() => {}} className="text-lg font-medium text-slate-600 hover:text-amber-600 transition-colors p-2 hover:bg-slate-50 rounded-lg">{t('pricing')}</Link>
-                        <Link href="/roadmap" onClick={() => {}} className="text-lg font-medium text-slate-600 hover:text-amber-600 transition-colors p-2 hover:bg-slate-50 rounded-lg">{t('roadmap')}</Link>
-                        <Link href="/contact" onClick={() => {}} className="text-lg font-medium text-slate-600 hover:text-amber-600 transition-colors p-2 hover:bg-slate-50 rounded-lg">{t('contact')}</Link>
-                      </nav>
                       {/* Language Selection Section */}
                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
                         <div className="flex items-center justify-between mb-2">

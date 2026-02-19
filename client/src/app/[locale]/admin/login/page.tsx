@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogFooter as DialogFooterUI,
 } from "@/components/ui/dialog";
-import { Coffee, Lock, Mail, ArrowRight, Loader2, KeyRound } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Loader2, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { API_URL } from '@/lib/api';

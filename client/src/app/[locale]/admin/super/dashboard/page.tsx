@@ -18,7 +18,6 @@ import {
   LogOut, 
   Loader2,
   Search,
-  Activity,
   AlertCircle,
   Settings,
   Power,
@@ -40,6 +39,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { API_URL } from '@/lib/api';
 import { RewardsManagement } from '@/components/admin/RewardsManagement';
+import { PricingManagement } from '@/components/admin/PricingManagement';
 import { IssueReportsList } from '@/components/admin/IssueReportsList';
 
 interface CafeAdmin {
@@ -84,16 +84,6 @@ interface FinancialStats {
   }[];
 }
 
-interface RecentLog {
-  id: string;
-  actionType: string;
-  details: string;
-  timestamp: string;
-  cafe: { name: string };
-  waiter?: { firstName: string; lastName: string };
-  admin?: { name: string };
-}
-
 interface SystemSettings {
   maintenanceMode: boolean;
   allowRegistrations: boolean;
@@ -115,7 +105,6 @@ export default function SuperAdminDashboard() {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [financialStats, setFinancialStats] = useState<FinancialStats | null>(null);
-  const [recentLogs, setRecentLogs] = useState<RecentLog[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [settings, setSettings] = useState<SystemSettings>({
     maintenanceMode: false,
@@ -195,15 +184,6 @@ export default function SuperAdminDashboard() {
       if (financialRes.ok) {
         const data = await financialRes.json();
         setFinancialStats(data);
-      }
-
-      // Fetch Recent Logs
-      const logsRes = await fetch(`${API_URL}/super-admin/recent-logs`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (logsRes.ok) {
-        const data = await logsRes.json();
-        setRecentLogs(data);
       }
 
       // Fetch Announcements
@@ -817,7 +797,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Financial & Logs Section */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
           {/* Financial Overview */}
           <Card className="border-none shadow-md">
             <CardHeader>
@@ -897,45 +877,6 @@ export default function SuperAdminDashboard() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Security Logs */}
-          <Card className="border-none shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Activity className="h-5 w-5 text-rose-500" />
-                Son Aktiviteler
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentLogs.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground text-xs">
-                    Henüz kayıtlı bir olay yok.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {recentLogs.map((log) => (
-                      <div key={log.id} className="flex items-start gap-3 p-2 rounded-lg border bg-slate-50/50 dark:bg-slate-900/50">
-                        <AlertCircle className="h-3 w-3 text-rose-500 mt-1 shrink-0" />
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs font-medium">{log.actionType}</p>
-                            <span className="text-[10px] text-muted-foreground">
-                              {new Date(log.timestamp).toLocaleDateString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground line-clamp-1">{log.details}</p>
-                          <div className="flex items-center gap-1">
-                             <Badge variant="secondary" className="text-[9px] h-4 px-1">{log.cafe.name}</Badge>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Main Content */}
@@ -971,6 +912,10 @@ export default function SuperAdminDashboard() {
                     <AlertCircle className="h-3 w-3 md:h-4 md:w-4" />
                     Bildirimler
                   </TabsTrigger>
+                  <TabsTrigger value="pricing" className="rounded-lg flex items-center gap-2 text-xs md:text-sm">
+                    <CreditCard className="h-3 w-3 md:h-4 md:w-4" />
+                    Fiyatlandırma
+                  </TabsTrigger>
                   <TabsTrigger value="rewards" className="rounded-lg flex items-center gap-2 text-xs md:text-sm"><Gift className="w-3 h-3 md:w-4 md:h-4" /> Hediye Kataloğu</TabsTrigger>
                   <TabsTrigger value="all" className="rounded-lg text-xs md:text-sm">Tümü</TabsTrigger>
                 </TabsList>
@@ -984,7 +929,11 @@ export default function SuperAdminDashboard() {
                 <IssueReportsList />
               </TabsContent>
 
-              {activeTab !== 'rewards' && activeTab !== 'issues' && (
+              <TabsContent value="pricing" className="mt-0">
+                <PricingManagement />
+              </TabsContent>
+
+              {activeTab !== 'rewards' && activeTab !== 'issues' && activeTab !== 'pricing' && (
                 <TabsContent value={activeTab} className="mt-0">
                   {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

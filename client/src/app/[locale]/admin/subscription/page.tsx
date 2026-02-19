@@ -64,6 +64,14 @@ export default function SubscriptionPage() {
   const [selectedPlanDuration, setSelectedPlanDuration] = useState<'monthly' | 'yearly'>('monthly');
   const [isExtendDialogOpen, setIsExtendDialogOpen] = useState(false);
   const [extendMonth, setExtendMonth] = useState(1);
+  const [prices, setPrices] = useState({
+    monthly: 499,
+    yearly: 4990
+  });
+  const [isPriceLoading, setIsPriceLoading] = useState(true);
+  const [discountPercentage, setDiscountPercentage] = useState(() => {
+    return Math.round((1 - (4990 / (499 * 12))) * 100);
+  });
 
   const fetchSubscriptionData = useCallback(async () => {
     try {
@@ -73,16 +81,26 @@ export default function SubscriptionPage() {
       const user = JSON.parse(userStr);
       if (!user.cafeId) return;
 
-      const [subRes, cardsRes] = await Promise.all([
-        fetch(`${API_URL}/cafes/${user.cafeId}`),
+      const [subRes, cardsRes, settingsRes] = await Promise.all([
+        fetch(`${API_URL}/cafes/${user.cafeId}`).catch(err => {
+            console.error('Cafe fetch failed:', err);
+            return null;
+        }),
         fetch(`${API_URL}/payments/cards`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
+        }).catch(err => {
+            console.error('Cards fetch failed:', err);
+            return null;
+        }),
+        fetch(`${API_URL}/super-admin/settings`).catch(err => {
+          console.error('Failed to fetch settings:', err);
+          return null;
         })
       ]);
 
-      if (subRes.ok) {
+      if (subRes && subRes.ok) {
         const data = await subRes.json();
         setSubscription({
           plan: data.plan,
@@ -93,9 +111,30 @@ export default function SubscriptionPage() {
         });
       }
 
-      if (cardsRes.ok) {
+      if (cardsRes && cardsRes.ok) {
         const cardsData = await cardsRes.json();
         setCards(Array.isArray(cardsData) ? cardsData : []);
+      }
+
+      if (settingsRes && settingsRes.ok) {
+        const data = await settingsRes.json();
+        let newMonthly = prices.monthly;
+        let newYearly = prices.yearly;
+
+        if (data.PRICING_MONTHLY) {
+          newMonthly = parseFloat(data.PRICING_MONTHLY);
+        }
+        if (data.PRICING_YEARLY) {
+          newYearly = parseFloat(data.PRICING_YEARLY);
+        }
+
+        setPrices({ monthly: newMonthly, yearly: newYearly });
+        
+        if (newMonthly > 0 && newYearly > 0) {
+          const yearlyTotal = newMonthly * 12;
+          const discount = Math.round((1 - (newYearly / yearlyTotal)) * 100);
+          setDiscountPercentage(discount);
+        }
       }
 
     } catch (error) {
@@ -103,6 +142,7 @@ export default function SubscriptionPage() {
       toast.error(t('errorFetch'));
     } finally {
       setLoading(false);
+      setIsPriceLoading(false);
     }
   }, [t]);
 
@@ -262,7 +302,14 @@ export default function SubscriptionPage() {
 
               <div className="space-y-1">
                  <span className="text-sm text-muted-foreground">{t('labels.renewalAmount')}</span>
-                 <p className="text-2xl font-bold">499.00 ₺ <span className="text-sm font-normal text-muted-foreground">/ay</span></p>
+                 <p className="text-2xl font-bold">
+                   {isPriceLoading ? (
+                     <span className="inline-block h-8 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded" />
+                   ) : (
+                     `${prices.monthly.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺`
+                   )}
+                   <span className="text-sm font-normal text-muted-foreground">/ay</span>
+                 </p>
               </div>
             </div>
           </CardContent>
@@ -348,7 +395,14 @@ export default function SubscriptionPage() {
             <CardDescription>{t('plans.monthly.description')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">499 ₺<span className="text-sm font-normal text-muted-foreground">/ay</span></div>
+            <div className="text-3xl font-bold">
+              {isPriceLoading ? (
+                <span className="inline-block h-9 w-32 bg-slate-200 dark:bg-slate-700 animate-pulse rounded" />
+              ) : (
+                `${prices.monthly.toLocaleString('tr-TR')} ₺`
+              )}
+              <span className="text-sm font-normal text-muted-foreground">/ay</span>
+            </div>
           </CardContent>
           <CardFooter>
             <Button 
@@ -376,12 +430,25 @@ export default function SubscriptionPage() {
                 <CardTitle>{t('plans.yearly.title')}</CardTitle>
                 <CardDescription>{t('plans.yearly.description')}</CardDescription>
               </div>
-              <Badge className="bg-green-500 hover:bg-green-600">{t('plans.yearly.discountBadge')}</Badge>
+              {!isPriceLoading && discountPercentage > 0 && (
+                <Badge className="bg-green-500 hover:bg-green-600">%{discountPercentage} İndirim</Badge>
+              )}
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">4.990 ₺<span className="text-sm font-normal text-muted-foreground">/yıl</span></div>
-            <p className="text-sm text-green-600 mt-2 font-medium">{t('plans.yearly.savings')}</p>
+            <div className="text-3xl font-bold">
+              {isPriceLoading ? (
+                <span className="inline-block h-9 w-32 bg-slate-200 dark:bg-slate-700 animate-pulse rounded" />
+              ) : (
+                `${prices.yearly.toLocaleString('tr-TR')} ₺`
+              )}
+              <span className="text-sm font-normal text-muted-foreground">/yıl</span>
+            </div>
+            {!isPriceLoading && discountPercentage > 0 && (
+              <p className="text-sm text-green-600 mt-2 font-medium">
+                Yıllık {Math.round((prices.monthly * 12) - prices.yearly).toLocaleString('tr-TR')} ₺ avantaj
+              </p>
+            )}
           </CardContent>
           <CardFooter>
             <Button 
@@ -491,14 +558,18 @@ export default function SubscriptionPage() {
               <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
                 <span className="font-medium">Toplam Tutar:</span>
                 <span className="text-xl font-bold">
-                  {extendMonth === 12 
-                    ? "4.990,00 ₺" 
-                    : `${(extendMonth * 499).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺`}
+                  {isPriceLoading ? (
+                    <span className="inline-block h-6 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded" />
+                  ) : (
+                    extendMonth === 12 
+                      ? `${prices.yearly.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺` 
+                      : `${(extendMonth * prices.monthly).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺`
+                  )}
                 </span>
               </div>
-              {extendMonth === 12 && (
+              {extendMonth === 12 && !isPriceLoading && discountPercentage > 0 && (
                 <p className="text-sm text-green-600 text-center font-medium">
-                  Yıllık planda %20 tasarruf edersiniz!
+                  Yıllık planda %{discountPercentage} tasarruf edersiniz!
                 </p>
               )}
             </div>

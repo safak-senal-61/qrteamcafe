@@ -60,8 +60,17 @@ export default function AddressAutocomplete({ onAddressSelect, defaultValue = ''
     }
   }, [defaultValue]);
 
-  const handleSearch = async (value: string) => {
+  const handleSearch = (value: string) => {
     setQuery(value);
+    
+    // Kullanıcı elle yazıyorsa bu değeri üst bileşene bildir
+    // Böylece API'den sonuç gelmese bile kullanıcının yazdığı adres geçerli olur
+    onAddressSelect({
+      address: value,
+      city: '',
+      country: 'Turkey',
+      zipCode: ''
+    });
     
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -74,7 +83,7 @@ export default function AddressAutocomplete({ onAddressSelect, defaultValue = ''
     }
 
     setIsLoading(true);
-    setShowSuggestions(true);
+    // setShowSuggestions(true); // Don't show immediately
 
     timeoutRef.current = setTimeout(async () => {
       try {
@@ -83,21 +92,30 @@ export default function AddressAutocomplete({ onAddressSelect, defaultValue = ''
           {
             headers: {
               'Accept-Language': 'tr-TR',
-              'User-Agent': 'qrders/1.0'
+              'User-Agent': 'qrders-client/1.0' // User-Agent güncellendi
             }
           }
         );
         
         if (response.ok) {
           const data = await response.json();
-          setResults(data);
+          if (Array.isArray(data) && data.length > 0) {
+            setResults(data);
+            setShowSuggestions(true);
+          } else {
+            setResults([]);
+            setShowSuggestions(false);
+          }
         }
       } catch (error) {
         console.error('Nominatim search error:', error);
+        // Hata durumunda sessiz kal, kullanıcı yazmaya devam edebilir
+        setResults([]);
+        setShowSuggestions(false);
       } finally {
         setIsLoading(false);
       }
-    }, 500); // 500ms debounce
+    }, 1000); // Debounce süresi artırıldı (500ms -> 1000ms) - API limitlerini zorlamamak için
   };
 
   const handleSelect = (result: NominatimResult) => {

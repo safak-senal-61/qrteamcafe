@@ -9,7 +9,6 @@ import {
   QrCode,
   Settings,
   LogOut,
-  Coffee,
   TrendingUp,
   Bell,
   Receipt,

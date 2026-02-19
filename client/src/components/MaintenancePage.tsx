@@ -33,7 +33,7 @@ export default function MaintenancePage() {
         setEmail('');
         setMessage('');
       }, 3000);
-    } catch (error) {
+    } catch {
       setStatus('error');
     } finally {
       setLoading(false);

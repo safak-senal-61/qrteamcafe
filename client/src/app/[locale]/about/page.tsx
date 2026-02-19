@@ -7,6 +7,14 @@ import { useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { API_URL } from '@/lib/api';
+import Image from 'next/image';
+
+interface TeamMember {
+  name: string;
+  role: string;
+  color: string;
+  image?: string;
+}
 
 export default function AboutPage() {
   const router = useRouter();
@@ -26,7 +34,7 @@ export default function AboutPage() {
           const data = await res.json();
           setStatsData(data);
         }
-      } catch (error) {
+      } catch {
         // Sunucu kapalıysa veya hata varsa sessizce geç
         // console.error('Failed to fetch stats:', error);
       }
@@ -86,7 +94,7 @@ export default function AboutPage() {
     }
   ];
 
-  const team = [
+  const team: TeamMember[] = [
     { 
       name: 'Furkan Erdoğan', 
       role: t('team.roles.founder'), 
@@ -245,11 +253,12 @@ export default function AboutPage() {
                   <div className="relative mb-6 mx-auto w-40 h-40">
                     <div className={`absolute inset-0 ${member.color} opacity-20 rounded-full blur-2xl group-hover:opacity-40 transition-opacity`} />
                     <div className={`relative w-full h-full ${member.color}/10 rounded-full flex items-center justify-center border border-border/50 overflow-hidden`}>
-                    {(member as any).image ? (
-                      <img 
-                        src={(member as any).image} 
+                    {member.image ? (
+                      <Image 
+                        src={member.image} 
                         alt={member.name} 
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     ) : (
                       <Users className={`w-12 h-12 ${member.color.replace('bg-', 'text-')}`} />

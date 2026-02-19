@@ -1,7 +1,18 @@
-import { Controller, Get, Param, Patch, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  ForbiddenException,
+} from '@nestjs/common';
 import { SuperAdminService } from './super-admin.service';
 import { RegisterSuperAdminDto } from './dto/register-super-admin.dto';
 import { SendAnnouncementEmailDto } from './dto/send-announcement-email.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('super-admin')
 export class SuperAdminController {
@@ -37,11 +48,6 @@ export class SuperAdminController {
     return this.superAdminService.getFinancialStats();
   }
 
-  @Get('recent-logs')
-  getRecentLogs() {
-    return this.superAdminService.getRecentLogs();
-  }
-
   @Get('cafes')
   getAllCafes() {
     return this.superAdminService.getAllCafes();
@@ -52,8 +58,15 @@ export class SuperAdminController {
     return this.superAdminService.getSettings();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch('settings')
-  updateSetting(@Body() body: { key: string; value: string }) {
+  updateSetting(
+    @Request() req: any,
+    @Body() body: { key: string; value: string },
+  ) {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Only Super Admins can update settings');
+    }
     return this.superAdminService.updateSetting(body.key, body.value);
   }
 

@@ -1,5 +1,5 @@
 import { Link } from '@/navigation';
-import { QrCode, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
