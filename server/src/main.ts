@@ -35,13 +35,15 @@ async function bootstrap() {
             'https://cdn.jsdelivr.net',
             'https://fonts.googleapis.com',
           ],
-          imgSrc: ["'self'", 'data:', 'https://cdn.jsdelivr.net'],
-          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+          imgSrc: ["'self'", 'data:', 'https://cdn.jsdelivr.net', 'https://qrders.com.tr'],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:', 'https://cdn.jsdelivr.net', 'blob:', 'https://fonts.googleapis.com'],
           connectSrc: [
             "'self'",
             'https://cdn.jsdelivr.net',
             'https://qrders.com.tr',
             'https://api.qrders.com.tr',
+            'https://proxy.scalar.com',
+            'https://api.scalar.com',
           ],
         },
       },
@@ -108,8 +110,8 @@ async function bootstrap() {
 
   // Swagger Configuration
   const config = new DocumentBuilder()
-    .setTitle('qrders API')
-    .setDescription('The qrders API description')
+    .setTitle('Qrders API')
+    .setDescription('The Qrders API description')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -118,9 +120,51 @@ async function bootstrap() {
   app.use(
     '/api',
     apiReference({
-      spec: {
-        content: document,
-      },
+      pageTitle: 'Qrders API Dokümanı',
+      theme: 'purple',
+      withDefaultFonts: false,
+      content: document,
+      customCss: `
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap');
+        
+        :root {
+          --scalar-font: 'Inter', sans-serif;
+        }
+
+        .sidebar-branding {
+          background-image: url("https://qrders.com.tr/favicons/icons/favicon-310x310.png") !important;
+          background-size: contain;
+          background-repeat: no-repeat;
+          background-position: center;
+          width: 80px !important;
+          height: 80px !important;
+          min-height: 80px !important;
+          margin: 20px auto !important;
+          padding: 0 !important;
+          display: block !important;
+        }
+        .sidebar-branding svg, .t-doc__logo svg {
+          display: none !important;
+        }
+        .sidebar-branding a {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+        /* Mobile fixes */
+        @media (max-width: 1000px) {
+          .t-doc__logo {
+            background-image: url("https://qrders.com.tr/favicons/icons/favicon-310x310.png") !important;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            width: 60px !important;
+            height: 60px !important;
+            min-height: 60px !important;
+            margin: 10px auto !important;
+          }
+        }
+      `,
     } as unknown as NestJSReferenceConfiguration),
   );
 

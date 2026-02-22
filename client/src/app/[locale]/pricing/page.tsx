@@ -78,7 +78,7 @@ export default function PricingPage() {
       })
       .catch(err => console.error('Failed to fetch pricing:', err))
       .finally(() => setIsPriceLoading(false));
-  }, []);
+  }, [prices.monthly, prices.yearly]);
 
   useEffect(() => {
     const durationParam = searchParams.get('duration');

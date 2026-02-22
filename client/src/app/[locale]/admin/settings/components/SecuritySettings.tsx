@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import { CustomQRCode } from '@/components/ui/CustomQRCode';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,7 +31,9 @@ interface Session {
 export default function SecuritySettings() {
   const [loading, setLoading] = useState(false);
   
-  // Password Change State
+  // Ref for QR Code Customization
+  const qrRef = useRef<HTMLDivElement>(null);
+
   const [formData, setFormData] = useState({
     oldPassword: '',
     newPassword: '',
@@ -40,6 +43,7 @@ export default function SecuritySettings() {
   // 2FA State
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [otpauthUrl, setOtpauthUrl] = useState('');
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
   const [is2FALoading, setIs2FALoading] = useState(false);
@@ -125,6 +129,7 @@ export default function SecuritySettings() {
       if (res.ok) {
         const data = await res.json();
         setQrCodeUrl(data.qrCodeUrl);
+        setOtpauthUrl(data.otpauthUrl);
         setIs2FAModalOpen(true);
       } else {
         toast.error('2FA oluşturulamadı.');
@@ -418,7 +423,15 @@ export default function SecuritySettings() {
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="flex flex-col items-center justify-center py-4 space-y-4">
-                                    {qrCodeUrl && (
+                                    {otpauthUrl ? (
+                                        <div ref={qrRef} className="p-4 bg-white rounded-xl shadow-md border-2 border-primary/10 relative">
+                                            <CustomQRCode
+                                                value={otpauthUrl}
+                                                size={200}
+                                                logoUrl="/logo/logo.svg"
+                                            />
+                                        </div>
+                                    ) : qrCodeUrl && (
                                         <div className="p-4 bg-white rounded-lg shadow-sm border">
                                             <Image 
                                                 src={getMediaUrl(qrCodeUrl)} 

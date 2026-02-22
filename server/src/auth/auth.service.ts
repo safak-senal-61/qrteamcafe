@@ -807,7 +807,7 @@ export class AuthService {
 
     const qrCodeUrl = await toDataURL(otpauthUrl);
 
-    return { secret, qrCodeUrl };
+    return { secret, qrCodeUrl, otpauthUrl };
   }
 
   async enable2FA(userId: string, code: string) {

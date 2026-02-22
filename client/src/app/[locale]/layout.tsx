@@ -111,7 +111,7 @@ export default async function LocaleLayout({
     }
   } catch (error) {
     // Backend kapalıysa veya ulaşılamıyorsa sadece bilgi ver, hata basma
-    if (error instanceof TypeError && error.cause && (error.cause as any).code === 'ECONNREFUSED') {
+    if (error instanceof TypeError && error.cause && (error.cause as { code?: string }).code === 'ECONNREFUSED') {
        console.log('Backend not reachable - Maintenance check skipped');
     } else {
        console.error('Failed to check system status:', error);

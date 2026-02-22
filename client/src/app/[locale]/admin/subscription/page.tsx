@@ -144,7 +144,7 @@ export default function SubscriptionPage() {
       setLoading(false);
       setIsPriceLoading(false);
     }
-  }, [t]);
+  }, [t, prices.monthly, prices.yearly]);
 
   useEffect(() => {
     fetchSubscriptionData();

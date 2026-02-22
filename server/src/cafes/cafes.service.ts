@@ -57,8 +57,16 @@ export class CafesService {
     }
 
     if (!cafe) throw new NotFoundException('Cafe bulunamadı');
-    await this.cache.set(cacheKey, cafe, 300 * 1000); // 5 dakika
-    return cafe;
+    
+    // Map database fields to frontend expected format
+    const mappedCafe = {
+      ...cafe,
+      logo: cafe.logoUrl,
+      coverImage: cafe.coverImageUrl,
+    };
+
+    await this.cache.set(cacheKey, mappedCafe, 300 * 1000); // 5 dakika
+    return mappedCafe;
   }
 
   async findBySlug(slug: string) {
@@ -70,8 +78,16 @@ export class CafesService {
       where: { slug },
     });
     if (!cafe) throw new NotFoundException('Cafe bulunamadı');
-    await this.cache.set(cacheKey, cafe, 300 * 1000); // 5 dakika
-    return cafe;
+
+    // Map database fields to frontend expected format
+    const mappedCafe = {
+      ...cafe,
+      logo: cafe.logoUrl,
+      coverImage: cafe.coverImageUrl,
+    };
+
+    await this.cache.set(cacheKey, mappedCafe, 300 * 1000); // 5 dakika
+    return mappedCafe;
   }
 
   async update(
@@ -137,7 +153,11 @@ export class CafesService {
       );
     }
 
-    return updatedCafe;
+    return {
+      ...updatedCafe,
+      logo: updatedCafe.logoUrl,
+      coverImage: updatedCafe.coverImageUrl,
+    };
   }
 
   async getDashboardStats(cafeId: string) {

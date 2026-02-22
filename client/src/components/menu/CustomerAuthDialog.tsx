@@ -354,25 +354,28 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
 
   return (
     <Dialog open={isAuthDialogOpen} onOpenChange={setAuthDialogOpen}>
-      <DialogContent className={cn("sm:max-w-[480px] p-0 overflow-hidden border-0 shadow-2xl gap-0", styles.contentBg)}>
+      <DialogContent className={cn(
+        "sm:max-w-[480px] p-0 overflow-hidden border-0 shadow-2xl gap-0 duration-200", // Faster dialog animation
+        styles.contentBg
+      )}>
         <DialogTitle className="sr-only">Müşteri Girişi</DialogTitle>
         <div className="relative">
-          {/* Header Pattern/Gradient */}
-          <div className={cn("absolute top-0 inset-x-0 h-32 opacity-50", styles.gradient)} />
+          {/* Header Pattern/Gradient - Simplified for performance */}
+          <div className={cn("absolute top-0 inset-x-0 h-32 opacity-50 pointer-events-none", styles.gradient)} />
           
           <div className="relative px-6 pt-8 pb-6">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {view === 'welcome' && (
                 <motion.div
                   key="welcome"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }} // Faster transition
                   className="space-y-8"
                 >
                   <div className="text-center space-y-2">
-                    <div className={cn("mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg rotate-3", styles.iconBox)}>
+                    <div className={cn("mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg", styles.iconBox)}>
                       <UtensilsCrossed className={cn("w-8 h-8", styles.iconColor)} />
                     </div>
                     <h2 className={cn("font-bold tracking-tight", headerTitleColor)}>Hoş Geldiniz</h2>
@@ -384,7 +387,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                   <div className="space-y-3 pt-2">
                     <Button 
                       onClick={() => setView('login')}
-                      className={cn("w-full h-14 text-base font-semibold shadow-lg shadow-primary/10 transition-all hover:scale-[1.02] active:scale-[0.98]", styles.primaryBtn)}
+                      className={cn("w-full h-14 text-base font-semibold shadow-lg shadow-primary/10 active:scale-[0.98]", styles.primaryBtn)}
                     >
                       <UserCircle2 className="mr-2 h-5 w-5" />
                       Giriş Yap / Kayıt Ol
@@ -402,7 +405,7 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
                     <Button 
                       variant="outline" 
                       onClick={handleGuestContinue}
-                      className={cn("w-full h-14 text-base font-medium border-2 hover:bg-secondary/50 transition-all hover:scale-[1.02] active:scale-[0.98]", styles.secondaryBtn)}
+                      className={cn("w-full h-14 text-base font-medium border-2 hover:bg-secondary/50 active:scale-[0.98]", styles.secondaryBtn)}
                     >
                       Misafir Olarak Devam Et
                       <ArrowRight className="ml-2 h-5 w-5 opacity-50" />
@@ -414,10 +417,10 @@ export function CustomerAuthDialog({ variant = 'default' }: CustomerAuthDialogPr
               {view === 'login' && (
                 <motion.div
                   key="login"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
                   className="space-y-6"
                 >
                   <div className="text-center mb-6">

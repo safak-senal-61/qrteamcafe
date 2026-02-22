@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Button } from '@/components/ui/button';
 import { PendingOrdersWidget } from '@/components/admin/PendingOrdersWidget';
 import { WaiterCallWidget } from '@/components/admin/WaiterCallWidget';
-import { API_URL } from '@/lib/api';
+import { API_URL, api } from '@/lib/api';
 import { AdminSocketProvider } from '@/providers/AdminSocketProvider';
 
 export default function AdminLayout({
@@ -57,24 +57,31 @@ export default function AdminLayout({
       const user = JSON.parse(userStr);
       
       if (user.cafeId && API_URL) {
-        const res = await fetch(`${API_URL}/cafes/${user.cafeId}`);
-        if (res.ok) {
-          const cafe = await res.json();
-          applyTheme(cafe);
+        try {
+          const res = await api.get(`/cafes/${user.cafeId}`);
+          if (res.status === 200) {
+            const cafe = res.data;
+            applyTheme(cafe);
 
-          // Subscription Check (Skip for Super Admin)
-          if (user.role !== 'SUPER_ADMIN') {
-            const now = new Date();
-            const trialEndsAt = cafe.trialEndsAt ? new Date(cafe.trialEndsAt) : null;
-            const subscriptionEndsAt = cafe.subscriptionEndsAt ? new Date(cafe.subscriptionEndsAt) : null;
-            
-            const isTrialActive = trialEndsAt && trialEndsAt > now;
-            const isSubscriptionActive = cafe.isSubscriptionActive && subscriptionEndsAt && subscriptionEndsAt > now;
+            // Subscription Check (Skip for Super Admin)
+            if (user.role !== 'SUPER_ADMIN') {
+              const now = new Date();
+              const trialEndsAt = cafe.trialEndsAt ? new Date(cafe.trialEndsAt) : null;
+              const subscriptionEndsAt = cafe.subscriptionEndsAt ? new Date(cafe.subscriptionEndsAt) : null;
+              
+              const isTrialActive = trialEndsAt && trialEndsAt > now;
+              const isSubscriptionActive = cafe.isSubscriptionActive && subscriptionEndsAt && subscriptionEndsAt > now;
 
-            if (!isTrialActive && !isSubscriptionActive) {
-               // Subscription expired
-               router.replace('/pricing');
+              if (!isTrialActive && !isSubscriptionActive) {
+                 // Subscription expired
+                 router.replace('/pricing');
+              }
             }
+          }
+        } catch (e) {
+          // Ignore network errors for theme fetching to prevent console spam
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Theme fetch failed (likely server down or network issue):', e);
           }
         }
       }

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { API_URL } from '@/lib/api';
+import { API_URL, api } from '@/lib/api';
 import { Loader2, Check, Palette, MonitorSmartphone } from 'lucide-react';
 import Image from 'next/image';
 
@@ -24,6 +24,8 @@ const TEMPLATES = [
            fill
            className="object-cover transition-transform duration-500 group-hover:scale-110"
            unoptimized
+           loading="eager"
+           priority={true}
          />
          <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] flex items-center justify-center">
             <div className="bg-white p-2 rounded shadow-sm w-3/4 h-3/4 flex flex-col gap-2 opacity-90">
@@ -157,9 +159,9 @@ export default function TemplatesPage() {
         const user = JSON.parse(userStr);
         setCafeId(user.cafeId);
 
-        const res = await fetch(`${API_URL}/cafes/${user.cafeId}`);
-        if (res.ok) {
-          const data = await res.json();
+        const res = await api.get(`/cafes/${user.cafeId}`);
+        if (res.status === 200) {
+          const data = res.data;
           if (data.templateId) {
             setCurrentTemplate(data.templateId);
           }
@@ -177,23 +179,34 @@ export default function TemplatesPage() {
 
   const handleSave = async (templateId: string) => {
     if (!cafeId) return;
+
+    // Token check before request
+    const token = localStorage.getItem('token');
+    if (!token) {
+        toast.error('Oturum anahtarı bulunamadı. Lütfen tekrar giriş yapın.');
+        router.push('/admin/login');
+        return;
+    }
+
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/cafes/${cafeId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ templateId }),
-      });
+      const res = await api.patch(`/cafes/${cafeId}`, { templateId });
 
-      if (res.ok) {
+      if (res.status === 200) {
         setCurrentTemplate(templateId);
         toast.success('Şablon başarıyla güncellendi.');
       } else {
         toast.error('Şablon güncellenemedi.');
       }
-    } catch (error) {
-      console.error(error);
-      toast.error('Bir hata oluştu.');
+    } catch (error: any) {
+      console.error('Template update error:', error);
+      if (error.response && error.response.status === 401) {
+          toast.error('Yetkilendirme hatası. Oturumunuz sonlanmış olabilir.');
+          // Redirect handled by interceptor, but we can force it here too just in case
+          setTimeout(() => router.push('/admin/login'), 2000);
+      } else {
+          toast.error(error.response?.data?.message || 'Bir hata oluştu.');
+      }
     } finally {
       setSaving(false);
     }

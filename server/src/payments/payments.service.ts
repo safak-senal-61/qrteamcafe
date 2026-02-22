@@ -539,7 +539,10 @@ export class PaymentsService {
               resolve({ success: false, message: 'Payment failed', result });
             }
           } catch (error) {
-            this.logger.error('Error during payment verification callback', error);
+            this.logger.error(
+              'Error during payment verification callback',
+              error,
+            );
             reject(error);
           }
         },

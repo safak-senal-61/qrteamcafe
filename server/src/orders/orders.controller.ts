@@ -39,6 +39,16 @@ export class OrdersController {
     return this.ordersService.create(cafeId, createOrderDto);
   }
 
+  @Get('public')
+  findPublic(
+    @Query('cafeId') cafeId: string,
+    @Query('tableId') tableId?: string,
+    @Query('orderIds') orderIds?: string,
+  ) {
+    const ids = orderIds ? orderIds.split(',') : [];
+    return this.ordersService.findPublic(cafeId, tableId, ids);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, SubscriptionGuard)
   findAll(@Query('cafeId') cafeId: string) {

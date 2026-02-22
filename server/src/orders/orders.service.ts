@@ -180,6 +180,46 @@ export class OrdersService {
     return orders.map((order) => this.mapOrderWithImages(order));
   }
 
+  async findPublic(cafeId: string, tableId?: string, orderIds?: string[]) {
+    const where: any = {
+      cafeId,
+      status: { not: 'PAID' }, // Only active orders for public view
+    };
+
+    const conditions: any[] = [];
+
+    if (tableId) {
+      conditions.push({ tableId });
+    }
+
+    if (orderIds && orderIds.length > 0) {
+      conditions.push({ id: { in: orderIds } });
+    }
+
+    if (conditions.length === 0) {
+      return []; // No criteria, return nothing
+    }
+
+    where.OR = conditions;
+
+    const orders = await this.prisma.order.findMany({
+      where,
+      include: {
+        table: true,
+        items: {
+          include: {
+            product: {
+              include: { category: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return orders.map((order) => this.mapOrderWithImages(order));
+  }
+
   async findAll(cafeId: string) {
     const orders = await this.prisma.order.findMany({
       where: { cafeId },

@@ -28,8 +28,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Link, useRouter, usePathname } from '@/navigation';
 import { useSearchParams } from 'next/navigation';
-import { API_URL, getMediaUrl } from '@/lib/api';
+import { getMediaUrl, api } from '@/lib/api';
 import Image from 'next/image';
+import axios from 'axios';
 import { useAdminSocket } from '@/providers/AdminSocketProvider';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -221,14 +222,11 @@ export default function DashboardPage() {
       // Check if we have a stored card
       const checkCardStatus = async () => {
         try {
-          const token = localStorage.getItem('token');
           console.log('Checking stored cards from API...');
-          const res = await fetch(`${API_URL}/payments/cards`, {
-             headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await api.get('/payments/cards');
           
-          if (res.ok) {
-            const cards = await res.json();
+          if (res.status === 200) {
+            const cards = res.data;
             console.log('Stored cards response:', cards);
             setHasStoredCard(Array.isArray(cards) && cards.length > 0);
           } else {
@@ -279,17 +277,9 @@ export default function DashboardPage() {
     try {
       if (!cafeId) return;
       
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/cafes/${cafeId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ isSoundEnabled: newState }),
-      });
+      const response = await api.patch(`/cafes/${cafeId}`, { isSoundEnabled: newState });
 
-      if (response.ok) {
+      if (response.status === 200) {
         toast.success(newState ? 'Bildirim sesi açıldı' : 'Bildirim sesi kapatıldı');
       } else {
         throw new Error('Update failed');
@@ -419,13 +409,9 @@ export default function DashboardPage() {
       setCafeId(cafeId);
 
       try {
-        const response = await fetch(`${API_URL}/cafes/${cafeId}/dashboard-stats`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
+        const response = await api.get(`/cafes/${cafeId}/dashboard-stats`);
+        if (response.status === 200) {
+          const data = response.data;
           setStats(data);
           // DB'den gelen değeri state'e ata
           const isEnabled = data.isSoundEnabled !== false;
@@ -442,26 +428,29 @@ export default function DashboardPage() {
         }
 
         // Fetch Announcements
-        const annResponse = await fetch(`${API_URL}/announcements/active`, {
-           headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (annResponse.ok) {
-           const annData = await annResponse.json();
+        const annResponse = await api.get('/announcements/active');
+        if (annResponse.status === 200) {
+           const annData = annResponse.data;
            setAnnouncements(annData);
         }
 
         // Fetch Audit Logs
-        const logsResponse = await fetch(`${API_URL}/audit-logs?limit=5`, {
-           headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (logsResponse.ok) {
-           const logsData = await logsResponse.json();
-           setAuditLogs(logsData.logs || []);
+        const logsResponse = await api.get('/audit-logs?limit=5');
+        if (logsResponse.status === 200) {
+           const logsData = logsResponse.data;
+           // Server returns { total, data: logs }
+           setAuditLogs(logsData.data || []);
         }
 
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to fetch stats:', error);
-        toast.error('Sunucu hatası.');
+        // If error is handled by interceptor (e.g. 401), we might not want to show generic error
+        if (axios.isAxiosError(error) && error.response?.status !== 401) {
+          toast.error('Sunucu hatası.');
+        } else if (!axios.isAxiosError(error)) {
+           // Fallback for non-axios errors
+           toast.error('Sunucu hatası.');
+        }
       } finally {
         setLoading(false);
       }
@@ -635,20 +624,20 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Panel</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Panel</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Kafe durumunu ve istatistiklerini görüntüleyin
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
            {/* Sound Toggle */}
            <Button
              variant="outline"
              size="icon"
              onClick={toggleSound}
-             className={soundEnabled ? 'text-primary' : 'text-muted-foreground'}
+             className={`shrink-0 ${soundEnabled ? 'text-primary' : 'text-muted-foreground'}`}
              title={soundEnabled ? 'Bildirim sesi açık' : 'Bildirim sesi kapalı'}
            >
              {soundEnabled ? (
@@ -661,44 +650,43 @@ export default function DashboardPage() {
              )}
            </Button>
 
-           <Button variant="outline" asChild>
+           <Button variant="outline" className="flex-1 sm:flex-none whitespace-nowrap" asChild>
              <Link href="/admin/settings">Ayarlar</Link>
            </Button>
-           <Button asChild>
+           <Button className="flex-1 sm:flex-none whitespace-nowrap" asChild>
              <Link href="/admin/orders">Siparişler</Link>
            </Button>
         </div>
       </div>
 
-      {/* Subscription Status Banner */}
+      {/* Subscription Status Banner - Ultra Compact */}
       {subStatus && (
-        <Card className={`${subStatus.color} border-none text-white shadow-lg overflow-hidden relative`}>
-           <div className="absolute right-0 top-0 h-full w-32 bg-white/10 skew-x-12 translate-x-16" />
-           <CardContent className="p-6 flex items-center justify-between relative z-10">
-              <div className="flex items-center gap-4">
-                 <div className="bg-white/20 p-3 rounded-full">
-                    <subStatus.icon className="h-6 w-6" />
-                 </div>
-                 <div>
-                    <h3 className="font-bold text-lg">{subStatus.label}</h3>
-                    <p className="text-white/90 text-sm">
-                       {subStatus.type === 'EXPIRED' 
-                          ? 'Abonelik süreniz dolmuştur. Hizmetlerden yararlanmaya devam etmek için lütfen yenileyin.'
-                          : `Kalan Süre: ${subStatus.daysLeft} Gün`}
-                    </p>
+        <div className={`${subStatus.color} rounded-lg shadow-sm text-white relative overflow-hidden`}>
+           <div className="absolute right-0 top-0 h-full w-24 bg-white/10 skew-x-12 translate-x-8" />
+           <div className="px-4 py-3 flex items-center justify-between relative z-10">
+              <div className="flex items-center gap-3">
+                 <subStatus.icon className="h-5 w-5 shrink-0" />
+                 <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm">{subStatus.label}</span>
+                    <span className="text-white/80 text-xs">
+                       • {subStatus.type === 'EXPIRED' 
+                          ? 'Süre doldu'
+                          : `${subStatus.daysLeft} Gün`}
+                    </span>
                  </div>
               </div>
               <Button 
+                size="sm"
                 variant="secondary" 
-                className="whitespace-nowrap bg-white text-slate-900 hover:bg-slate-100"
+                className="h-7 text-xs px-3 bg-white/20 hover:bg-white/30 text-white border-none shadow-none"
                 asChild
               >
                  <Link href="/pricing">
-                    {subStatus.type === 'EXPIRED' ? 'Hemen Yenile' : 'Paketi Yükselt'}
+                    {subStatus.type === 'EXPIRED' ? 'Yenile' : 'Yükselt'}
                  </Link>
               </Button>
-           </CardContent>
-        </Card>
+           </div>
+        </div>
       )}
 
       {/* Active Announcements */}
@@ -763,9 +751,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <div className="flex flex-col lg:grid lg:grid-cols-7 gap-4">
         {/* Recent Orders */}
-        <Card className="col-span-4">
+        <Card className="lg:col-span-4 h-full">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -782,7 +770,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[350px] pr-4">
+            <ScrollArea className="h-[350px] lg:h-[calc(100vh-450px)] lg:min-h-[350px] pr-4">
               <div className="space-y-4">
                 {stats.recentOrders.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-sm">
@@ -822,102 +810,143 @@ export default function DashboardPage() {
         </Card>
 
         {/* Audit Logs & Popular Products */}
-        <div className="col-span-3 space-y-4">
+        <div className="lg:col-span-3 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-1 content-start">
           {/* Audit Logs */}
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="h-full border-none shadow-md overflow-hidden">
+            <CardHeader className="bg-slate-50/50 pb-4 border-b">
               <CardTitle className="text-base flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                <div className="p-1.5 bg-indigo-100 rounded-lg">
+                  <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                </div>
                 Son İşlemler
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[200px]">
-                <div className="space-y-3">
-                  {auditLogs.length === 0 ? (
-                    <div className="text-center py-4 text-muted-foreground text-xs">
-                      İşlem kaydı yok.
-                    </div>
-                  ) : (
-                    auditLogs.map((log) => (
-                      <div key={log.id} className="flex items-start gap-3 text-sm border-b pb-2 last:border-0 last:pb-0">
-                        <div className={`p-1.5 rounded-full shrink-0 mt-0.5 ${
-                          log.actionType.includes('DELETE') ? 'bg-red-100 text-red-600' :
-                          log.actionType.includes('UPDATE') ? 'bg-blue-100 text-blue-600' :
-                          'bg-green-100 text-green-600'
-                        }`}>
-                          <ShieldCheck className="h-3 w-3" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-xs">
-                            {actionTypeLabels[log.actionType] || log.actionType}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
-                            {log.details}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="secondary" className="text-[10px] h-4 px-1">
-                              {log.admin ? log.admin.name : log.waiter ? `${log.waiter.firstName} ${log.waiter.lastName}` : 'Sistem'}
-                            </Badge>
-                            <span className="text-[10px] text-muted-foreground">
-                              {format(new Date(log.timestamp), 'HH:mm', { locale: tr })}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[300px]">
+                {auditLogs.length === 0 ? (
+                   <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground gap-3">
+                     <div className="p-3 bg-slate-50 rounded-full">
+                       <ShieldCheck className="h-6 w-6 opacity-20" />
+                     </div>
+                     <p className="text-xs font-medium">Henüz işlem kaydı bulunmuyor</p>
+                   </div>
+                ) : (
+                   <div className="divide-y">
+                     {auditLogs.map((log) => (
+                       <div key={log.id} className="p-4 hover:bg-slate-50/50 transition-colors">
+                         <div className="flex items-start gap-3">
+                           {/* Icon based on type */}
+                           <div className={`mt-0.5 p-1.5 rounded-full shrink-0 ${
+                             log.actionType.includes('DELETE') ? 'bg-red-100 text-red-600' :
+                             log.actionType.includes('UPDATE') ? 'bg-amber-100 text-amber-600' :
+                             'bg-emerald-100 text-emerald-600'
+                           }`}>
+                             <ShieldCheck className="h-3 w-3" />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                             <div className="flex items-center justify-between gap-2 mb-0.5">
+                               <p className="font-medium text-xs text-slate-900 truncate">
+                                 {actionTypeLabels[log.actionType] || log.actionType}
+                               </p>
+                               <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                 {format(new Date(log.timestamp), 'HH:mm', { locale: tr })}
+                               </span>
+                             </div>
+                             <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                               {log.details}
+                             </p>
+                             <div className="mt-2 flex items-center gap-2">
+                               <Badge variant="outline" className="text-[10px] h-4 px-1.5 bg-white font-normal text-slate-500">
+                                 {log.admin ? log.admin.name : log.waiter ? `${log.waiter.firstName} ${log.waiter.lastName}` : 'Sistem'}
+                               </Badge>
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                )}
               </ScrollArea>
             </CardContent>
           </Card>
 
           {/* Popular Products */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Popüler Ürünler</CardTitle>
-              <CardDescription>
-                En çok sipariş edilenler
-              </CardDescription>
+          <Card className="h-full border-none shadow-md overflow-hidden">
+            <CardHeader className="bg-slate-50/50 pb-4 border-b">
+               <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <div className="p-1.5 bg-orange-100 rounded-lg">
+                      <Crown className="h-4 w-4 text-orange-600" />
+                    </div>
+                    Popüler Ürünler
+                  </CardTitle>
+               </div>
+               <CardDescription className="text-xs mt-1">
+                 En çok tercih edilen lezzetler
+               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-0">
+              <ScrollArea className="h-[300px]">
                 {stats.popularProducts.length === 0 ? (
-                  <div className="text-center py-4 text-muted-foreground text-sm">
-                    Veri yok.
+                  <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground gap-3">
+                    <div className="p-3 bg-slate-50 rounded-full">
+                       <UtensilsCrossed className="h-6 w-6 opacity-20" />
+                    </div>
+                    <p className="text-xs font-medium">Henüz veri oluşmadı</p>
                   </div>
                 ) : (
-                  stats.popularProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center gap-4"
-                    >
-                      <div className="relative h-10 w-10 overflow-hidden rounded-md border bg-muted">
-                        {product.imageUrl ? (
-                          <Image
-                            src={getMediaUrl(product.imageUrl)}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-secondary">
-                            <UtensilsCrossed className="h-4 w-4 text-muted-foreground" />
+                  <div className="divide-y">
+                    {stats.popularProducts.map((product, index) => (
+                      <div key={product.id} className="p-4 flex items-center gap-4 hover:bg-slate-50/50 transition-colors group">
+                        <div className="flex-none font-bold text-sm w-6 text-center text-muted-foreground/50 group-hover:text-primary transition-colors">
+                           {index === 0 ? <Crown className="h-5 w-5 text-amber-500 mx-auto fill-amber-500" /> : 
+                            index === 1 ? <span className="text-slate-700 text-lg font-black">2</span> :
+                            index === 2 ? <span className="text-slate-600 text-lg font-black">3</span> :
+                            <span className="text-sm text-slate-400 font-medium">{index + 1}</span>}
+                        </div>
+                        
+                        <div className="relative h-10 w-10 overflow-hidden rounded-lg border bg-white shadow-sm shrink-0">
+                          {product.imageUrl ? (
+                            <Image
+                              src={getMediaUrl(product.imageUrl)}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-slate-50">
+                              <UtensilsCrossed className="h-4 w-4 text-slate-300" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-1">
+                             <p className="text-sm font-medium text-slate-900 truncate group-hover:text-primary transition-colors">
+                               {product.name}
+                             </p>
+                             <span className="text-[10px] font-semibold bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 whitespace-nowrap ml-2">
+                               {product._count?.orderItems || 0}
+                             </span>
                           </div>
-                        )}
+                          
+                          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                             <div 
+                               className={`h-full rounded-full ${
+                                 index === 0 ? 'bg-amber-500' : 
+                                 index === 1 ? 'bg-slate-700' :
+                                 index === 2 ? 'bg-slate-500' :
+                                 'bg-primary/60'
+                               }`}
+                               style={{ width: `${Math.min(100, ((product._count?.orderItems || 0) / (stats.popularProducts[0]?._count?.orderItems || 1)) * 100)}%` }} 
+                             />
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {product.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {product._count?.orderItems || 0} sipariş
-                        </p>
-                      </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
-              </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>

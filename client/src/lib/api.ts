@@ -1,12 +1,34 @@
 import axios from 'axios';
+import { toast } from 'sonner';
 
 export const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     // Tarayıcıda çalışıyorsa
+    const hostname = window.location.hostname;
+    
+    // Debug log to understand environment detection
+    if (process.env.NODE_ENV === 'development') {
+        console.log('API_URL Detection - Hostname:', hostname);
+    }
+
+    // Debug override
+    try {
+      const debugUrl = localStorage.getItem('DEBUG_API_URL');
+      if (debugUrl) return debugUrl;
+    } catch (e) {}
     
     // Eğer localhost ise yerel portu kullan (process.env.NEXT_PUBLIC_API_URL olsa bile)
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return `${window.location.protocol}//${window.location.hostname}:3001`;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${window.location.protocol}//${hostname}:3001`;
+    }
+
+    // Check for local network IP (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+    if (
+      hostname.startsWith('192.168.') || 
+      hostname.startsWith('10.') ||
+      (hostname.startsWith('172.') && parseInt(hostname.split('.')[1]) >= 16 && parseInt(hostname.split('.')[1]) <= 31)
+    ) {
+       return `${window.location.protocol}//${hostname}:3001`;
     }
 
     if (process.env.NEXT_PUBLIC_API_URL) {
@@ -69,8 +91,24 @@ export const getMediaUrl = (url?: string | null): string => {
     if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) {
       // Validate URL format
       try {
-        new URL(url);
-        return url;
+        // Upgrade HTTP to HTTPS for specific domains or generally in production
+        let finalUrl = url;
+        const isLocalhost = typeof window !== 'undefined' && 
+          (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.'));
+
+        if (!isLocalhost && finalUrl.startsWith('http://')) {
+            // Always upgrade known secure providers
+            if (
+                finalUrl.includes('unsplash.com') || 
+                finalUrl.includes('digitaloceanspaces.com') ||
+                finalUrl.includes('qrders.com.tr')
+            ) {
+                finalUrl = finalUrl.replace('http://', 'https://');
+            }
+        }
+
+        new URL(finalUrl);
+        return finalUrl;
       } catch {
         // Try encoding if it contains spaces or special chars
         try {
@@ -116,28 +154,46 @@ api.interceptors.request.use((config) => {
     const isAdminSection = window.location.pathname.includes('/admin');
     const adminToken = localStorage.getItem('token');
     
+    // Debug logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log('API Request Interceptor:', {
+        url: config.url,
+        isAdminSection,
+        hasAdminToken: !!adminToken,
+        pathname: window.location.pathname
+      });
+    }
+    
+    // Check for Waiter Token
+    const isWaiterSection = window.location.pathname.includes('/waiter');
+    const waiterToken = localStorage.getItem('waiter-token');
+
+    // Check for Customer Token
+    const storage = localStorage.getItem('customer-storage');
+    let customerToken = null;
+    if (storage) {
+       try {
+         const { state } = JSON.parse(storage);
+         if (state?.token) {
+           customerToken = state.token;
+         }
+       } catch {}
+    }
+
     if (isAdminSection && adminToken) {
       config.headers.Authorization = `Bearer ${adminToken}`;
       return config;
     }
-
-    // Check for Waiter Token
-    const isWaiterSection = window.location.pathname.includes('/waiter');
-    const waiterToken = localStorage.getItem('waiter-token');
 
     if (isWaiterSection && waiterToken) {
       config.headers.Authorization = `Bearer ${waiterToken}`;
       return config;
     }
 
-    // Check for Customer Token
-    const storage = localStorage.getItem('customer-storage');
-    if (storage) {
-      const { state } = JSON.parse(storage);
-      if (state?.token) {
-        config.headers.Authorization = `Bearer ${state.token}`;
+    // Default to customer token if available and not in admin/waiter section
+    if (customerToken && !isAdminSection && !isWaiterSection) {
+        config.headers.Authorization = `Bearer ${customerToken}`;
         return config;
-      }
     }
 
     // Fallback: Use admin token if available (even if not in admin section, e.g. shared components)
@@ -147,3 +203,45 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Response interceptor to handle 401 Unauthorized
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (typeof window !== 'undefined' && error.response && error.response.status === 401) {
+      const pathname = window.location.pathname;
+
+      // Prevent infinite loops if the login endpoint itself returns 401
+      if (pathname.includes('/login') || pathname.includes('/register')) {
+        return Promise.reject(error);
+      }
+
+      // Admin Logout Logic
+      if (pathname.includes('/admin')) {
+        // Clear all admin related storage
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        toast.error('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
+        
+        // Force redirect to login
+        setTimeout(() => {
+          window.location.href = '/admin/login';
+        }, 1000);
+      }
+      
+      // Waiter Logout Logic
+      else if (pathname.includes('/waiter')) {
+         localStorage.removeItem('waiter-token');
+         localStorage.removeItem('waiter-user');
+         toast.error('Oturum süreniz doldu.');
+         setTimeout(() => {
+            window.location.href = '/waiter/login';
+         }, 1000);
+      }
+      // Customer Logic (Optional - usually we don't force logout for customers in the same way, 
+      // but if needed we can clear customer-storage)
+    }
+    return Promise.reject(error);
+  }
+);

@@ -64,6 +64,7 @@ export function AdminSocketProvider({ children }: { children: React.ReactNode })
       auth: {
         token,
       },
+      autoConnect: false, // Otomatik bağlanmayı kapat
     });
 
     newSocket.on('connect', () => {
@@ -82,16 +83,18 @@ export function AdminSocketProvider({ children }: { children: React.ReactNode })
       setActiveTablesCount(count);
     });
 
-    // We can also handle global notifications here if we want to unify
-    // For now, we keep specific widget logic separate but activeTables is shared
-
-    // Avoid synchronous setState in effect
-    setTimeout(() => {
+    // Bağlantıyı başlat (React StrictMode double-mount sorununu önlemek için gecikmeli)
+    const connectionTimeout = setTimeout(() => {
+      if (!newSocket.connected) {
+        newSocket.connect();
+      }
       setSocket(newSocket);
-    }, 0);
+    }, 50);
 
     return () => {
       console.log('AdminSocketProvider: Cleaning up socket');
+      clearTimeout(connectionTimeout);
+      newSocket.removeAllListeners();
       newSocket.disconnect();
     };
   }, []);
