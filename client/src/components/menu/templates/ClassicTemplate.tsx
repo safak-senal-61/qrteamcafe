@@ -98,6 +98,7 @@ export function ClassicTemplate({
             className="object-cover"
             priority={true}
             sizes="100vw"
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             {...({ fetchPriority: "high" } as any)}
           />
         </motion.div>
@@ -116,6 +117,7 @@ export function ClassicTemplate({
                 className="object-cover"
                 priority={true}
                 sizes="(max-width: 768px) 96px, 96px"
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 {...({ fetchPriority: "high" } as any)}
               />
             </motion.div>

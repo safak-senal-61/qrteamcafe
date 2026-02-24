@@ -32,31 +32,31 @@ export default function RoadmapPage() {
 
   const milestones = [
     {
+      quarter: t('milestones.q4_2025.quarter'),
+      title: t('milestones.q4_2025.title'),
+      icon: <Rocket className="h-6 w-6" />,
+      items: t.raw('milestones.q4_2025.items') as string[],
+      status: 'completed'
+    },
+    {
       quarter: t('milestones.q1_2026.quarter'),
       title: t('milestones.q1_2026.title'),
-      icon: <Rocket className="h-6 w-6" />,
+      icon: <Code className="h-6 w-6" />,
       items: t.raw('milestones.q1_2026.items') as string[],
       status: 'completed'
     },
     {
       quarter: t('milestones.q2_2026.quarter'),
       title: t('milestones.q2_2026.title'),
-      icon: <Code className="h-6 w-6" />,
+      icon: <Star className="h-6 w-6" />,
       items: t.raw('milestones.q2_2026.items') as string[],
       status: 'in-progress'
     },
     {
       quarter: t('milestones.q3_2026.quarter'),
       title: t('milestones.q3_2026.title'),
-      icon: <Star className="h-6 w-6" />,
-      items: t.raw('milestones.q3_2026.items') as string[],
-      status: 'planned'
-    },
-    {
-      quarter: t('milestones.q4_2026.quarter'),
-      title: t('milestones.q4_2026.title'),
       icon: <Milestone className="h-6 w-6" />,
-      items: t.raw('milestones.q4_2026.items') as string[],
+      items: t.raw('milestones.q3_2026.items') as string[],
       status: 'planned'
     }
   ];

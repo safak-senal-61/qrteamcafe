@@ -97,7 +97,7 @@
     "phoneDesc": "Hafta içi 09:00 - 18:00",
     "officeTitle": "Ofis",
     "officeDesc": "Bizi ziyaret edin",
-    "address": "Teknoloji Vadisi, B Blok No:42<br />Maslak, İstanbul",
+    "address": "Pelitli Mahallesi, Kızılcık Sokak<br />Ortahisar, Trabzon",
     "formTitle": "Mesaj Gönderin",
     "formName": "Adınız Soyadınız",
     "formEmail": "E-posta Adresiniz",
@@ -542,25 +542,43 @@
       "planned": "Planlandı"
     },
     "milestones": {
+      "q4_2025": {
+        "quarter": "2025 Q4",
+        "title": "MVP & Lansman",
+        "items": [
+          "Temassız QR Menü (Mobil Uyumlu)",
+          "Admin Yönetim Paneli (Kategori & Ürün Yönetimi)",
+          "Masa Yönetimi & QR Kod Oluşturucu",
+          "Temel Raporlama (Sipariş & Ciro)",
+          "Çoklu Dil Desteği (TR/EN)",
+          "Garson Çağrı Sistemi (Temel)"
+        ]
+      },
       "q1_2026": {
         "quarter": "2026 Q1",
-        "title": "Başlangıç",
-        "items": ["QR Menü Lansmanı", "Temel Yönetim Paneli", "Çoklu Dil Desteği"]
+        "title": "Operasyonel Verimlilik",
+        "items": [
+          "Garson & Mutfak Paneli (Rol Bazlı Yetkilendirme)",
+          "Canlı Sipariş Takibi (WebSocket)",
+          "Stok Takibi & Kritik Stok Uyarıları",
+          "Gelişmiş Raporlama & Analizler",
+          "Ödeme Entegrasyonları (Iyzico/Stripe)",
+          "Kupon & İndirim Yönetimi"
+        ]
       },
       "q2_2026": {
-        "quarter": "2026 Q2",
-        "title": "Büyüme",
-        "items": ["POS Entegrasyonları", "Stok Takibi Modülü", "Garson Çağrı Sistemi"]
+        "quarter": "Yakında",
+        "title": "Müşteri Deneyimi",
+        "items": [
+          "Daha Fazla Özellik Yolda..."
+        ]
       },
       "q3_2026": {
-        "quarter": "2026 Q3",
-        "title": "Gelişme",
-        "items": ["Yapay Zeka Destekli Öneriler", "Sadakat Programı", "Mobil Uygulama"]
-      },
-      "q4_2026": {
-        "quarter": "2026 Q4",
-        "title": "Global",
-        "items": ["Yurt Dışı Açılımı", "Pazaryeri Entegrasyonu", "Gelişmiş API"]
+        "quarter": "Yakında",
+        "title": "Entegrasyon & Ölçeklenme",
+        "items": [
+          "Daha Fazla Özellik Yolda..."
+        ]
       }
     }
   },

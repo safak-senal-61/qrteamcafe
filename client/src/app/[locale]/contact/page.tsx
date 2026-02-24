@@ -138,9 +138,18 @@ export default function ContactPage() {
                       <div>
                         <h3 className="font-semibold text-lg mb-1">{t('emailTitle')}</h3>
                         <p className="text-muted-foreground text-sm mb-2">{t('emailDesc')}</p>
-                        <a href="mailto:info@qrders.com" className="text-foreground font-medium hover:text-primary transition-colors">
-                          info@qrders.com
+                        <a href="mailto:info@qrders.com.tr" className="text-foreground font-medium hover:text-primary transition-colors">
+                          info@qrders.com.tr
                         </a>
+                        <div className="mt-2 space-y-1">
+                          <a href="mailto:safak@qrders.com.tr" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                            safak@qrders.com.tr
+                          </a>
+                          <div />
+                          <a href="mailto:aferdogan@qrders.com.tr" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                            aferdogan@qrders.com.tr
+                          </a>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -153,8 +162,8 @@ export default function ContactPage() {
                       <div>
                         <h3 className="font-semibold text-lg mb-1">{t('phoneTitle')}</h3>
                         <p className="text-muted-foreground text-sm mb-2">{t('phoneDesc')}</p>
-                        <a href="tel:+908501234567" className="text-foreground font-medium hover:text-primary transition-colors">
-                          +90 (850) 123 45 67
+                        <a href="tel:+905013609961" className="text-foreground font-medium hover:text-primary transition-colors">
+                          +90 (501) 360 99 61
                         </a>
                       </div>
                     </CardContent>

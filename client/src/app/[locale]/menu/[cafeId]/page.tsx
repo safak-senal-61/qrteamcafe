@@ -29,6 +29,7 @@ async function getProducts(cafeId: string) {
     if (!res.ok) return [];
     const data = await res.json();
     // Filter available products on server side as well
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return data.filter((p: any) => p.isAvailable);
   } catch (error) {
     console.error('Error fetching products:', error);

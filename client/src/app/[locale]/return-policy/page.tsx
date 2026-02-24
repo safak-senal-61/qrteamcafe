@@ -126,7 +126,7 @@ export default function ReturnPolicyPage() {
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
               <p>
-                İade ve iptal süreçleriyle ilgili sorularınız için <strong>support@qrders.com</strong> adresinden veya <strong>0850 123 45 67</strong> numaralı telefondan bize ulaşabilirsiniz.
+                İade ve iptal süreçleriyle ilgili sorularınız için <a href="mailto:support@qrders.com.tr" className="font-semibold text-foreground hover:text-primary transition-colors">support@qrders.com.tr</a> adresinden veya <a href="tel:+905013609961" className="font-semibold text-foreground hover:text-primary transition-colors">+90 (501) 360 99 61</a> numaralı telefondan bize ulaşabilirsiniz.
               </p>
             </CardContent>
           </Card>

@@ -60,8 +60,8 @@ export default function DistanceSalesAgreementPage() {
               <p>
                 <strong>1.1. Satıcı Bilgileri:</strong><br />
                 Ünvan: QrDers (Bundan sonra &quot;SATICI&quot; olarak anılacaktır)<br />
-                Adres: Teknoloji Vadisi, B Blok No:42 Maslak, İstanbul<br />
-                E-posta: support@qrders.com<br />
+                Adres: Pelitli Mahallesi, Kızılcık Sokak, Ortahisar / Trabzon<br />
+                E-posta: support@qrders.com.tr<br />
               </p>
               <p>
                 <strong>1.2. Alıcı Bilgileri:</strong><br />

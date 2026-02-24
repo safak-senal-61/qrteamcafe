@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { API_URL, api } from '@/lib/api';
+import { api } from '@/lib/api';
 import { Loader2, Check, Palette, MonitorSmartphone } from 'lucide-react';
 import Image from 'next/image';
 
@@ -198,7 +198,7 @@ export default function TemplatesPage() {
       } else {
         toast.error('Şablon güncellenemedi.');
       }
-    } catch (error: any) {
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error('Template update error:', error);
       if (error.response && error.response.status === 401) {
           toast.error('Yetkilendirme hatası. Oturumunuz sonlanmış olabilir.');

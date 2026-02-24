@@ -15,7 +15,9 @@ export const getApiUrl = () => {
     try {
       const debugUrl = localStorage.getItem('DEBUG_API_URL');
       if (debugUrl) return debugUrl;
-    } catch (e) {}
+    } catch {
+        // ignore
+    }
     
     // Eğer localhost ise yerel portu kullan (process.env.NEXT_PUBLIC_API_URL olsa bile)
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
