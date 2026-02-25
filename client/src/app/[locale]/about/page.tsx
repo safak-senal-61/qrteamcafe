@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, Variants } from 'framer-motion';
-import { Users, Target, Heart, Coffee, Lightbulb, Shield, Globe, Award, Sparkles } from 'lucide-react';
+import { Users, Target, Heart, Coffee, Lightbulb, Shield, Globe, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
@@ -28,11 +28,24 @@ export default function AboutPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
+      // Check cache first (Daily)
+      const cachedStats = localStorage.getItem('aboutStats');
+      const cachedTime = localStorage.getItem('aboutStatsTime');
+      const oneDay = 24 * 60 * 60 * 1000;
+
+      if (cachedStats && cachedTime && (Date.now() - parseInt(cachedTime) < oneDay)) {
+        setStatsData(JSON.parse(cachedStats));
+        return;
+      }
+
       try {
         const res = await fetch(`${API_URL}/stats`, { next: { revalidate: 3600 } });
         if (res.ok) {
           const data = await res.json();
           setStatsData(data);
+          // Update cache
+          localStorage.setItem('aboutStats', JSON.stringify(data));
+          localStorage.setItem('aboutStatsTime', Date.now().toString());
         }
       } catch {
         // Sunucu kapalıysa veya hata varsa sessizce geç
@@ -69,7 +82,6 @@ export default function AboutPage() {
   const stats = [
     { label: t('stats.happyBusiness'), value: statsData.activeCafes > 0 ? `${statsData.activeCafes}+` : '500+', icon: <Coffee className="w-6 h-6" /> },
     { label: t('stats.digitalMenu'), value: statsData.totalProducts > 0 ? `${statsData.totalProducts}+` : '1000+', icon: <Globe className="w-6 h-6" /> },
-    { label: t('stats.monthlyTransaction'), value: statsData.totalOrders > 0 ? `${(statsData.totalOrders / 1000).toFixed(1)}K+` : '5M+', icon: <Sparkles className="w-6 h-6" /> },
     { label: t('stats.citiesServed'), value: statsData.uniqueCities > 0 ? `${statsData.uniqueCities}` : '81', icon: <Target className="w-6 h-6" /> },
   ];
 
@@ -152,7 +164,7 @@ export default function AboutPage() {
           </div>
 
           {/* Stats Section */}
-          <motion.div variants={containerVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
+          <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}

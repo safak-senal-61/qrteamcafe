@@ -58,16 +58,16 @@ export default function Footer() {
             {t('rights')}
           </p>
           <div className="flex gap-4">
-            <Link href="#" aria-label="Facebook" className="text-slate-400 hover:text-amber-600 transition-colors">
+            <Link href="https://www.facebook.com/profile.php?id=61587807744622" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-slate-400 hover:text-amber-600 transition-colors">
               <Facebook className="h-5 w-5" />
             </Link>
-            <Link href="#" aria-label="Twitter" className="text-slate-400 hover:text-amber-600 transition-colors">
+            <Link href="https://twitter.com/qrders_app" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="text-slate-400 hover:text-amber-600 transition-colors">
               <Twitter className="h-5 w-5" />
             </Link>
-            <Link href="#" aria-label="Instagram" className="text-slate-400 hover:text-amber-600 transition-colors">
+            <Link href="https://www.instagram.com/qrders_app" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-slate-400 hover:text-amber-600 transition-colors">
               <Instagram className="h-5 w-5" />
             </Link>
-            <Link href="#" aria-label="LinkedIn" className="text-slate-400 hover:text-amber-600 transition-colors">
+            <Link href="https://www.linkedin.com/company/qrders" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-slate-400 hover:text-amber-600 transition-colors">
               <Linkedin className="h-5 w-5" />
             </Link>
           </div>

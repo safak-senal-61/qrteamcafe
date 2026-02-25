@@ -109,7 +109,9 @@
     "quickResponse": "Hızlı Yanıt",
     "avgTime": "Ort. 2 saat içinde",
     "globalSupport": "Global Destek",
-    "languages": "Türkçe & İngilizce"
+    "languages": "Türkçe & İngilizce",
+    "socialTitle": "Sosyal Medya",
+    "socialDesc": "Bizi takip edin"
   },
   "SubscriptionPage": {
     "title": "Abonelik Yönetimi",

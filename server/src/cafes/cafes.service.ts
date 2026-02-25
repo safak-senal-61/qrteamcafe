@@ -57,7 +57,7 @@ export class CafesService {
     }
 
     if (!cafe) throw new NotFoundException('Cafe bulunamadı');
-    
+
     // Map database fields to frontend expected format
     const mappedCafe = {
       ...cafe,

@@ -14,10 +14,16 @@ export class AppService {
   }
 
   async getSystemStatus() {
-    const setting = await this.prisma.systemSetting.findUnique({
+    const maintenanceMode = await this.prisma.systemSetting.findUnique({
       where: { key: 'maintenanceMode' },
     });
-    return { maintenanceMode: setting?.value === 'true' };
+    const hideConsoleLogs = await this.prisma.systemSetting.findUnique({
+      where: { key: 'hideConsoleLogs' },
+    });
+    return {
+      maintenanceMode: maintenanceMode?.value === 'true',
+      hideConsoleLogs: hideConsoleLogs?.value === 'true',
+    };
   }
 
   async getPublicStats() {

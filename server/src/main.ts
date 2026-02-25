@@ -35,8 +35,20 @@ async function bootstrap() {
             'https://cdn.jsdelivr.net',
             'https://fonts.googleapis.com',
           ],
-          imgSrc: ["'self'", 'data:', 'https://cdn.jsdelivr.net', 'https://qrders.com.tr'],
-          fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:', 'https://cdn.jsdelivr.net', 'blob:', 'https://fonts.googleapis.com'],
+          imgSrc: [
+            "'self'",
+            'data:',
+            'https://cdn.jsdelivr.net',
+            'https://qrders.com.tr',
+          ],
+          fontSrc: [
+            "'self'",
+            'https://fonts.gstatic.com',
+            'data:',
+            'https://cdn.jsdelivr.net',
+            'blob:',
+            'https://fonts.googleapis.com',
+          ],
           connectSrc: [
             "'self'",
             'https://cdn.jsdelivr.net',

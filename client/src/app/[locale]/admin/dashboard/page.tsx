@@ -22,7 +22,6 @@ import {
   CreditCard,
   Clock,
   Megaphone,
-  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -37,24 +36,6 @@ import { tr } from 'date-fns/locale';
 
 // Sayfanın dinamik olmasını zorla (Cache sorunlarını önlemek için)
 export const dynamic = 'force-dynamic';
-
-const actionTypeLabels: Record<string, string> = {
-  ORDER_CREATED: 'Yeni Sipariş',
-  ORDER_UPDATED: 'Sipariş Güncelleme',
-  ORDER_CANCELLED: 'Sipariş İptali',
-  TABLE_MOVED: 'Masa Taşıma',
-  TABLE_CLOSE_PAYMENT: 'Hesap Kapatma',
-  PRODUCT_CREATE: 'Ürün Ekleme',
-  PRODUCT_UPDATE: 'Ürün Güncelleme',
-  PRODUCT_DELETE: 'Ürün Silme',
-  CATEGORY_CREATE: 'Kategori Ekleme',
-  CATEGORY_UPDATE: 'Kategori Güncelleme',
-  CATEGORY_DELETE: 'Kategori Silme',
-  WAITER_INVITE: 'Garson Daveti',
-  WAITER_DELETE: 'Garson Silme',
-  CAFE_SETTINGS_UPDATE: 'Kafe Ayarları',
-  SYSTEM_AUTO_CLOSE: 'Otomatik Kapanış',
-};
 
 interface OrderItem {
   id: string;
@@ -99,15 +80,6 @@ interface Announcement {
   createdAt: string;
 }
 
-interface AuditLog {
-  id: string;
-  actionType: string;
-  details: string;
-  timestamp: string;
-  admin?: { name: string };
-  waiter?: { firstName: string; lastName: string };
-}
-
 interface DashboardStats {
   totalOrders: number;
   dailyRevenue: number;
@@ -143,7 +115,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [cafeId, setCafeId] = useState<string | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   
   // Payment Success Dialog State
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
@@ -432,14 +403,6 @@ export default function DashboardPage() {
         if (annResponse.status === 200) {
            const annData = annResponse.data;
            setAnnouncements(annData);
-        }
-
-        // Fetch Audit Logs
-        const logsResponse = await api.get('/audit-logs?limit=5');
-        if (logsResponse.status === 200) {
-           const logsData = logsResponse.data;
-           // Server returns { total, data: logs }
-           setAuditLogs(logsData.data || []);
         }
 
       } catch (error: unknown) {
@@ -809,67 +772,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Audit Logs & Popular Products */}
-        <div className="lg:col-span-3 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-1 content-start">
-          {/* Audit Logs */}
-          <Card className="h-full border-none shadow-md overflow-hidden">
-            <CardHeader className="bg-slate-50/50 pb-4 border-b">
-              <CardTitle className="text-base flex items-center gap-2">
-                <div className="p-1.5 bg-indigo-100 rounded-lg">
-                  <ShieldCheck className="h-4 w-4 text-indigo-600" />
-                </div>
-                Son İşlemler
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="h-[300px]">
-                {auditLogs.length === 0 ? (
-                   <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground gap-3">
-                     <div className="p-3 bg-slate-50 rounded-full">
-                       <ShieldCheck className="h-6 w-6 opacity-20" />
-                     </div>
-                     <p className="text-xs font-medium">Henüz işlem kaydı bulunmuyor</p>
-                   </div>
-                ) : (
-                   <div className="divide-y">
-                     {auditLogs.map((log) => (
-                       <div key={log.id} className="p-4 hover:bg-slate-50/50 transition-colors">
-                         <div className="flex items-start gap-3">
-                           {/* Icon based on type */}
-                           <div className={`mt-0.5 p-1.5 rounded-full shrink-0 ${
-                             log.actionType.includes('DELETE') ? 'bg-red-100 text-red-600' :
-                             log.actionType.includes('UPDATE') ? 'bg-amber-100 text-amber-600' :
-                             'bg-emerald-100 text-emerald-600'
-                           }`}>
-                             <ShieldCheck className="h-3 w-3" />
-                           </div>
-                           <div className="flex-1 min-w-0">
-                             <div className="flex items-center justify-between gap-2 mb-0.5">
-                               <p className="font-medium text-xs text-slate-900 truncate">
-                                 {actionTypeLabels[log.actionType] || log.actionType}
-                               </p>
-                               <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                 {format(new Date(log.timestamp), 'HH:mm', { locale: tr })}
-                               </span>
-                             </div>
-                             <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
-                               {log.details}
-                             </p>
-                             <div className="mt-2 flex items-center gap-2">
-                               <Badge variant="outline" className="text-[10px] h-4 px-1.5 bg-white font-normal text-slate-500">
-                                 {log.admin ? log.admin.name : log.waiter ? `${log.waiter.firstName} ${log.waiter.lastName}` : 'Sistem'}
-                               </Badge>
-                             </div>
-                           </div>
-                         </div>
-                       </div>
-                     ))}
-                   </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
+        {/* Popular Products */}
+        <div className="lg:col-span-3 grid gap-4 grid-cols-1 content-start">
           {/* Popular Products */}
           <Card className="h-full border-none shadow-md overflow-hidden">
             <CardHeader className="bg-slate-50/50 pb-4 border-b">

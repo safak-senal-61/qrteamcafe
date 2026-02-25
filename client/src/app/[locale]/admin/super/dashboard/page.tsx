@@ -87,6 +87,7 @@ interface FinancialStats {
 interface SystemSettings {
   maintenanceMode: boolean;
   allowRegistrations: boolean;
+  hideConsoleLogs: boolean;
 }
 
 interface Announcement {
@@ -109,6 +110,7 @@ export default function SuperAdminDashboard() {
   const [settings, setSettings] = useState<SystemSettings>({
     maintenanceMode: false,
     allowRegistrations: true,
+    hideConsoleLogs: false,
   });
   const [loading, setLoading] = useState(true);
   // Change processingId to store both ID and Action
@@ -205,6 +207,7 @@ export default function SuperAdminDashboard() {
         setSettings({
           maintenanceMode: data.maintenanceMode === 'true',
           allowRegistrations: data.allowRegistrations !== 'false', // default true
+          hideConsoleLogs: data.hideConsoleLogs === 'true',
         });
       }
     } catch (error) {
@@ -242,19 +245,41 @@ export default function SuperAdminDashboard() {
 
   const saveSettings = async () => {
     setSavingSettings(true);
+    const token = localStorage.getItem('token');
+    if (!token) {
+        setSavingSettings(false);
+        toast.error('Oturum süreniz dolmuş olabilir.');
+        return;
+    }
+
     try {
       // Update each setting individually (backend supports key-value update)
       // In a real app, you might want a bulk update endpoint
       await fetch(`${API_URL}/super-admin/settings`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ key: 'maintenanceMode', value: String(settings.maintenanceMode) })
       });
 
       await fetch(`${API_URL}/super-admin/settings`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ key: 'allowRegistrations', value: String(settings.allowRegistrations) })
+      });
+
+      await fetch(`${API_URL}/super-admin/settings`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ key: 'hideConsoleLogs', value: String(settings.hideConsoleLogs) })
       });
 
       toast.success('Site ayarları güncellendi.');
@@ -516,6 +541,21 @@ export default function SuperAdminDashboard() {
                       id="registrations"
                       checked={settings.allowRegistrations}
                       onCheckedChange={(checked) => setSettings({ ...settings, allowRegistrations: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between space-x-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="consoleLogs" className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" /> Konsol Loglarını Gizle
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Tüm kullanıcılarda console.log çıktılarını kapatır.
+                      </p>
+                    </div>
+                    <Switch
+                      id="consoleLogs"
+                      checked={settings.hideConsoleLogs}
+                      onCheckedChange={(checked) => setSettings({ ...settings, hideConsoleLogs: checked })}
                     />
                   </div>
                 </div>

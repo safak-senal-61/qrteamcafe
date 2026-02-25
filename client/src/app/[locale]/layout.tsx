@@ -10,6 +10,7 @@ import { getMessages } from 'next-intl/server';
 import { headers } from 'next/headers';
 import MaintenancePage from '@/components/MaintenancePage';
 import { API_URL } from '@/lib/api';
+import ConsoleWarning from '@/components/ConsoleWarning';
 
 const geistSans = localFont({
   src: '../fonts/GeistVF.woff',
@@ -102,17 +103,29 @@ export default async function LocaleLayout({
   const headersList = await headers();
   const pathname = headersList.get('x-pathname') || '';
   let isMaintenance = false;
+  let hideConsoleLogs = false;
 
   try {
-    const res = await fetch(`${API_URL}/system-status`, { next: { revalidate: 10 } });
+    const res = await fetch(`${API_URL}/system-status`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
       isMaintenance = data.maintenanceMode;
+      hideConsoleLogs = data.hideConsoleLogs === true || data.hideConsoleLogs === 'true';
     }
-  } catch (error) {
+  } catch (error: unknown) {
     // Backend kapalıysa veya ulaşılamıyorsa sadece bilgi ver, hata basma
-    if (error instanceof TypeError && error.cause && (error.cause as { code?: string }).code === 'ECONNREFUSED') {
-       console.log('Backend not reachable - Maintenance check skipped');
+    // Node.js fetch hataları bazen AggregateError içinde gelebilir veya doğrudan TypeError olabilir
+    const err = error as { code?: string; cause?: { code?: string }; message?: string };
+    const isConnectionError = 
+      (err?.code === 'ECONNREFUSED') || 
+      (err?.cause?.code === 'ECONNREFUSED') ||
+      (err?.message?.includes('fetch failed'));
+
+    if (isConnectionError) {
+       // Sadece geliştirme ortamında veya explicit debug modunda logla
+       if (process.env.NODE_ENV === 'development') {
+         // console.log('Backend not reachable - Maintenance check skipped');
+       }
     } else {
        console.error('Failed to check system status:', error);
     }
@@ -138,7 +151,75 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={direction} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`} suppressHydrationWarning>
+        {hideConsoleLogs && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  try {
+                    var noop = function(){};
+                    var originalLog = console.log;
+                    console.log = function() {
+                      var args = Array.from(arguments);
+                      if (args.length > 0 && typeof args[0] === 'string' && (
+                          args[0].indexOf('%cDUR!') !== -1 ||
+                          args[0].indexOf('geliştiriciler için tasarlanmış') !== -1 ||
+                          args[0].indexOf('qrders.com.tr/guvenlik') !== -1
+                      )) {
+                          originalLog.apply(console, args);
+                          return;
+                      }
+                    };
+                    console.warn = noop;
+                    console.error = noop;
+                    console.info = noop;
+                    console.debug = noop;
+                    console.clear();
+                    
+                    var titleStyle = [
+                      'color: red',
+                      'font-size: 60px',
+                      'font-weight: bold',
+                      'text-shadow: 2px 2px 0px black',
+                      'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+                    ].join(';');
+
+                    var bodyStyle = [
+                      'font-size: 18px',
+                      'color: #333',
+                      'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                      'line-height: 1.5'
+                    ].join(';');
+
+                    var linkStyle = [
+                      'font-size: 16px',
+                      'color: #0095f6',
+                      'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                      'text-decoration: underline',
+                      'cursor: pointer'
+                    ].join(';');
+
+                    originalLog.call(console, '%cDUR!', titleStyle);
+                    
+                    originalLog.call(
+                      console,
+                      '%cBu, geliştiriciler için tasarlanmış bir tarayıcı özelliğidir. Biri sana bir qrders özelliğini etkinleştirmek veya birinin hesabını ele geçirmek için bir şeyi kopyalayıp buraya yapıştırmanı söylediyse bu bir dolandırıcılık girişimidir ve bunu yapmanı söyleyen kişi sen bunu yaptığında senin qrders hesabına erişebilecektir.',
+                      bodyStyle
+                    );
+
+                    originalLog.call(
+                      console,
+                      '%cDaha fazla bilgi için https://qrders.com.tr/guvenlik adresine göz at.',
+                      linkStyle
+                    );
+                  } catch(e) {}
+                })();
+              `
+            }}
+          />
+        )}
         <NextIntlClientProvider messages={messages}>
+          <ConsoleWarning shouldHideLogs={hideConsoleLogs} />
           <NetworkStatus />
           <BackToHomeButton />
           {children}

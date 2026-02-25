@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { LazyMotion, domAnimation, m, Variants } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Globe, CheckCircle2, Loader2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Globe, CheckCircle2, Loader2, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -178,6 +178,32 @@ export default function ContactPage() {
                         <h3 className="font-semibold text-lg mb-1">{t('officeTitle')}</h3>
                         <p className="text-muted-foreground text-sm mb-2">{t('officeDesc')}</p>
                         <p className="text-foreground font-medium" dangerouslySetInnerHTML={{ __html: t.raw('address') }} />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-border/50 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors">
+                    <CardContent className="p-6 flex items-start gap-4">
+                      <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600">
+                        <Globe className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg mb-1">{t('socialTitle')}</h3>
+                        <p className="text-muted-foreground text-sm mb-3">{t('socialDesc')}</p>
+                        <div className="flex gap-3">
+                          <a href="https://www.facebook.com/profile.php?id=61587807744622" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-blue-600 transition-colors">
+                            <Facebook className="w-5 h-5" />
+                          </a>
+                          <a href="https://twitter.com/qrders_app" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-blue-400 transition-colors">
+                            <Twitter className="w-5 h-5" />
+                          </a>
+                          <a href="https://www.instagram.com/qrders_app" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-pink-600 transition-colors">
+                            <Instagram className="w-5 h-5" />
+                          </a>
+                          <a href="https://www.linkedin.com/company/qrders" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-blue-700 transition-colors">
+                            <Linkedin className="w-5 h-5" />
+                          </a>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

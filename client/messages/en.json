@@ -108,7 +108,9 @@
     "quickResponse": "Quick Response",
     "avgTime": "Avg. within 2 hours",
     "globalSupport": "Global Support",
-    "languages": "Turkish & English"
+    "languages": "Turkish & English",
+    "socialTitle": "Social Media",
+    "socialDesc": "Follow us"
   },
   "PricingPage": {
     "title": "Simple and Transparent",
